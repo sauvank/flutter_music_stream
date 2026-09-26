@@ -19,6 +19,19 @@ MusicStream est un lecteur de musique personnel construit avec Flutter. Il trans
 
 Le FTP, les playlists et la synchronisation chiffrée multi-appareils sont documentés dans la feuille de route. Ils ne sont pas présentés comme déjà livrés.
 
+## Miroir chiffré avec rclone
+
+Le script `scripts/sync_music_rclone_crypt.sh` adapte à la musique le miroir rclone de ComicStream. Il synchronise la bibliothèque vers un remote `crypt` déjà configuré et refuse les sources système, absentes, vides ou ne contenant aucun format audio pris en charge.
+
+Configurez d'abord le backend de stockage et son remote `crypt` avec `rclone config`, puis vérifiez toujours le résultat avec une simulation :
+
+```bash
+./scripts/sync_music_rclone_crypt.sh --dry-run /media/music music_crypt:
+./scripts/sync_music_rclone_crypt.sh /media/music music_crypt:
+```
+
+La seconde commande demande de saisir `SYNCHRONISER`, car `rclone sync` supprime sur la destination les fichiers qui n'existent plus dans la source. Pour une exécution automatisée après validation, utilisez `--yes`. Les variables `MUSIC_SOURCE_PATH` et `RCLONE_DESTINATION` permettent de définir les valeurs par défaut sans versionner de configuration locale.
+
 ## Démarrage
 
 ```bash

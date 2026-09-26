@@ -23,7 +23,7 @@
 ## Serveurs et hors-ligne
 
 - [x] Explorer WebDAV et HTTP auto-index/JSON.
-- [ ] Adapter les scripts rclone de `comic_reader_app` à la bibliothèque musicale, avec remote configurable et garde-fous avant toute opération miroir.
+- [x] Adapter le miroir rclone de `comic_reader_app` à la bibliothèque musicale, avec remote configurable, simulation et garde-fous avant toute opération miroir.
 - [ ] Explorer les serveurs FTP.
 - [ ] Diffuser une piste distante sans téléchargement obligatoire.
 - [ ] Télécharger des albums avec une file, progression et reprise.

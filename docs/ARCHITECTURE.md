@@ -35,4 +35,4 @@ Sur Android, le projet utilise encore AGP 8.1 avec Flutter 3.27. Les bibliothèq
 
 Les secrets de production ne transitent jamais dans Git. La CI consomme seulement les secrets de l’environnement GitHub et détruit les fichiers temporaires dans une étape exécutée systématiquement.
 
-Les futurs scripts rclone seront des outils d'exploitation externes à l'application Flutter. Ils pourront maintenir une copie chiffrée de la bibliothèque audio, mais ne devront pas être confondus avec la synchronisation applicative des métadonnées décrite dans la feuille de route.
+Le script `scripts/sync_music_rclone_crypt.sh` est un outil d'exploitation externe à l'application Flutter. Il maintient une copie chiffrée de la bibliothèque audio avec un remote rclone `crypt` configuré localement. Ses contrôles bloquent les racines système, les sources indisponibles ou sans audio et les exécutions miroir non confirmées. Ce miroir des fichiers ne doit pas être confondu avec la synchronisation applicative des métadonnées décrite dans la feuille de route.

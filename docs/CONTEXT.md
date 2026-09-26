@@ -13,14 +13,14 @@ MusicStream est la déclinaison musicale de `comic_reader_app`. Il transpose l�
 
 ## Continuité avec ComicStream
 
-Le dépôt ne contient pas encore les scripts rclone présents dans `comic_reader_app`. Leur portage reste à faire pour une bibliothèque musicale, sans traitement propre aux BD comme la conversion PDF/CBZ. Le futur flux devra au minimum :
+Le miroir rclone de `comic_reader_app` est porté dans `scripts/sync_music_rclone_crypt.sh` pour une bibliothèque musicale, sans traitement propre aux BD comme la conversion PDF/CBZ. Le flux :
 
 - synchroniser un dossier musical vers un remote rclone chiffré configurable ;
 - refuser les racines système ainsi qu'une source absente, inaccessible ou vide avant toute opération miroir ;
-- n'inclure aucun nom de remote, chemin local, adresse réseau ni identifiant réel dans Git ;
+- n'inclure aucun nom de remote réel, chemin local personnel, adresse réseau réelle ni identifiant réel dans Git ;
 - documenter clairement la différence entre la synchronisation des fichiers audio par script et la future synchronisation applicative des seules métadonnées entre appareils.
 
-Ce rappel est un élément de backlog, pas une fonctionnalité actuellement livrée.
+Le script impose une confirmation explicite avant le miroir, propose `--dry-run` pour le contrôler sans écriture et exige `--yes` en exécution non interactive. Le remote rclone et ses secrets restent entièrement dans la configuration locale de rclone.
 
 ## Version 0.1
 
