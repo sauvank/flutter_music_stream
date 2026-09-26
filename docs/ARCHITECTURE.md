@@ -25,7 +25,11 @@ lib/
     └── track_artwork.dart
 ```
 
-`LibraryService` copie les imports dans le répertoire privé, calcule leur empreinte et sérialise l’index. `AudioMetadataService` lit les tags avec `audiotags`; les pochettes intégrées sont extraites dans `artwork/` et leur URI privée est conservée avec la piste. Les anciennes entrées sont enrichies une seule fois lors de leur premier chargement après migration. `LibraryProvider` expose recherche, favoris et progression. L’écran de bibliothèque construit les regroupements artistes, albums et genres à partir de cette source unique. `PlayerProvider` possède l’unique instance `AudioPlayer`, construit la file, transmet la pochette aux contrôles système et fournit l’état aux écrans.
+`LibraryService` copie les imports dans le répertoire privé, calcule leur empreinte et sérialise l’index. `AudioMetadataService` lit les tags avec `audio_metadata_reader`; les pochettes intégrées sont extraites dans `artwork/` et leur URI privée est conservée avec la piste. Les anciennes entrées sont enrichies une seule fois lors de leur premier chargement après migration. `LibraryProvider` expose recherche, favoris et progression. L’écran de bibliothèque construit les regroupements artistes, albums et genres à partir de cette source unique. `PlayerProvider` possède l’unique instance `AudioPlayer`, construit la file, transmet la pochette aux contrôles système et fournit l’état aux écrans.
+
+`HomeScreen` porte le fond, le mini-lecteur et la navigation commune. Il utilise une barre flottante compacte sur téléphone et un `NavigationRail` sur les fenêtres d’au moins 840 pixels logiques. Les écrans Bibliothèque, Serveurs, Lecture et Réglages partagent les mêmes surfaces arrondies, dégradés, titres expressifs et marges réservées aux contrôles persistants.
+
+Sur Android, le projet utilise encore AGP 8.1 avec Flutter 3.27. Les bibliothèques JNI sont donc empaquetées en mode legacy/compressé, voie de compatibilité officielle pour les appareils à pages mémoire de 16 Kio tant qu’une montée coordonnée de Flutter, AGP et Gradle n’est pas réalisée. Le retour prédictif Android est activé dans le manifeste.
 
 `ServerProfileService` conserve uniquement les profils non sensibles dans les préférences et délègue les mots de passe à `FlutterSecureStorage`. `RemoteServerService` comprend WebDAV `PROPFIND`, les index HTTP JSON et les auto-index HTML. Les téléchargements rejoignent le stockage privé avant indexation, comme un import local. Le FTP devra converger vers les mêmes modèles.
 

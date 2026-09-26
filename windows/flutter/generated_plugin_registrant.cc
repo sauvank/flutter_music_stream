@@ -6,12 +6,9 @@
 
 #include "generated_plugin_registrant.h"
 
-#include <audiotags/audiotags_plugin_c_api.h>
 #include <flutter_secure_storage_windows/flutter_secure_storage_windows_plugin.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
-  AudiotagsPluginCApiRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("AudiotagsPluginCApi"));
   FlutterSecureStorageWindowsPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("FlutterSecureStorageWindowsPlugin"));
 }

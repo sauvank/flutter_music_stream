@@ -1,6 +1,7 @@
+import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:audiotags/audiotags.dart';
+import 'package:audio_metadata_reader/audio_metadata_reader.dart' as tags;
 
 class AudioMetadata {
   const AudioMetadata({
@@ -30,23 +31,22 @@ class AudioMetadataService {
   const AudioMetadataService();
 
   Future<AudioMetadata> read(String path) async {
-    final tag = await AudioTags.read(path);
-    if (tag == null) return const AudioMetadata();
+    final tag = tags.readMetadata(File(path), getImage: true);
     final artwork = tag.pictures.where((picture) {
-          return picture.pictureType == PictureType.coverFront;
+          return picture.pictureType == tags.PictureType.coverFront;
         }).firstOrNull ??
         tag.pictures.firstOrNull;
 
     return AudioMetadata(
       title: _nonEmpty(tag.title),
-      artist: _nonEmpty(tag.trackArtist) ?? _nonEmpty(tag.albumArtist),
+      artist: _nonEmpty(tag.artist) ?? _nonEmpty(tag.albumArtist),
       album: _nonEmpty(tag.album),
-      genre: _nonEmpty(tag.genre),
+      genre: tag.genres.map(_nonEmpty).nonNulls.firstOrNull,
       trackNumber: tag.trackNumber,
       discNumber: tag.discNumber,
-      durationMs: tag.duration == null ? null : tag.duration! * 1000,
+      durationMs: tag.duration?.inMilliseconds,
       artworkBytes: artwork?.bytes,
-      artworkExtension: _extension(artwork?.mimeType),
+      artworkExtension: _extension(artwork?.mimetype),
     );
   }
 
@@ -55,11 +55,11 @@ class AudioMetadataService {
     return trimmed == null || trimmed.isEmpty ? null : trimmed;
   }
 
-  static String _extension(MimeType? mimeType) => switch (mimeType) {
-        MimeType.png => 'png',
-        MimeType.gif => 'gif',
-        MimeType.bmp => 'bmp',
-        MimeType.tiff => 'tiff',
-        MimeType.jpeg || null => 'jpg',
+  static String _extension(String? mimeType) => switch (mimeType) {
+        'image/png' => 'png',
+        'image/gif' => 'gif',
+        'image/bmp' => 'bmp',
+        'image/tiff' => 'tiff',
+        _ => 'jpg',
       };
 }

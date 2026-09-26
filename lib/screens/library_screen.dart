@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,10 +19,10 @@ extension on _LibraryMode {
       };
 
   IconData get icon => switch (this) {
-        _LibraryMode.tracks => Icons.queue_music_rounded,
-        _LibraryMode.artists => Icons.person_rounded,
+        _LibraryMode.tracks => Icons.music_note_rounded,
+        _LibraryMode.artists => Icons.mic_external_on_rounded,
         _LibraryMode.albums => Icons.album_rounded,
-        _LibraryMode.genres => Icons.category_rounded,
+        _LibraryMode.genres => Icons.auto_awesome_rounded,
       };
 
   String valueFor(MusicTrack track) => switch (this) {
@@ -49,55 +51,55 @@ class _LibraryScreenState extends State<LibraryScreen> {
         ? const <String, List<MusicTrack>>{}
         : _group(tracks, _mode);
     return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
       slivers: [
-        SliverAppBar.large(
-          title:
-              Text(_mode == _LibraryMode.tracks ? 'MusicStream' : _mode.label),
-          actions: [
-            PopupMenuButton<_LibraryMode>(
-              tooltip: 'Organiser la bibliothèque',
-              initialValue: _mode,
-              onSelected: (value) => setState(() => _mode = value),
-              itemBuilder: (_) => _LibraryMode.values
-                  .map((mode) => PopupMenuItem(
-                        value: mode,
-                        child: ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(mode.icon),
-                          title: Text(mode.label),
-                        ),
-                      ))
-                  .toList(),
-              icon: Icon(_mode.icon),
-            ),
-            IconButton(
-              tooltip: library.favoritesOnly ? 'Afficher tout' : 'Favoris',
-              onPressed: library.toggleFavoritesFilter,
-              icon: Icon(library.favoritesOnly
-                  ? Icons.favorite
-                  : Icons.favorite_border),
-            ),
-            if (library.allTracks.isNotEmpty)
-              IconButton(
-                tooltip: 'Importer des morceaux',
-                onPressed: library.isImporting ? null : library.importFiles,
-                icon: library.isImporting
-                    ? const SizedBox.square(
-                        dimension: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.add_rounded),
-              ),
-            const SizedBox(width: 8),
-          ],
+        SliverToBoxAdapter(
+          child: _LibraryHeader(
+            count: library.allTracks.length,
+            importing: library.isImporting,
+            favoritesOnly: library.favoritesOnly,
+            onImport: library.importFiles,
+            onFavorites: library.toggleFavoritesFilter,
+          ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
           sliver: SliverToBoxAdapter(
             child: SearchBar(
-              hintText: 'Titre, artiste, album ou genre',
-              leading: const Icon(Icons.search),
+              elevation: const WidgetStatePropertyAll(0),
+              backgroundColor: WidgetStatePropertyAll(
+                Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHigh
+                    .withValues(alpha: .72),
+              ),
+              padding: const WidgetStatePropertyAll(
+                EdgeInsets.symmetric(horizontal: 18),
+              ),
+              hintText: 'Rechercher dans votre musique',
+              leading: const Icon(Icons.search_rounded),
               onChanged: library.setQuery,
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 54,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              scrollDirection: Axis.horizontal,
+              itemCount: _LibraryMode.values.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final mode = _LibraryMode.values[index];
+                return ChoiceChip(
+                  selected: _mode == mode,
+                  showCheckmark: false,
+                  avatar: Icon(mode.icon, size: 18),
+                  label: Text(mode.label),
+                  onSelected: (_) => setState(() => _mode = mode),
+                );
+              },
             ),
           ),
         ),
@@ -111,51 +113,45 @@ class _LibraryScreenState extends State<LibraryScreen> {
             hasScrollBody: false,
             child: _NoResults(),
           )
-        else if (_mode == _LibraryMode.tracks)
-          _trackSliver(tracks)
-        else
-          _groupSliver(context, groups),
+        else if (_mode == _LibraryMode.tracks) ...[
+          SliverToBoxAdapter(child: _RecentTracks(tracks: tracks)),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 26, 20, 10),
+            sliver: SliverToBoxAdapter(
+              child: _SectionTitle(
+                title:
+                    library.favoritesOnly ? 'Vos favoris' : 'Tous les morceaux',
+                detail: _trackCount(tracks.length),
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 190),
+            sliver: SliverList.builder(
+              itemCount: tracks.length,
+              itemBuilder: (context, index) => _StaggeredEntry(
+                index: index,
+                child: _TrackTile(track: tracks[index], queue: tracks),
+              ),
+            ),
+          ),
+        ] else ...[
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 14),
+            sliver: SliverToBoxAdapter(
+              child: _SectionTitle(
+                title: _mode.label,
+                detail:
+                    '${groups.length} collection${groups.length > 1 ? 's' : ''}',
+              ),
+            ),
+          ),
+          _GroupGrid(groups: groups, mode: _mode),
+          const SliverToBoxAdapter(child: SizedBox(height: 190)),
+        ],
       ],
     );
   }
-
-  SliverPadding _trackSliver(List<MusicTrack> tracks) => SliverPadding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 100),
-        sliver: SliverList.builder(
-          itemCount: tracks.length,
-          itemBuilder: (context, index) =>
-              _TrackTile(track: tracks[index], queue: tracks),
-        ),
-      );
-
-  SliverPadding _groupSliver(
-    BuildContext context,
-    Map<String, List<MusicTrack>> groups,
-  ) =>
-      SliverPadding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 100),
-        sliver: SliverList.builder(
-          itemCount: groups.length,
-          itemBuilder: (context, index) {
-            final entry = groups.entries.elementAt(index);
-            return Card(
-              child: ListTile(
-                onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
-                  builder: (_) => _CollectionScreen(
-                    title: entry.key,
-                    tracks: entry.value,
-                  ),
-                )),
-                leading: TrackArtwork(track: entry.value.first, size: 52),
-                title: Text(entry.key,
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
-                subtitle: Text(_trackCount(entry.value.length)),
-                trailing: const Icon(Icons.chevron_right_rounded),
-              ),
-            );
-          },
-        ),
-      );
 
   Map<String, List<MusicTrack>> _group(
     List<MusicTrack> tracks,
@@ -165,26 +161,362 @@ class _LibraryScreenState extends State<LibraryScreen> {
     for (final track in tracks) {
       grouped.putIfAbsent(mode.valueFor(track), () => []).add(track);
     }
+    for (final values in grouped.values) {
+      values.sort((a, b) {
+        final disc = (a.discNumber ?? 0).compareTo(b.discNumber ?? 0);
+        return disc != 0
+            ? disc
+            : (a.trackNumber ?? 0).compareTo(b.trackNumber ?? 0);
+      });
+    }
     final entries = grouped.entries.toList()
       ..sort((a, b) => a.key.toLowerCase().compareTo(b.key.toLowerCase()));
     return Map.fromEntries(entries);
   }
 }
 
+class _LibraryHeader extends StatelessWidget {
+  const _LibraryHeader({
+    required this.count,
+    required this.importing,
+    required this.favoritesOnly,
+    required this.onImport,
+    required this.onFavorites,
+  });
+
+  final int count;
+  final bool importing;
+  final bool favoritesOnly;
+  final VoidCallback onImport;
+  final VoidCallback onFavorites;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 22, 12, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF7C4DFF), Color(0xFFFF4D8D)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x557C4DFF),
+                        blurRadius: 18,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child:
+                      const Icon(Icons.graphic_eq_rounded, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'VOTRE BIBLIOTHÈQUE',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              letterSpacing: 1.8,
+                              fontWeight: FontWeight.w800,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                      ),
+                      Text(
+                        count == 0 ? 'MusicStream' : _greeting(),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton.filledTonal(
+                  tooltip: favoritesOnly ? 'Afficher tout' : 'Favoris',
+                  onPressed: onFavorites,
+                  icon: Icon(favoritesOnly
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded),
+                ),
+                IconButton.filled(
+                  tooltip: 'Importer des morceaux',
+                  onPressed: importing ? null : onImport,
+                  icon: importing
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.add_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+            Text(
+              count == 0
+                  ? 'Votre musique mérite\nun bel écrin.'
+                  : 'Qu’avez-vous envie\nd’écouter ?',
+              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    height: 1.04,
+                    letterSpacing: -1.6,
+                  ),
+            ),
+            if (count > 0) ...[
+              const SizedBox(height: 10),
+              Text(
+                '$count morceau${count > 1 ? 'x' : ''} disponible${count > 1 ? 's' : ''} hors connexion',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ],
+          ],
+        ),
+      );
+
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Bonjour';
+    if (hour < 18) return 'Bon après-midi';
+    return 'Bonsoir';
+  }
+}
+
+class _RecentTracks extends StatelessWidget {
+  const _RecentTracks({required this.tracks});
+  final List<MusicTrack> tracks;
+
+  @override
+  Widget build(BuildContext context) {
+    final recent = List<MusicTrack>.of(tracks)
+      ..sort((a, b) => b.addedAt.compareTo(a.addedAt));
+    final visible = recent.take(8).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 26, 20, 14),
+          child: _SectionTitle(
+            title: 'Ajoutés récemment',
+            action: TextButton.icon(
+              onPressed: () => context
+                  .read<PlayerProvider>()
+                  .playTrack(visible.first, visible),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Tout lire'),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 226,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            scrollDirection: Axis.horizontal,
+            itemCount: visible.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 14),
+            itemBuilder: (context, index) {
+              final track = visible[index];
+              return SizedBox(
+                width: 158,
+                child: InkWell(
+                  onTap: () =>
+                      context.read<PlayerProvider>().playTrack(track, visible),
+                  borderRadius: BorderRadius.circular(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Stack(
+                        children: [
+                          TrackArtwork(
+                            track: track,
+                            size: 158,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          Positioned(
+                            right: 10,
+                            bottom: 10,
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.play_arrow_rounded,
+                                  color: Color(0xFF171221)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        track.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      Text(
+                        track.artist,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _GroupGrid extends StatelessWidget {
+  const _GroupGrid({required this.groups, required this.mode});
+  final Map<String, List<MusicTrack>> groups;
+  final _LibraryMode mode;
+
+  @override
+  Widget build(BuildContext context) => SliverLayoutBuilder(
+        builder: (context, constraints) {
+          final columns = math.max(2, constraints.crossAxisExtent ~/ 210);
+          return SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverGrid.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                childAspectRatio: .76,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+              ),
+              itemCount: groups.length,
+              itemBuilder: (context, index) {
+                final entry = groups.entries.elementAt(index);
+                return _CollectionCard(
+                  title: entry.key,
+                  tracks: entry.value,
+                  circularArtwork: mode == _LibraryMode.artists,
+                );
+              },
+            ),
+          );
+        },
+      );
+}
+
+class _CollectionCard extends StatelessWidget {
+  const _CollectionCard({
+    required this.title,
+    required this.tracks,
+    required this.circularArtwork,
+  });
+  final String title;
+  final List<MusicTrack> tracks;
+  final bool circularArtwork;
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+            builder: (_) => _CollectionScreen(title: title, tracks: tracks),
+          )),
+          borderRadius: BorderRadius.circular(28),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => TrackArtwork(
+                      track: tracks.first,
+                      size: constraints.maxWidth,
+                      borderRadius: BorderRadius.circular(
+                          circularArtwork ? constraints.maxWidth : 24),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                Text(
+                  _trackCount(tracks.length),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+}
+
 class _CollectionScreen extends StatelessWidget {
   const _CollectionScreen({required this.title, required this.tracks});
-
   final String title;
   final List<MusicTrack> tracks;
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: Text(title)),
-        body: ListView.builder(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 32),
-          itemCount: tracks.length,
-          itemBuilder: (context, index) =>
-              _TrackTile(track: tracks[index], queue: tracks),
+        body: CustomScrollView(
+          slivers: [
+            SliverAppBar.large(
+              expandedHeight: 310,
+              pinned: true,
+              actions: [
+                IconButton.filledTonal(
+                  tooltip: 'Lire la collection',
+                  onPressed: () => context
+                      .read<PlayerProvider>()
+                      .playTrack(tracks.first, tracks),
+                  icon: const Icon(Icons.play_arrow_rounded),
+                ),
+                const SizedBox(width: 12),
+              ],
+              flexibleSpace: FlexibleSpaceBar(
+                title: Text(title, maxLines: 1),
+                background: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    TrackArtwork(track: tracks.first),
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.transparent, Color(0xCC0D0C14)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 32),
+              sliver: SliverList.builder(
+                itemCount: tracks.length,
+                itemBuilder: (context, index) =>
+                    _TrackTile(track: tracks[index], queue: tracks),
+              ),
+            ),
+          ],
         ),
       );
 }
@@ -194,36 +526,92 @@ class _EmptyLibrary extends StatelessWidget {
   final bool importing;
 
   @override
-  Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.headphones_rounded,
-                  size: 88, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(height: 20),
-              Text('Votre musique, partout',
-                  style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 8),
-              const Text(
-                'Importez vos fichiers audio. Ils restent sur cet appareil et sont disponibles hors connexion.',
-                textAlign: TextAlign.center,
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 180),
+        child: Center(
+          child: Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 620),
+            padding: const EdgeInsets.all(26),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF6C44E9), Color(0xFFE43F83)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              const SizedBox(height: 24),
-              FilledButton.icon(
-                onPressed: importing
-                    ? null
-                    : context.read<LibraryProvider>().importFiles,
-                icon: importing
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.add),
-                label: Text(importing ? 'Import…' : 'Importer des morceaux'),
-              ),
-            ],
+              borderRadius: BorderRadius.circular(36),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x446C44E9),
+                  blurRadius: 34,
+                  offset: Offset(0, 16),
+                ),
+              ],
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: -44,
+                  top: -54,
+                  child: Icon(Icons.album_rounded,
+                      size: 210, color: Colors.white.withValues(alpha: .1)),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: .16),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: const Icon(Icons.library_music_rounded,
+                          color: Colors.white, size: 32),
+                    ),
+                    const SizedBox(height: 72),
+                    Text(
+                      'Donnez vie à\nvotre bibliothèque',
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                height: 1.05,
+                              ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Ajoutez vos morceaux : ils restent privés, disponibles hors connexion et classés automatiquement.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withValues(alpha: .82),
+                            height: 1.45,
+                          ),
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF321B62),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 16),
+                      ),
+                      onPressed: importing
+                          ? null
+                          : context.read<LibraryProvider>().importFiles,
+                      icon: importing
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.add_rounded),
+                      label: Text(importing
+                          ? 'Import en cours…'
+                          : 'Ajouter ma musique'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -233,12 +621,23 @@ class _NoResults extends StatelessWidget {
   const _NoResults();
 
   @override
-  Widget build(BuildContext context) => const Center(
+  Widget build(BuildContext context) => Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Text(
-            'Aucun morceau ne correspond aux filtres actuels.',
-            textAlign: TextAlign.center,
+          padding: const EdgeInsets.fromLTRB(32, 32, 32, 180),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.search_off_rounded,
+                  size: 64, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(height: 16),
+              Text('Aucun résultat',
+                  style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 6),
+              const Text(
+                'Essayez un autre titre, artiste, album ou genre.',
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
       );
@@ -250,23 +649,121 @@ class _TrackTile extends StatelessWidget {
   final List<MusicTrack> queue;
 
   @override
-  Widget build(BuildContext context) => Card(
-        child: ListTile(
-          onTap: () => context.read<PlayerProvider>().playTrack(track, queue),
-          leading: TrackArtwork(track: track, size: 48),
-          title:
-              Text(track.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-          subtitle: Text('${track.artist} • ${track.album}',
-              maxLines: 1, overflow: TextOverflow.ellipsis),
-          trailing: IconButton(
-            tooltip:
-                track.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
-            onPressed: () =>
-                context.read<LibraryProvider>().toggleFavorite(track.id),
-            icon: Icon(track.favorite ? Icons.favorite : Icons.favorite_border),
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Material(
+          color: Theme.of(context)
+              .colorScheme
+              .surfaceContainer
+              .withValues(alpha: .48),
+          borderRadius: BorderRadius.circular(22),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(22),
+            onTap: () => context.read<PlayerProvider>().playTrack(track, queue),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Row(
+                children: [
+                  TrackArtwork(
+                    track: track,
+                    size: 58,
+                    borderRadius: BorderRadius.circular(17),
+                  ),
+                  const SizedBox(width: 13),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(track.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 3),
+                        Text('${track.artist}  •  ${track.album}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall),
+                      ],
+                    ),
+                  ),
+                  if (track.durationMs != null)
+                    Text(
+                      _duration(track.durationMs!),
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                  IconButton(
+                    tooltip: track.favorite
+                        ? 'Retirer des favoris'
+                        : 'Ajouter aux favoris',
+                    onPressed: () => context
+                        .read<LibraryProvider>()
+                        .toggleFavorite(track.id),
+                    icon: Icon(track.favorite
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       );
 }
 
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.title, this.detail, this.action});
+  final String title;
+  final String? detail;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -.4,
+                        )),
+                if (detail != null)
+                  Text(detail!, style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          ),
+          if (action != null) action!,
+        ],
+      );
+}
+
+class _StaggeredEntry extends StatelessWidget {
+  const _StaggeredEntry({required this.index, required this.child});
+  final int index;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+        duration: Duration(milliseconds: 260 + math.min(index, 5) * 45),
+        tween: Tween(begin: 0, end: 1),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) => Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 14 * (1 - value)),
+            child: child,
+          ),
+        ),
+        child: child,
+      );
+}
+
 String _trackCount(int count) => '$count morceau${count > 1 ? 'x' : ''}';
+
+String _duration(int milliseconds) {
+  final value = Duration(milliseconds: milliseconds);
+  final seconds = value.inSeconds.remainder(60).toString().padLeft(2, '0');
+  return '${value.inMinutes}:$seconds';
+}

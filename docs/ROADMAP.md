@@ -8,6 +8,7 @@
 - [x] Bibliothèque, recherche et favoris.
 - [x] File de lecture, navigation, reprise et mini-lecteur.
 - [x] Lecture mobile en arrière-plan et contrôles système.
+- [x] Interface expressive et navigation adaptative téléphone/tablette/desktop.
 - [x] Profils WebDAV et HTTP avec mots de passe dans le coffre de l’OS.
 - [x] Exploration distante et téléchargement hors ligne.
 

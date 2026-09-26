@@ -49,7 +49,7 @@ dependencies:
   crypto: ^3.0.7
   audio_service: ^0.18.19
   flutter_secure_storage: ^10.3.4
-  audiotags: ^1.4.5
+  audio_metadata_reader: ^1.8.0
 
 dev_dependencies:
   flutter_test:
