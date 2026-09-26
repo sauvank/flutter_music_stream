@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -64,6 +65,45 @@ class LibraryService {
       ));
     }
     return imported;
+  }
+
+  Future<MusicTrack> importRemote({
+    required String name,
+    required Uri uri,
+    Map<String, String> headers = const {},
+  }) async {
+    final root = await getApplicationDocumentsDirectory();
+    final musicDirectory = Directory(p.join(root.path, 'music'));
+    await musicDirectory.create(recursive: true);
+    final temporary = File(p.join(
+      musicDirectory.path,
+      '.download-${DateTime.now().microsecondsSinceEpoch}',
+    ));
+    try {
+      await Dio().download(
+        uri.toString(),
+        temporary.path,
+        options: Options(headers: headers),
+      );
+      final id = (await sha256.bind(temporary.openRead()).first).toString();
+      final extension = p.extension(name).toLowerCase();
+      final destination = File(
+        p.join(musicDirectory.path, '${id.substring(0, 16)}$extension'),
+      );
+      if (await destination.exists()) {
+        await temporary.delete();
+      } else {
+        await temporary.rename(destination.path);
+      }
+      return MusicTrack(
+        id: id,
+        title: _titleFromFilename(name),
+        uri: destination.uri.toString(),
+        addedAt: DateTime.now().toUtc(),
+      );
+    } finally {
+      if (await temporary.exists()) await temporary.delete();
+    }
   }
 
   String _titleFromFilename(String name) {

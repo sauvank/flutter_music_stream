@@ -65,6 +65,29 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> importRemote({
+    required String name,
+    required Uri uri,
+    Map<String, String> headers = const {},
+  }) async {
+    isImporting = true;
+    notifyListeners();
+    try {
+      final track = await _service.importRemote(
+        name: name,
+        uri: uri,
+        headers: headers,
+      );
+      if (_tracks.any((existing) => existing.id == track.id)) return false;
+      _tracks.add(track);
+      await _service.save(_tracks);
+      return true;
+    } finally {
+      isImporting = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> savePosition(String id, Duration position) async {
     final index = _tracks.indexWhere((track) => track.id == id);
     if (index == -1) return;

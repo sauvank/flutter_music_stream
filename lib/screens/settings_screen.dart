@@ -25,7 +25,8 @@ class SettingsScreen extends StatelessWidget {
             child: ListTile(
               leading: Icon(Icons.cloud_outlined),
               title: Text('Serveurs personnels'),
-              subtitle: Text('WebDAV, HTTP et FTP — prochaine étape'),
+              subtitle: Text(
+                  'WebDAV et HTTP, avec identifiants dans le coffre système'),
             ),
           ),
           const Card(

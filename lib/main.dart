@@ -4,8 +4,11 @@ import 'package:provider/provider.dart';
 
 import 'providers/library_provider.dart';
 import 'providers/player_provider.dart';
+import 'providers/server_provider.dart';
 import 'screens/home_screen.dart';
 import 'services/library_service.dart';
+import 'services/remote_server_service.dart';
+import 'services/server_profile_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,18 +18,29 @@ Future<void> main() async {
     androidNotificationOngoing: true,
   );
   final library = LibraryProvider(LibraryService());
+  final servers = ServerProvider(
+    ServerProfileService(),
+    RemoteServerService(),
+  );
   await library.load();
-  runApp(MusicStreamApp(library: library));
+  await servers.load();
+  runApp(MusicStreamApp(library: library, servers: servers));
 }
 
 class MusicStreamApp extends StatelessWidget {
-  const MusicStreamApp({super.key, required this.library});
+  const MusicStreamApp({
+    super.key,
+    required this.library,
+    required this.servers,
+  });
   final LibraryProvider library;
+  final ServerProvider servers;
 
   @override
   Widget build(BuildContext context) => MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: library),
+          ChangeNotifierProvider.value(value: servers),
           ChangeNotifierProvider(
             create: (_) =>
                 PlayerProvider(onPositionChanged: library.savePosition),

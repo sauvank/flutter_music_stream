@@ -10,9 +10,11 @@ MusicStream est un lecteur de musique personnel open source construit avec Flutt
 - lecture, pause, navigation dans la file et reprise ;
 - mini-lecteur et écran de lecture adaptatif ;
 - lecture Android/iOS en arrière-plan avec notification et commandes système ;
+- profils WebDAV et HTTP avec mot de passe dans le coffre sécurisé de l’OS ;
+- navigation distante et téléchargement des morceaux pour l’écoute hors ligne ;
 - thèmes clair et sombre Material 3.
 
-Les connexions WebDAV, HTTP et FTP, les métadonnées embarquées, les playlists et la synchronisation chiffrée multi-appareils sont documentées dans la feuille de route. Elles ne sont pas présentées comme déjà livrées.
+Le FTP, les métadonnées embarquées, les playlists et la synchronisation chiffrée multi-appareils sont documentés dans la feuille de route. Ils ne sont pas présentés comme déjà livrés.
 
 ## Démarrage
 
@@ -30,7 +32,7 @@ flutter test
 
 ## Plateformes
 
-Android et iOS sont les cibles prioritaires. Linux, macOS et Windows disposent du même socle Flutter. Le Web nécessitera un stockage d’import spécifique avant d’être considéré comme pris en charge.
+Android 6 (API 23) ou plus récent et iOS sont les cibles prioritaires. Linux, macOS et Windows disposent du même socle Flutter. Le Web nécessitera un stockage d’import spécifique avant d’être considéré comme pris en charge.
 
 ## Sécurité
 

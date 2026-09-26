@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/player_provider.dart';
 import 'library_screen.dart';
 import 'now_playing_screen.dart';
+import 'servers_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,7 +19,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const screens = [LibraryScreen(), NowPlayingScreen(), SettingsScreen()];
+    const screens = [
+      LibraryScreen(),
+      ServersScreen(),
+      NowPlayingScreen(),
+      SettingsScreen(),
+    ];
     return Scaffold(
       body: SafeArea(child: IndexedStack(index: _index, children: screens)),
       bottomNavigationBar: Column(
@@ -33,6 +39,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icon(Icons.library_music_outlined),
                   selectedIcon: Icon(Icons.library_music),
                   label: 'Bibliothèque'),
+              NavigationDestination(
+                  icon: Icon(Icons.dns_outlined),
+                  selectedIcon: Icon(Icons.dns),
+                  label: 'Serveurs'),
               NavigationDestination(
                   icon: Icon(Icons.play_circle_outline),
                   selectedIcon: Icon(Icons.play_circle),
