@@ -11,6 +11,8 @@ class LibraryProvider extends ChangeNotifier {
   String query = '';
   bool favoritesOnly = false;
 
+  List<MusicTrack> get allTracks => List.unmodifiable(_tracks);
+
   List<MusicTrack> get tracks {
     final needle = query.trim().toLowerCase();
     return _tracks.where((track) {

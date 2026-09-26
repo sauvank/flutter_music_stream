@@ -51,7 +51,13 @@ class PlayerProvider extends ChangeNotifier {
                   id: item.id,
                   title: item.title,
                   artist: item.artist,
-                  album: item.album),
+                  album: item.album,
+                  duration: item.durationMs == null
+                      ? null
+                      : Duration(milliseconds: item.durationMs!),
+                  artUri: item.artworkUri == null
+                      ? null
+                      : Uri.parse(item.artworkUri!)),
             ))
         .toList();
     await _player.setAudioSources(

@@ -7,6 +7,8 @@ MusicStream est un lecteur de musique personnel open source construit avec Flutt
 - import multiple de fichiers MP3, M4A, AAC, FLAC, OGG, OPUS et WAV ;
 - copie dans le stockage privé de l’application et déduplication SHA-256 ;
 - bibliothèque persistante avec recherche et favoris ;
+- lecture des tags audio, pochettes intégrées et durée à l’import ;
+- navigation par morceaux, artistes, albums et genres ;
 - lecture, pause, navigation dans la file et reprise ;
 - mini-lecteur et écran de lecture adaptatif ;
 - lecture Android/iOS en arrière-plan avec notification et commandes système ;
@@ -14,7 +16,7 @@ MusicStream est un lecteur de musique personnel open source construit avec Flutt
 - navigation distante et téléchargement des morceaux pour l’écoute hors ligne ;
 - thèmes clair et sombre Material 3.
 
-Le FTP, les métadonnées embarquées, les playlists et la synchronisation chiffrée multi-appareils sont documentés dans la feuille de route. Ils ne sont pas présentés comme déjà livrés.
+Le FTP, les playlists et la synchronisation chiffrée multi-appareils sont documentés dans la feuille de route. Ils ne sont pas présentés comme déjà livrés.
 
 ## Démarrage
 

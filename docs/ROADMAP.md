@@ -13,8 +13,8 @@
 
 ## Prochaine étape — bibliothèque riche
 
-- [ ] Lire les tags ID3/Vorbis et les pochettes intégrées.
-- [ ] Organiser par artistes, albums et genres.
+- [x] Lire les tags ID3/Vorbis et les pochettes intégrées.
+- [x] Organiser par artistes, albums et genres.
 - [ ] Créer et modifier des playlists.
 - [ ] Ajouter répétition, lecture aléatoire, égaliseur et fondu.
 - [x] Sauvegarder automatiquement la position pendant l’écoute.

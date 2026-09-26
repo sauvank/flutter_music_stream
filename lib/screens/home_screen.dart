@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/player_provider.dart';
+import '../widgets/track_artwork.dart';
 import 'library_screen.dart';
 import 'now_playing_screen.dart';
 import 'servers_screen.dart';
@@ -70,7 +71,7 @@ class _MiniPlayer extends StatelessWidget {
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
       child: ListTile(
-        leading: const CircleAvatar(child: Icon(Icons.music_note)),
+        leading: TrackArtwork(track: track, size: 48),
         title: Text(track.title, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle:
             Text(track.artist, maxLines: 1, overflow: TextOverflow.ellipsis),

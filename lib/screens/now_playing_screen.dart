@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
+import '../widgets/track_artwork.dart';
 
 class NowPlayingScreen extends StatelessWidget {
   const NowPlayingScreen({super.key});
@@ -28,16 +29,9 @@ class NowPlayingScreen extends StatelessWidget {
           const Spacer(),
           AspectRatio(
             aspectRatio: 1,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(32),
-                gradient: const LinearGradient(
-                    colors: [Color(0xFF7C4DFF), Color(0xFF00BFA5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight),
-              ),
-              child: const Icon(Icons.graphic_eq_rounded,
-                  size: 128, color: Colors.white),
+            child: TrackArtwork(
+              track: track,
+              borderRadius: BorderRadius.circular(32),
             ),
           ),
           const Spacer(),
