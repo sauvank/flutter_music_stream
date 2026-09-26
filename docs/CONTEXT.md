@@ -1,6 +1,6 @@
 # Contexte produit — MusicStream
 
-MusicStream transpose l’expérience de ComicStream à une bibliothèque musicale personnelle : importer ou récupérer ses morceaux, les conserver hors connexion et les écouter sur mobile ou ordinateur.
+MusicStream est la déclinaison musicale de `comic_reader_app`. Il transpose l’expérience et les principes de ComicStream à une bibliothèque musicale personnelle : importer ou récupérer ses morceaux, les conserver hors connexion et les écouter sur mobile ou ordinateur. Les fonctions reprises du projet d'origine doivent être adaptées au vocabulaire, aux formats et aux contraintes de la musique, et non copiées telles quelles.
 
 ## Principes
 
@@ -10,6 +10,17 @@ MusicStream transpose l’expérience de ComicStream à une bibliothèque musica
 - Les identifiants de serveurs devront être stockés dans le coffre sécurisé du système.
 - Toute synchronisation future chiffrera les données côté client.
 - Android cible au minimum l’API 23, exigée par le coffre sécurisé, tout en couvrant la cible principale Android 8.
+
+## Continuité avec ComicStream
+
+Le dépôt ne contient pas encore les scripts rclone présents dans `comic_reader_app`. Leur portage reste à faire pour une bibliothèque musicale, sans traitement propre aux BD comme la conversion PDF/CBZ. Le futur flux devra au minimum :
+
+- synchroniser un dossier musical vers un remote rclone chiffré configurable ;
+- refuser les racines système ainsi qu'une source absente, inaccessible ou vide avant toute opération miroir ;
+- n'inclure aucun nom de remote, chemin local, adresse réseau ni identifiant réel dans Git ;
+- documenter clairement la différence entre la synchronisation des fichiers audio par script et la future synchronisation applicative des seules métadonnées entre appareils.
+
+Ce rappel est un élément de backlog, pas une fonctionnalité actuellement livrée.
 
 ## Version 0.1
 

@@ -34,3 +34,5 @@ Sur Android, le projet utilise encore AGP 8.1 avec Flutter 3.27. Les bibliothèq
 `ServerProfileService` conserve uniquement les profils non sensibles dans les préférences et délègue les mots de passe à `FlutterSecureStorage`. `RemoteServerService` comprend WebDAV `PROPFIND`, les index HTTP JSON et les auto-index HTML. Les téléchargements rejoignent le stockage privé avant indexation, comme un import local. Le FTP devra converger vers les mêmes modèles.
 
 Les secrets de production ne transitent jamais dans Git. La CI consomme seulement les secrets de l’environnement GitHub et détruit les fichiers temporaires dans une étape exécutée systématiquement.
+
+Les futurs scripts rclone seront des outils d'exploitation externes à l'application Flutter. Ils pourront maintenir une copie chiffrée de la bibliothèque audio, mais ne devront pas être confondus avec la synchronisation applicative des métadonnées décrite dans la feuille de route.

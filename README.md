@@ -1,6 +1,6 @@
 # MusicStream
 
-MusicStream est un lecteur de musique personnel open source construit avec Flutter. Il privilégie une bibliothèque locale, une lecture hors connexion et une architecture prête à accueillir les serveurs personnels de ComicStream sans envoyer les fichiers audio vers un service tiers.
+MusicStream est un lecteur de musique personnel construit avec Flutter. Il transpose à la musique l'approche local-first de ComicStream : bibliothèque locale, lecture hors connexion et prise en charge de serveurs personnels sans envoyer les fichiers audio vers un service tiers.
 
 ## État actuel
 
@@ -39,7 +39,7 @@ Android 6 (API 23) ou plus récent et iOS sont les cibles prioritaires. Linux, m
 
 ## Sécurité
 
-Le dépôt est public. Aucun mot de passe, jeton, certificat, configuration Firebase réelle ou clé de signature n’y est stocké. Consultez [docs/SECRETS.md](docs/SECRETS.md) avant de configurer une CI ou un backend.
+Le dépôt est privé, mais il reste maintenu comme s'il pouvait devenir public : aucun mot de passe, jeton, certificat, configuration Firebase réelle ou clé de signature n’y est stocké. Consultez [docs/SECRETS.md](docs/SECRETS.md) avant de configurer une CI ou un backend.
 
 ## Licence
 
