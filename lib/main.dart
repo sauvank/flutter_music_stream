@@ -7,6 +7,7 @@ import 'providers/player_provider.dart';
 import 'providers/server_provider.dart';
 import 'screens/home_screen.dart';
 import 'services/library_service.dart';
+import 'services/playlist_service.dart';
 import 'services/remote_server_service.dart';
 import 'services/server_profile_service.dart';
 
@@ -17,7 +18,7 @@ Future<void> main() async {
     androidNotificationChannelName: 'Lecture audio',
     androidNotificationOngoing: true,
   );
-  final library = LibraryProvider(LibraryService());
+  final library = LibraryProvider(LibraryService(), PlaylistService());
   final servers = ServerProvider(
     ServerProfileService(),
     RemoteServerService(),

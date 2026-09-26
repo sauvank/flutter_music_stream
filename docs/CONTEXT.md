@@ -24,11 +24,19 @@ Le script impose une confirmation explicite avant le miroir, propose `--dry-run`
 
 ## Version 0.1
 
-La bibliothèque importe des formats audio courants dans le stockage privé de l’application. Elle lit leurs tags ID3, MP4 ou Vorbis, extrait les pochettes dans un répertoire privé et utilise le nom de fichier comme repli. Les morceaux peuvent être parcourus par artiste, album ou genre. Elle persiste l’état favori et la position de reprise, actualisée pendant l’écoute. Le moteur `just_audio` fournit la file et `just_audio_background` les commandes système.
+La bibliothèque importe des formats audio courants dans le stockage privé de l’application. Elle lit leurs tags ID3, MP4 ou Vorbis, extrait les pochettes dans un répertoire privé et utilise le nom de fichier comme repli. Les morceaux peuvent être parcourus par artiste, album ou genre, puis regroupés dans des playlists locales modifiables. Elle persiste l’état favori et la position de reprise, actualisée pendant l’écoute. Le moteur `just_audio` fournit la file et `just_audio_background` les commandes système.
 
-Les profils WebDAV et HTTP séparent les métadonnées non sensibles, conservées dans les préférences, des mots de passe placés dans le coffre sécurisé du système. L’utilisateur parcourt les dossiers distants et choisit les morceaux à copier hors ligne. La diffusion directe, le FTP, les playlists et les comptes ne sont pas encore implémentés.
+Les profils WebDAV et HTTP séparent les métadonnées non sensibles, conservées dans les préférences, des mots de passe placés dans le coffre sécurisé du système. L’utilisateur parcourt les dossiers distants et choisit les morceaux à copier hors ligne. La diffusion directe, le FTP et les comptes ne sont pas encore implémentés.
 
 ## Journal de continuité
+
+### 2026-09-26 — Playlists locales
+
+- Ajout d’un modèle et d’un stockage dédiés aux playlists, qui référencent les pistes par leur empreinte sans dupliquer les fichiers audio.
+- La bibliothèque permet de créer, renommer et supprimer une playlist, d’y ajouter des pistes depuis la liste générale ou par sélection multiple, et d’en retirer.
+- Une playlist sert directement de file de lecture et conserve l’ordre d’ajout des morceaux.
+- Validation sur l’émulateur Android 16 Kio : création persistée, sélection de plusieurs morceaux et rendu de la file contrôlés; une assertion liée au cycle de vie du champ de saisie a été détectée puis corrigée pendant ce parcours.
+- Couverture ajoutée pour la sérialisation et le cycle complet des opérations; `flutter analyze` et les 5 tests réussissent.
 
 ### 2026-09-26 — Reprise de la refonte visuelle en cours
 

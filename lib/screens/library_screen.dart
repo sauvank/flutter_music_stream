@@ -3,12 +3,13 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/music_playlist.dart';
 import '../models/music_track.dart';
 import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
 import '../widgets/track_artwork.dart';
 
-enum _LibraryMode { tracks, artists, albums, genres }
+enum _LibraryMode { tracks, artists, albums, genres, playlists }
 
 extension on _LibraryMode {
   String get label => switch (this) {
@@ -16,6 +17,7 @@ extension on _LibraryMode {
         _LibraryMode.artists => 'Artistes',
         _LibraryMode.albums => 'Albums',
         _LibraryMode.genres => 'Genres',
+        _LibraryMode.playlists => 'Playlists',
       };
 
   IconData get icon => switch (this) {
@@ -23,6 +25,7 @@ extension on _LibraryMode {
         _LibraryMode.artists => Icons.mic_external_on_rounded,
         _LibraryMode.albums => Icons.album_rounded,
         _LibraryMode.genres => Icons.auto_awesome_rounded,
+        _LibraryMode.playlists => Icons.queue_music_rounded,
       };
 
   String valueFor(MusicTrack track) => switch (this) {
@@ -30,6 +33,7 @@ extension on _LibraryMode {
         _LibraryMode.artists => track.artist,
         _LibraryMode.albums => track.album,
         _LibraryMode.genres => track.genre,
+        _LibraryMode.playlists => '',
       };
 }
 
@@ -47,9 +51,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
     final tracks = library.tracks;
-    final groups = _mode == _LibraryMode.tracks
-        ? const <String, List<MusicTrack>>{}
-        : _group(tracks, _mode);
+    final groups =
+        _mode == _LibraryMode.tracks || _mode == _LibraryMode.playlists
+            ? const <String, List<MusicTrack>>{}
+            : _group(tracks, _mode);
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
@@ -103,7 +108,31 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
           ),
         ),
-        if (library.allTracks.isEmpty)
+        if (_mode == _LibraryMode.playlists) ...[
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 14),
+            sliver: SliverToBoxAdapter(
+              child: _SectionTitle(
+                title: 'Vos playlists',
+                detail:
+                    '${library.playlists.length} playlist${library.playlists.length > 1 ? 's' : ''}',
+                action: FilledButton.tonalIcon(
+                  onPressed: () => _createPlaylist(context),
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('Créer'),
+                ),
+              ),
+            ),
+          ),
+          if (library.playlists.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: _EmptyPlaylists(onCreate: () => _createPlaylist(context)),
+            )
+          else
+            _PlaylistGrid(playlists: library.playlists),
+          const SliverToBoxAdapter(child: SizedBox(height: 190)),
+        ] else if (library.allTracks.isEmpty)
           SliverFillRemaining(
             hasScrollBody: false,
             child: _EmptyLibrary(importing: library.isImporting),
@@ -521,6 +550,166 @@ class _CollectionScreen extends StatelessWidget {
       );
 }
 
+class _PlaylistGrid extends StatelessWidget {
+  const _PlaylistGrid({required this.playlists});
+  final List<MusicPlaylist> playlists;
+
+  @override
+  Widget build(BuildContext context) => SliverLayoutBuilder(
+        builder: (context, constraints) {
+          final columns = math.max(2, constraints.crossAxisExtent ~/ 210);
+          return SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverGrid.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                childAspectRatio: .88,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+              ),
+              itemCount: playlists.length,
+              itemBuilder: (context, index) =>
+                  _PlaylistCard(playlist: playlists[index]),
+            ),
+          );
+        },
+      );
+}
+
+class _PlaylistCard extends StatelessWidget {
+  const _PlaylistCard({required this.playlist});
+  final MusicPlaylist playlist;
+
+  @override
+  Widget build(BuildContext context) {
+    final tracks = context.watch<LibraryProvider>().tracksForPlaylist(playlist);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => _PlaylistScreen(playlistId: playlist.id),
+        )),
+        borderRadius: BorderRadius.circular(28),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF7C4DFF), Color(0xFFE43F83)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: tracks.isEmpty
+                      ? const Icon(Icons.queue_music_rounded,
+                          size: 56, color: Colors.white)
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: TrackArtwork(track: tracks.first),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(playlist.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w800)),
+              Text(_trackCount(tracks.length),
+                  style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PlaylistScreen extends StatelessWidget {
+  const _PlaylistScreen({required this.playlistId});
+  final String playlistId;
+
+  @override
+  Widget build(BuildContext context) {
+    final library = context.watch<LibraryProvider>();
+    final index = library.playlists.indexWhere((item) => item.id == playlistId);
+    if (index == -1) return const SizedBox.shrink();
+    final playlist = library.playlists[index];
+    final tracks = library.tracksForPlaylist(playlist);
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar.large(
+            pinned: true,
+            title: Text(playlist.name),
+            actions: [
+              IconButton(
+                tooltip: 'Ajouter des morceaux',
+                onPressed: () => _selectTracks(context, playlist),
+                icon: const Icon(Icons.playlist_add_rounded),
+              ),
+              PopupMenuButton<String>(
+                onSelected: (action) async {
+                  if (action == 'rename') {
+                    await _renamePlaylist(context, playlist);
+                  } else if (action == 'delete' &&
+                      await _confirmDelete(context, playlist.name)) {
+                    if (!context.mounted) return;
+                    await context
+                        .read<LibraryProvider>()
+                        .deletePlaylist(playlist.id);
+                    if (context.mounted) Navigator.of(context).pop();
+                  }
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'rename', child: Text('Renommer')),
+                  PopupMenuItem(value: 'delete', child: Text('Supprimer')),
+                ],
+              ),
+            ],
+          ),
+          if (tracks.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child:
+                  _EmptyPlaylist(onAdd: () => _selectTracks(context, playlist)),
+            )
+          else ...[
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
+              sliver: SliverToBoxAdapter(
+                child: FilledButton.icon(
+                  onPressed: () => context
+                      .read<PlayerProvider>()
+                      .playTrack(tracks.first, tracks),
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: const Text('Tout lire'),
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 32),
+              sliver: SliverList.builder(
+                itemCount: tracks.length,
+                itemBuilder: (context, index) => _TrackTile(
+                  track: tracks[index],
+                  queue: tracks,
+                  playlistId: playlist.id,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _EmptyLibrary extends StatelessWidget {
   const _EmptyLibrary({required this.importing});
   final bool importing;
@@ -617,6 +806,67 @@ class _EmptyLibrary extends StatelessWidget {
       );
 }
 
+class _EmptyPlaylists extends StatelessWidget {
+  const _EmptyPlaylists({required this.onCreate});
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(32, 32, 32, 180),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.queue_music_rounded,
+                  size: 72, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(height: 18),
+              Text('Créez votre première playlist',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 8),
+              const Text(
+                'Regroupez vos morceaux pour les retrouver et les lire dans l’ordre.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: onCreate,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Créer une playlist'),
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
+class _EmptyPlaylist extends StatelessWidget {
+  const _EmptyPlaylist({required this.onAdd});
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.music_note_rounded, size: 64),
+              const SizedBox(height: 16),
+              Text('Cette playlist est vide',
+                  style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 18),
+              FilledButton.icon(
+                onPressed: onAdd,
+                icon: const Icon(Icons.playlist_add_rounded),
+                label: const Text('Ajouter des morceaux'),
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
 class _NoResults extends StatelessWidget {
   const _NoResults();
 
@@ -644,9 +894,14 @@ class _NoResults extends StatelessWidget {
 }
 
 class _TrackTile extends StatelessWidget {
-  const _TrackTile({required this.track, required this.queue});
+  const _TrackTile({
+    required this.track,
+    required this.queue,
+    this.playlistId,
+  });
   final MusicTrack track;
   final List<MusicTrack> queue;
+  final String? playlistId;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -702,6 +957,31 @@ class _TrackTile extends StatelessWidget {
                     icon: Icon(track.favorite
                         ? Icons.favorite_rounded
                         : Icons.favorite_border_rounded),
+                  ),
+                  PopupMenuButton<String>(
+                    tooltip: 'Options du morceau',
+                    onSelected: (action) {
+                      if (action == 'add') {
+                        _addTrackToPlaylist(context, track);
+                      } else if (action == 'remove') {
+                        context.read<LibraryProvider>().removeTrackFromPlaylist(
+                              playlistId!,
+                              track.id,
+                            );
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      if (playlistId == null)
+                        const PopupMenuItem(
+                          value: 'add',
+                          child: Text('Ajouter à une playlist'),
+                        )
+                      else
+                        const PopupMenuItem(
+                          value: 'remove',
+                          child: Text('Retirer de la playlist'),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -766,4 +1046,200 @@ String _duration(int milliseconds) {
   final value = Duration(milliseconds: milliseconds);
   final seconds = value.inSeconds.remainder(60).toString().padLeft(2, '0');
   return '${value.inMinutes}:$seconds';
+}
+
+Future<void> _createPlaylist(BuildContext context) async {
+  final name = await _askForName(context, title: 'Nouvelle playlist');
+  if (name == null || !context.mounted) return;
+  await context.read<LibraryProvider>().createPlaylist(name);
+}
+
+Future<void> _renamePlaylist(
+  BuildContext context,
+  MusicPlaylist playlist,
+) async {
+  final name = await _askForName(
+    context,
+    title: 'Renommer la playlist',
+    initialValue: playlist.name,
+  );
+  if (name == null || !context.mounted) return;
+  await context.read<LibraryProvider>().renamePlaylist(playlist.id, name);
+}
+
+Future<String?> _askForName(
+  BuildContext context, {
+  required String title,
+  String initialValue = '',
+}) async {
+  var currentValue = initialValue;
+  return showDialog<String>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(title),
+      content: TextFormField(
+        initialValue: initialValue,
+        autofocus: true,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: const InputDecoration(labelText: 'Nom'),
+        onChanged: (value) => currentValue = value,
+        onFieldSubmitted: (value) {
+          if (value.trim().isNotEmpty) {
+            Navigator.pop(dialogContext, value.trim());
+          }
+        },
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext),
+          child: const Text('Annuler'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final name = currentValue.trim();
+            if (name.isNotEmpty) Navigator.pop(dialogContext, name);
+          },
+          child: const Text('Enregistrer'),
+        ),
+      ],
+    ),
+  );
+}
+
+Future<bool> _confirmDelete(BuildContext context, String name) async =>
+    await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Supprimer la playlist ?'),
+        content:
+            Text('« $name » sera supprimée. Vos morceaux seront conservés.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    ) ??
+    false;
+
+Future<void> _addTrackToPlaylist(
+  BuildContext context,
+  MusicTrack track,
+) async {
+  final library = context.read<LibraryProvider>();
+  if (library.playlists.isEmpty) {
+    final name = await _askForName(context, title: 'Nouvelle playlist');
+    if (name == null || !context.mounted) return;
+    final playlist = await library.createPlaylist(name);
+    if (playlist != null) {
+      await library.addTrackToPlaylist(playlist.id, track.id);
+    }
+    return;
+  }
+  if (!context.mounted) return;
+  await showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (sheetContext) => SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(sheetContext).height * .72,
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text('Ajouter « ${track.title} »',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(sheetContext).textTheme.titleLarge),
+            ),
+            const SizedBox(height: 8),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final playlist in library.playlists)
+                    ListTile(
+                      leading: const Icon(Icons.queue_music_rounded),
+                      title: Text(playlist.name),
+                      trailing: playlist.trackIds.contains(track.id)
+                          ? const Icon(Icons.check_rounded)
+                          : null,
+                      enabled: !playlist.trackIds.contains(track.id),
+                      onTap: () async {
+                        await library.addTrackToPlaylist(playlist.id, track.id);
+                        if (sheetContext.mounted) Navigator.pop(sheetContext);
+                      },
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Future<void> _selectTracks(
+  BuildContext context,
+  MusicPlaylist playlist,
+) async {
+  final library = context.read<LibraryProvider>();
+  final selected = playlist.trackIds.toSet();
+  final result = await showDialog<Set<String>>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: const Text('Morceaux de la playlist'),
+        content: SizedBox(
+          width: 520,
+          child: library.allTracks.isEmpty
+              ? const Text(
+                  'Importez d’abord des morceaux dans la bibliothèque.')
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: library.allTracks.length,
+                  itemBuilder: (context, index) {
+                    final track = library.allTracks[index];
+                    return CheckboxListTile(
+                      value: selected.contains(track.id),
+                      title: Text(track.title),
+                      subtitle: Text(track.artist),
+                      onChanged: (checked) => setState(() {
+                        checked == true
+                            ? selected.add(track.id)
+                            : selected.remove(track.id);
+                      }),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, selected),
+            child: const Text('Enregistrer'),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (result == null || !context.mounted) return;
+  for (final trackId in result.difference(playlist.trackIds.toSet())) {
+    await library.addTrackToPlaylist(playlist.id, trackId);
+  }
+  for (final trackId in playlist.trackIds.toSet().difference(result)) {
+    await library.removeTrackFromPlaylist(playlist.id, trackId);
+  }
 }
