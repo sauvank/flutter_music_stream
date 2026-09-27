@@ -94,6 +94,22 @@ void main() {
     expect(listened, ['1']);
     player.dispose();
   });
+
+  test('announces the current track once for automatic enrichment', () async {
+    final announced = <String>[];
+    final player = PlayerProvider(
+      audioPlayer: _FakeAudioPlayer(),
+      fadeDuration: Duration.zero,
+      onCurrentTrackChanged: (track) async => announced.add(track.id),
+    );
+    final first = _track('1');
+
+    await player.playTrack(first, [first]);
+    await Future<void>.delayed(const Duration(milliseconds: 450));
+
+    expect(announced, ['1']);
+    player.dispose();
+  });
 }
 
 MusicTrack _track(String id) => MusicTrack(

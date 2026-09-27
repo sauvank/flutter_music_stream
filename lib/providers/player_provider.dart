@@ -12,6 +12,7 @@ class PlayerProvider extends ChangeNotifier {
     this.onFadeDurationChanged,
     this.onVolumeChanged,
     this.onTrackListened,
+    this.onCurrentTrackChanged,
     Duration fadeDuration = const Duration(milliseconds: 500),
     double volume = 1,
     AudioPlayer? audioPlayer,
@@ -39,6 +40,7 @@ class PlayerProvider extends ChangeNotifier {
     _subscriptions.add(_player.currentIndexStream.listen((index) {
       _current = index != null && index < _queue.length ? _queue[index] : null;
       _resetListeningSession(_current);
+      _announceTrack();
       notifyListeners();
     }));
   }
@@ -49,6 +51,7 @@ class PlayerProvider extends ChangeNotifier {
   final Future<void> Function(Duration duration)? onFadeDurationChanged;
   final Future<void> Function(double volume)? onVolumeChanged;
   final Future<void> Function(String id)? onTrackListened;
+  final Future<void> Function(MusicTrack track)? onCurrentTrackChanged;
   List<MusicTrack> _queue = [];
   MusicTrack? _current;
   Duration _fadeDuration;
@@ -59,6 +62,8 @@ class PlayerProvider extends ChangeNotifier {
   Duration? _lastObservedPosition;
   Duration _listenedDuration = Duration.zero;
   bool _historyRecorded = false;
+  String? _lastAnnouncedTrackId;
+  bool _isDisposed = false;
 
   MusicTrack? get current => _current;
   bool get playing => _player.playing;
@@ -85,6 +90,7 @@ class PlayerProvider extends ChangeNotifier {
     );
     _current = track;
     _resetListeningSession(track, force: true);
+    _announceTrack();
     await _playWithFade();
   }
 
@@ -103,6 +109,7 @@ class PlayerProvider extends ChangeNotifier {
     _queue = [track];
     _current = track;
     _resetListeningSession(track, force: true);
+    _announceTrack();
     await _player.setAudioSources([
       _audioSource(track, headers: headers),
     ]);
@@ -115,6 +122,7 @@ class PlayerProvider extends ChangeNotifier {
     if (wasPlaying && !await _fadeTo(0)) return;
     await _player.seek(Duration.zero, index: index);
     _current = _queue[index];
+    _announceTrack();
     notifyListeners();
     if (wasPlaying) {
       await _fadeTo(1);
@@ -296,6 +304,22 @@ class PlayerProvider extends ChangeNotifier {
   void _syncCurrentTrack() {
     final index = _player.currentIndex;
     _current = index != null && index < _queue.length ? _queue[index] : null;
+    _announceTrack();
+  }
+
+  void _announceTrack() {
+    final track = _current;
+    if (track == null) {
+      _lastAnnouncedTrackId = null;
+      return;
+    }
+    if (_lastAnnouncedTrackId == track.id) return;
+    _lastAnnouncedTrackId = track.id;
+    unawaited(Future<void>.delayed(const Duration(milliseconds: 400), () async {
+      if (!_isDisposed && _current?.id == track.id) {
+        await onCurrentTrackChanged?.call(track);
+      }
+    }));
   }
 
   void _resetListeningSession(MusicTrack? track, {bool force = false}) {
@@ -337,6 +361,7 @@ class PlayerProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
     _fadeOperation++;
     for (final subscription in _subscriptions) {
       unawaited(subscription.cancel());

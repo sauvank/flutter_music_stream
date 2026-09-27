@@ -6,12 +6,14 @@ import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/lyrics_document.dart';
 import '../models/music_track.dart';
 
 class LyricsService {
   static final shared = LyricsService();
+  static const _automaticSearchKey = 'lyrics_automatic_search';
 
   LyricsService({
     Dio? dio,
@@ -25,7 +27,15 @@ class LyricsService {
   final Future<Directory> Function() _documentsDirectory;
   final String endpoint;
   DateTime? _retryAt;
-  bool _searching = false;
+  Future<LyricsDocument?>? _activeSearch;
+  String? _activeTrackId;
+
+  Future<bool?> automaticSearchPreference() async =>
+      (await SharedPreferences.getInstance()).getBool(_automaticSearchKey);
+
+  Future<void> setAutomaticSearch(bool enabled) async =>
+      (await SharedPreferences.getInstance())
+          .setBool(_automaticSearchKey, enabled);
 
   Future<Directory> _lyricsDirectory() async =>
       Directory(p.join((await _documentsDirectory()).path, 'lyrics'));
@@ -70,19 +80,30 @@ class LyricsService {
         'Le titre et l’artiste sont nécessaires pour chercher des paroles.',
       );
     }
+    while (_activeSearch != null) {
+      final active = _activeSearch!;
+      if (_activeTrackId == track.id) return active;
+      try {
+        await active;
+      } catch (_) {
+        // A failed search for another track must not block this one.
+      }
+    }
     final retryAt = _retryAt;
     if (retryAt != null && DateTime.now().isBefore(retryAt)) {
       final remaining = retryAt.difference(DateTime.now()).inSeconds + 1;
       throw LyricsRateLimitException(remaining.toString());
     }
-    if (_searching) {
-      throw StateError('Une recherche de paroles est déjà en cours.');
-    }
-    _searching = true;
+    final search = _searchOnline(track);
+    _activeSearch = search;
+    _activeTrackId = track.id;
     try {
-      return await _searchOnline(track);
+      return await search;
     } finally {
-      _searching = false;
+      if (identical(_activeSearch, search)) {
+        _activeSearch = null;
+        _activeTrackId = null;
+      }
     }
   }
 
@@ -96,7 +117,7 @@ class LyricsService {
           track.durationMs! <= 3600000)
         'duration': (track.durationMs! / 1000).round(),
     };
-    final response = await _dio.get<Map<String, dynamic>>(
+    final response = await _dio.get<dynamic>(
       endpoint,
       queryParameters: parameters,
       options: Options(
@@ -108,25 +129,69 @@ class LyricsService {
         validateStatus: (status) => status != null && status < 500,
       ),
     );
-    if (response.statusCode == 404) return null;
+    if (response.statusCode == 404) return _searchFallback(track);
     if (response.statusCode == 429) {
-      final retryAfter = response.headers.value('retry-after');
-      final seconds = int.tryParse(retryAfter ?? '');
-      if (seconds != null) {
-        _retryAt = DateTime.now().add(Duration(seconds: seconds));
-      } else {
-        try {
-          _retryAt = HttpDate.parse(retryAfter!);
-        } catch (_) {
-          _retryAt = DateTime.now().add(const Duration(seconds: 30));
-        }
-      }
-      throw LyricsRateLimitException(retryAfter);
+      _handleRateLimit(response.headers);
     }
-    if (response.statusCode != 200 || response.data == null) {
+    if (response.statusCode != 200 || response.data is! Map) {
       throw StateError('LRCLIB est indisponible pour le moment.');
     }
-    final data = response.data!;
+    return _saveResult(track, Map<String, dynamic>.from(response.data as Map));
+  }
+
+  Future<LyricsDocument?> _searchFallback(MusicTrack track) async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    final response = await _dio.get<dynamic>(
+      endpoint.replaceFirst(RegExp(r'/get$'), '/search'),
+      queryParameters: {
+        'track_name': track.title,
+        'artist_name': track.artist,
+      },
+      options: Options(
+        headers: const {
+          'User-Agent':
+              'MusicStream/0.1 (https://github.com/sauvank/flutter_music_reade)',
+        },
+        receiveTimeout: const Duration(seconds: 20),
+        validateStatus: (status) => status != null && status < 500,
+      ),
+    );
+    if (response.statusCode == 429) _handleRateLimit(response.headers);
+    if (response.statusCode != 200 || response.data is! List) {
+      throw StateError('LRCLIB est indisponible pour le moment.');
+    }
+    final title = track.title.trim().toLowerCase();
+    final artist = track.artist.trim().toLowerCase();
+    for (final candidate in response.data as List) {
+      if (candidate is! Map) continue;
+      final data = Map<String, dynamic>.from(candidate);
+      if ((data['trackName'] as String?)?.trim().toLowerCase() != title ||
+          (data['artistName'] as String?)?.trim().toLowerCase() != artist) {
+        continue;
+      }
+      final result = await _saveResult(track, data);
+      if (result != null) return result;
+    }
+    return null;
+  }
+
+  Never _handleRateLimit(Headers headers) {
+    final retryAfter = headers.value('retry-after');
+    final seconds = int.tryParse(retryAfter ?? '');
+    if (seconds != null) {
+      _retryAt = DateTime.now().add(Duration(seconds: seconds));
+    } else {
+      try {
+        _retryAt = HttpDate.parse(retryAfter!);
+      } catch (_) {
+        _retryAt = DateTime.now().add(const Duration(seconds: 30));
+      }
+    }
+    throw LyricsRateLimitException(retryAfter);
+  }
+
+  Future<LyricsDocument?> _saveResult(
+      MusicTrack track, Map<String, dynamic> data) async {
     if (data['instrumental'] == true) return null;
     final synced = data['syncedLyrics'] as String?;
     if (synced != null && LyricsDocument.parse(synced).synchronized) {

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/player_provider.dart';
 import '../services/playback_settings_service.dart';
+import '../services/lyrics_service.dart';
 import '../widgets/import_music_sheet.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -94,6 +95,7 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 22),
           const _SectionLabel('CONFIDENTIALITÉ'),
           const SizedBox(height: 8),
+          const _AutomaticLyricsTile(),
           const _InfoTile(
             icon: Icons.shield_outlined,
             title: 'Local par défaut',
@@ -105,6 +107,39 @@ class SettingsScreen extends StatelessWidget {
             subtitle: 'Vos morceaux restent dans le stockage privé de l’app',
           ),
         ],
+      );
+}
+
+class _AutomaticLyricsTile extends StatefulWidget {
+  const _AutomaticLyricsTile();
+
+  @override
+  State<_AutomaticLyricsTile> createState() => _AutomaticLyricsTileState();
+}
+
+class _AutomaticLyricsTileState extends State<_AutomaticLyricsTile> {
+  bool? _enabled;
+
+  @override
+  void initState() {
+    super.initState();
+    LyricsService.shared.automaticSearchPreference().then((value) {
+      if (mounted) setState(() => _enabled = value ?? false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => SwitchListTile(
+        title: const Text('Paroles automatiques'),
+        subtitle: const Text(
+            'Pendant la lecture, envoie les métadonnées du morceau à LRCLIB si ses paroles ne sont pas déjà enregistrées.'),
+        value: _enabled ?? false,
+        onChanged: _enabled == null
+            ? null
+            : (value) async {
+                await LyricsService.shared.setAutomaticSearch(value);
+                if (mounted) setState(() => _enabled = value);
+              },
       );
 }
 

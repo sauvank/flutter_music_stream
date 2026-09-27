@@ -12,7 +12,7 @@ MusicStream est un lecteur de musique personnel construit avec Flutter. Il trans
 - création et modification de playlists locales ;
 - lecture, pause, file visible et réorganisable, « lire ensuite », reprise, aléatoire, répétition, volume persistant et fondus configurables ;
 - historique local des morceaux réellement écoutés, classé par écoute récente ;
-- paroles `.lrc` synchronisées importées avec les fichiers locaux ou manuellement depuis Lecture ; recherche LRCLIB sur demande, conservée hors connexion ;
+- paroles `.lrc` synchronisées importées avec les fichiers locaux ou manuellement depuis Lecture ; recherche LRCLIB automatique après accord, conservée hors connexion, et traduction à la demande ;
 - interface Material 3 expressive, mini-lecteur et écran de lecture immersif ;
 - navigation adaptative avec barre flottante sur téléphone et rail sur grand écran ;
 - lecture Android/iOS en arrière-plan avec notification et commandes système ;
@@ -24,7 +24,7 @@ MusicStream est un lecteur de musique personnel construit avec Flutter. Il trans
 
 La synchronisation chiffrée multi-appareils est documentée dans la feuille de route et n’est pas présentée comme déjà livrée.
 
-La recherche de paroles sur LRCLIB est lancée uniquement via le bouton de l’écran Lecture. Elle transmet le titre, l’artiste et, s’ils sont connus, l’album et la durée. Les paroles récupérées sont ensuite enregistrées dans le stockage privé de l’application.
+Au premier morceau sans paroles, l’écran Paroles demande si la recherche automatique doit être activée. Une fois activée, elle transmet à LRCLIB le titre, l’artiste et, s’ils sont connus, l’album et la durée au changement de morceau lorsqu’aucune parole n’est en cache. Ce choix peut être modifié dans Réglages ; la recherche manuelle reste disponible. Les paroles récupérées sont enregistrées dans le stockage privé. Choisir une langue pour la traduction envoie les paroles à MyMemory ; la traduction est ensuite conservée localement.
 
 ## Miroir chiffré avec rclone
 

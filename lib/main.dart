@@ -8,6 +8,7 @@ import 'providers/player_provider.dart';
 import 'providers/server_provider.dart';
 import 'screens/home_screen.dart';
 import 'services/library_service.dart';
+import 'services/lyrics_service.dart';
 import 'services/playlist_service.dart';
 import 'services/playback_settings_service.dart';
 import 'services/remote_server_service.dart';
@@ -69,6 +70,16 @@ class MusicStreamApp extends StatelessWidget {
             create: (_) => PlayerProvider(
               onPositionChanged: library.savePosition,
               onTrackListened: library.recordPlayed,
+              onCurrentTrackChanged: (track) async {
+                try {
+                  final lyrics = LyricsService.shared;
+                  if (await lyrics.automaticSearchPreference() != true) return;
+                  if (await lyrics.load(track.id) != null) return;
+                  await lyrics.searchOnline(track);
+                } catch (_) {
+                  // Automatic enrichment must never interrupt playback.
+                }
+              },
               fadeDuration: fadeDuration,
               volume: volume,
               onFadeDurationChanged: playbackSettings.saveFadeDuration,

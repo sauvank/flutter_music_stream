@@ -15,7 +15,7 @@
 - [x] Détection manuelle des nouveaux albums sur les serveurs configurés.
 - [x] File de lecture visible et modifiable : lire ensuite, ajouter en fin, sélectionner, réordonner et retirer.
 - [x] Volume applicatif persistant et historique des morceaux réellement écoutés.
-- [x] Paroles `.lrc` locales et LRCLIB, synchronisées avec la lecture et disponibles hors connexion après import.
+- [x] Paroles `.lrc` locales et LRCLIB, synchronisées avec la lecture, recherche automatique après accord et traduction à la demande avec cache privé.
 
 ## En cours
 
@@ -25,7 +25,6 @@
 
 - [ ] Choix explicite du thème et localisation multilingue.
 - [ ] Scan de la médiathèque de l’appareil et widget d’accueil Android.
-- [ ] Traduction facultative des paroles avec consentement réseau explicite.
 - [ ] Synchronisation chiffrée des métadonnées entre appareils.
 
 ## Différé

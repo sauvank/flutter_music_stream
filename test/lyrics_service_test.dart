@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:music_reader_app/models/music_track.dart';
 import 'package:music_reader_app/services/lyrics_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -11,6 +13,7 @@ void main() {
   late Directory directory;
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     directory = await Directory.systemTemp.createTemp('musicstream-lyrics-');
   });
 
@@ -128,6 +131,83 @@ void main() {
         throwsA(isA<LyricsRateLimitException>()));
     expect(requests, 1);
     expect(await service.load('track-id'), isNull);
+  });
+
+  test('automatic search choice is opt-in and persistent', () async {
+    final service = LyricsService(documentsDirectory: () async => directory);
+    expect(await service.automaticSearchPreference(), isNull);
+    await service.setAutomaticSearch(true);
+    expect(await service.automaticSearchPreference(), isTrue);
+    await service.setAutomaticSearch(false);
+    expect(await service.automaticSearchPreference(), isFalse);
+  });
+
+  test('falls back to matching LRCLIB search result after 404', () async {
+    final paths = <String>[];
+    final dio = Dio()
+      ..interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
+        paths.add(options.uri.path);
+        if (options.uri.path.endsWith('/get')) {
+          handler.resolve(Response<dynamic>(
+            requestOptions: options,
+            statusCode: 404,
+          ));
+        } else {
+          handler.resolve(Response<dynamic>(
+            requestOptions: options,
+            statusCode: 200,
+            data: [
+              {
+                'trackName': 'Wrong Song',
+                'artistName': 'Demo Artist',
+                'plainLyrics': 'Wrong lyrics',
+              },
+              {
+                'trackName': 'Demo Song',
+                'artistName': 'Demo Artist',
+                'syncedLyrics': '[00:01.00] Matched line',
+              },
+            ],
+          ));
+        }
+      }));
+    final service = LyricsService(
+      dio: dio,
+      documentsDirectory: () async => directory,
+    );
+
+    final result = await service.searchOnline(_track());
+
+    expect(paths, ['/api/get', '/api/search']);
+    expect(result?.lines.single.text, 'Matched line');
+  });
+
+  test('shares an in-flight lookup for the same track', () async {
+    final release = Completer<void>();
+    var requests = 0;
+    final dio = Dio()
+      ..interceptors
+          .add(InterceptorsWrapper(onRequest: (options, handler) async {
+        requests++;
+        await release.future;
+        handler.resolve(Response<dynamic>(
+          requestOptions: options,
+          statusCode: 200,
+          data: {'plainLyrics': 'Demo line'},
+        ));
+      }));
+    final service = LyricsService(
+      dio: dio,
+      documentsDirectory: () async => directory,
+    );
+
+    final first = service.searchOnline(_track());
+    final second = service.searchOnline(_track());
+    release.complete();
+
+    expect((await first)?.plainText, 'Demo line');
+    expect((await second)?.plainText, 'Demo line');
+    expect(requests, 1);
   });
 }
 

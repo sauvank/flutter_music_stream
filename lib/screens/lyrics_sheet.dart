@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:provider/provider.dart';
 
 import '../models/lyrics_document.dart';
 import '../models/music_track.dart';
 import '../providers/player_provider.dart';
 import '../services/lyrics_service.dart';
+import '../services/lyrics_translation_service.dart';
 
 class LyricsSheet extends StatefulWidget {
   const LyricsSheet({super.key, required this.track, this.service});
@@ -20,8 +22,11 @@ class _LyricsSheetState extends State<LyricsSheet> {
   late final LyricsService _service;
   final ScrollController _scrollController = ScrollController();
   LyricsDocument? _lyrics;
+  LyricsDocument? _translation;
+  String? _translationLanguage;
   String? _message;
   bool _busy = true;
+  bool _translating = false;
   int _lastActive = -2;
 
   @override
@@ -45,6 +50,38 @@ class _LyricsSheetState extends State<LyricsSheet> {
         _lyrics = lyrics;
         _busy = false;
       });
+      if (lyrics != null) return;
+      final automatic = await _service.automaticSearchPreference();
+      if (!mounted) return;
+      if (automatic == true) {
+        await _search();
+      } else if (automatic == null) {
+        final accepted = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Trouver les paroles automatiquement ?'),
+            content: const Text(
+              'Pour les morceaux sans paroles enregistrées, '
+              'MusicStream enverra son titre, son artiste, son album et sa '
+              'durée à LRCLIB dès leur lecture. Ce choix reste modifiable '
+              'dans Réglages.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Pas maintenant'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Activer'),
+              ),
+            ],
+          ),
+        );
+        if (!mounted) return;
+        await _service.setAutomaticSearch(accepted == true);
+        if (accepted == true && mounted) await _search();
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -64,6 +101,8 @@ class _LyricsSheetState extends State<LyricsSheet> {
       if (!mounted) return;
       if (imported) {
         _lyrics = await _service.load(widget.track.id);
+        _translation = null;
+        _translationLanguage = null;
         _lastActive = -2;
       }
     } on FormatException catch (error) {
@@ -87,6 +126,8 @@ class _LyricsSheetState extends State<LyricsSheet> {
         _message = 'Aucune parole trouvée sur LRCLIB.';
       } else {
         _lyrics = lyrics;
+        _translation = null;
+        _translationLanguage = null;
         _lastActive = -2;
       }
     } on LyricsRateLimitException catch (error) {
@@ -100,11 +141,66 @@ class _LyricsSheetState extends State<LyricsSheet> {
     }
   }
 
+  Future<void> _chooseTranslation() async {
+    final language = await showModalBottomSheet<MapEntry<String, String>>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: ListView(
+          children: [
+            const ListTile(
+              title: Text('Traduire les paroles'),
+              subtitle: Text('Les paroles seront envoyées à MyMemory. '
+                  'La traduction sera gardée sur cet appareil.'),
+            ),
+            for (final entry in LyricsTranslationService.languages.entries)
+              ListTile(
+                title: Text(entry.key),
+                onTap: () => Navigator.pop(context, entry),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (language == null || !mounted || _lyrics == null) return;
+    setState(() {
+      _translating = true;
+      _message = null;
+    });
+    try {
+      final original = _lyrics!;
+      final translated = await LyricsTranslationService.shared
+          .translate(widget.track.id, original, language.value);
+      if (!mounted || !identical(_lyrics, original)) return;
+      setState(() {
+        _translation = translated;
+        _translationLanguage = language.key;
+        _lastActive = -2;
+      });
+    } on FormatException catch (error) {
+      if (mounted) setState(() => _message = error.message);
+    } on DioException catch (error) {
+      if (mounted) {
+        setState(() => _message = error.response?.statusCode == 429
+            ? 'MyMemory limite temporairement les traductions. Réessayez plus tard.'
+            : 'Traduction impossible (réseau ou service indisponible).');
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _message =
+            'Traduction impossible. Vérifiez la connexion et réessayez.');
+      }
+    } finally {
+      if (mounted) setState(() => _translating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final player = context.watch<PlayerProvider>();
+    final displayed = _translation ?? _lyrics;
     final active = player.current?.id == widget.track.id
-        ? _lyrics?.activeLineAt(player.position) ?? -1
+        ? displayed?.activeLineAt(player.position) ?? -1
         : -1;
     return SafeArea(
       child: Padding(
@@ -127,20 +223,37 @@ class _LyricsSheetState extends State<LyricsSheet> {
               spacing: 8,
               children: [
                 OutlinedButton.icon(
-                  onPressed: _busy ? null : _import,
+                  onPressed: _busy || _translating ? null : _import,
                   icon: const Icon(Icons.upload_file_rounded),
                   label: const Text('Importer .lrc'),
                 ),
                 FilledButton.tonalIcon(
-                  onPressed: _busy ? null : _search,
+                  onPressed: _busy || _translating ? null : _search,
                   icon: const Icon(Icons.travel_explore_rounded),
-                  label: const Text('Chercher sur LRCLIB'),
+                  label: const Text('Relancer la recherche'),
                 ),
+                if (_lyrics != null)
+                  OutlinedButton.icon(
+                    onPressed:
+                        _busy || _translating ? null : _chooseTranslation,
+                    icon: const Icon(Icons.translate_rounded),
+                    label: const Text('Traduire'),
+                  ),
+                if (_translation != null)
+                  TextButton(
+                    onPressed: () => setState(() {
+                      _translation = null;
+                      _translationLanguage = null;
+                    }),
+                    child: const Text('Original'),
+                  ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
-              'La recherche envoie le titre, l’artiste, l’album et la durée à LRCLIB.',
+              _translationLanguage == null
+                  ? 'La recherche envoie le titre, l’artiste, l’album et la durée à LRCLIB.'
+                  : 'Traduction : $_translationLanguage',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -151,19 +264,20 @@ class _LyricsSheetState extends State<LyricsSheet> {
               ),
             const SizedBox(height: 12),
             Expanded(
-              child: _busy
+              child: _busy || _translating
                   ? const Center(child: CircularProgressIndicator())
-                  : _lyrics == null
+                  : displayed == null
                       ? const Center(
                           child: Text(
-                            'Importez un fichier .lrc ou lancez une recherche sur LRCLIB.',
+                            'Aucune parole trouvée. Importez un fichier .lrc ou relancez la recherche.',
                             textAlign: TextAlign.center,
                           ),
                         )
-                      : _lyrics!.synchronized
+                      : displayed.synchronized
                           ? LayoutBuilder(
                               builder: (context, constraints) => _timedLyrics(
                                 context,
+                                displayed,
                                 active,
                                 constraints.maxHeight,
                               ),
@@ -172,7 +286,7 @@ class _LyricsSheetState extends State<LyricsSheet> {
                               child: Padding(
                                 padding: const EdgeInsets.all(16),
                                 child: Text(
-                                  _lyrics!.plainText,
+                                  displayed.plainText,
                                   textAlign: TextAlign.center,
                                   style: Theme.of(context)
                                       .textTheme
@@ -199,7 +313,8 @@ class _LyricsSheetState extends State<LyricsSheet> {
     );
   }
 
-  Widget _timedLyrics(BuildContext context, int active, double viewportHeight) {
+  Widget _timedLyrics(BuildContext context, LyricsDocument displayed,
+      int active, double viewportHeight) {
     if (active != _lastActive) {
       _lastActive = active;
       if (active >= 0) {
@@ -216,10 +331,10 @@ class _LyricsSheetState extends State<LyricsSheet> {
     }
     return ListView.builder(
       controller: _scrollController,
-      itemCount: _lyrics!.lines.length,
+      itemCount: displayed.lines.length,
       itemExtent: 72,
       itemBuilder: (context, index) {
-        final line = _lyrics!.lines[index];
+        final line = displayed.lines[index];
         final selected = index == active;
         return InkWell(
           onTap: () => context.read<PlayerProvider>().seek(line.time),
