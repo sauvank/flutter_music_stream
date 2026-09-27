@@ -30,6 +30,6 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 
 ## Problème actif
 
-La lecture distante authentifiée, le téléchargement HTTP en arrière-plan, l’indexation finale, le sélecteur récursif de dossier, l’extraction distante des pochettes, les modes aléatoire/répétition, les fondus, le volume applicatif, l’historique et l’adaptation verticale de l’écran Lecture ont été validés sur un Galaxy S24 sous Android 16. Le FTP et la nouvelle feuille Paroles doivent encore être contrôlés sur appareil. L’égaliseur est différé tant qu’aucune solution Android/iOS cohérente n’est disponible.
+La lecture distante authentifiée, le téléchargement HTTP en arrière-plan, l’indexation finale, le sélecteur récursif de dossier, l’extraction distante des pochettes, les modes aléatoire/répétition, les fondus, le volume applicatif, l’historique, l’adaptation verticale de l’écran Lecture et l’ouverture de la feuille Paroles ont été validés sur un Galaxy S24 sous Android 16. L’application démarre aussi sur l’émulateur Android API 35. L’import et l’affichage synchronisé des paroles, la recherche LRCLIB et le FTP restent à contrôler sur appareil. L’égaliseur est différé tant qu’aucune solution Android/iOS cohérente n’est disponible.
 
 Architecture détaillée : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Travaux futurs : [ROADMAP.md](ROADMAP.md).
