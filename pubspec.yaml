@@ -50,6 +50,7 @@ dependencies:
   audio_service: ^0.18.19
   flutter_secure_storage: ^10.3.4
   audio_metadata_reader: ^1.8.0
+  background_downloader: 8.9.5
 
 dev_dependencies:
   flutter_test:

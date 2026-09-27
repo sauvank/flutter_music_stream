@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../models/music_playlist.dart';
 import '../models/music_track.dart';
+import '../models/remote_audio_entry.dart';
 import '../services/library_service.dart';
 import '../services/playlist_service.dart';
 
@@ -163,6 +164,59 @@ class LibraryProvider extends ChangeNotifier {
       isImporting = false;
       notifyListeners();
     }
+  }
+
+  Future<({int added, int skipped, int failed})> importRemoteFiles({
+    required List<RemoteAudioEntry> files,
+    Map<String, String> headers = const {},
+    void Function(int completed, int total)? onProgress,
+  }) async {
+    var added = 0;
+    var skipped = 0;
+    var failed = 0;
+    isImporting = true;
+    notifyListeners();
+    try {
+      for (var index = 0; index < files.length; index++) {
+        final file = files[index];
+        try {
+          final track = await _service.importRemote(
+            name: file.name,
+            uri: file.uri,
+            headers: headers,
+          );
+          if (_tracks.any((existing) => existing.id == track.id)) {
+            skipped++;
+          } else {
+            _tracks.add(track);
+            added++;
+          }
+        } catch (_) {
+          failed++;
+        }
+        onProgress?.call(index + 1, files.length);
+      }
+      if (added > 0) await _service.save(_tracks);
+      return (added: added, skipped: skipped, failed: failed);
+    } finally {
+      isImporting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> importDownloadedFile({
+    required String sourcePath,
+    required String originalName,
+  }) async {
+    final track = await _service.importDownloadedFile(
+      sourcePath: sourcePath,
+      originalName: originalName,
+    );
+    if (_tracks.any((existing) => existing.id == track.id)) return false;
+    _tracks.add(track);
+    await _service.save(_tracks);
+    notifyListeners();
+    return true;
   }
 
   Future<void> savePosition(String id, Duration position) async {

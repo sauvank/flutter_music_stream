@@ -3,6 +3,7 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/library_provider.dart';
+import 'providers/download_queue_provider.dart';
 import 'providers/player_provider.dart';
 import 'providers/server_provider.dart';
 import 'screens/home_screen.dart';
@@ -19,28 +20,37 @@ Future<void> main() async {
     androidNotificationOngoing: true,
   );
   final library = LibraryProvider(LibraryService(), PlaylistService());
+  final downloads = DownloadQueueProvider(library);
   final servers = ServerProvider(
     ServerProfileService(),
     RemoteServerService(),
   );
   await library.load();
+  await downloads.initialize();
   await servers.load();
-  runApp(MusicStreamApp(library: library, servers: servers));
+  runApp(MusicStreamApp(
+    library: library,
+    downloads: downloads,
+    servers: servers,
+  ));
 }
 
 class MusicStreamApp extends StatelessWidget {
   const MusicStreamApp({
     super.key,
     required this.library,
+    required this.downloads,
     required this.servers,
   });
   final LibraryProvider library;
+  final DownloadQueueProvider downloads;
   final ServerProvider servers;
 
   @override
   Widget build(BuildContext context) => MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: library),
+          ChangeNotifierProvider.value(value: downloads),
           ChangeNotifierProvider.value(value: servers),
           ChangeNotifierProvider(
             create: (_) =>

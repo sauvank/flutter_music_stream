@@ -7,7 +7,9 @@ lib/
 ├── models/music_track.dart
 ├── models/server_profile.dart
 ├── models/remote_audio_entry.dart
+├── models/remote_audio_metadata.dart
 ├── providers/
+│   ├── download_queue_provider.dart
 │   ├── library_provider.dart
 │   ├── player_provider.dart
 │   └── server_provider.dart
@@ -16,6 +18,7 @@ lib/
 │   ├── library_service.dart
 │   ├── playlist_service.dart
 │   ├── remote_server_service.dart
+│   ├── remote_audio_metadata_service.dart
 │   └── server_profile_service.dart
 ├── screens/
 │   ├── home_screen.dart
@@ -33,7 +36,9 @@ lib/
 
 Sur Android, le projet utilise encore AGP 8.1 avec Flutter 3.27. Les bibliothèques JNI sont donc empaquetées en mode legacy/compressé, voie de compatibilité officielle pour les appareils à pages mémoire de 16 Kio tant qu’une montée coordonnée de Flutter, AGP et Gradle n’est pas réalisée. Le retour prédictif Android est activé dans le manifeste.
 
-`ServerProfileService` conserve uniquement les profils non sensibles dans les préférences et délègue les mots de passe à `FlutterSecureStorage`. `RemoteServerService` comprend WebDAV `PROPFIND`, les index HTTP JSON et les auto-index HTML. Les téléchargements rejoignent le stockage privé avant indexation, comme un import local. Le FTP devra converger vers les mêmes modèles.
+`ServerProfileService` conserve uniquement les profils non sensibles dans les préférences et délègue les mots de passe à `FlutterSecureStorage`. `ServerProvider` accepte aussi un fichier JSON ou du JSON collé contenant un profil ou une liste sous la clé `servers`, dans le schéma MusicStream ou dans le schéma historique de ComicStream. Un éventuel mot de passe importé est extrait puis placé directement dans le coffre; il n’est jamais conservé avec le profil. `RemoteServerService` comprend WebDAV `PROPFIND`, les index HTTP JSON et les auto-index HTML.
+
+`DownloadQueueProvider` confie les fichiers à `background_downloader`, dont la file native persiste lorsque l’interface passe en arrière-plan. Les tâches conservent leurs en-têtes d’authentification uniquement dans le stockage privé de l’application. Une fois un fichier terminé, `LibraryService` le déplace dans `music/`, calcule son empreinte, le déduplique et extrait ses tags. Android autorise le trafic non chiffré pour rester compatible avec les profils HTTP explicitement pris en charge. Le FTP devra converger vers les mêmes modèles.
 
 Les secrets de production ne transitent jamais dans Git. La CI consomme seulement les secrets de l’environnement GitHub et détruit les fichiers temporaires dans une étape exécutée systématiquement.
 

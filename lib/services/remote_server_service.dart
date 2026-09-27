@@ -21,6 +21,34 @@ class RemoteServerService {
           ? _listWebDav(profile, uri, password)
           : _listHttp(profile, uri, password);
 
+  Future<List<RemoteAudioEntry>> listRecursively(
+    ServerProfile profile,
+    Uri root,
+    String password, {
+    int maximumEntries = 10000,
+  }) async {
+    final files = <RemoteAudioEntry>[];
+    final pending = <Uri>[root];
+    final visited = <String>{};
+    while (pending.isNotEmpty) {
+      final directory = pending.removeLast();
+      final key = directory.replace(query: '', fragment: '').toString();
+      if (!visited.add(key)) continue;
+      final children = await list(profile, directory, password);
+      for (final child in children) {
+        if (child.isDirectory) {
+          pending.add(child.uri);
+        } else {
+          files.add(child);
+          if (files.length >= maximumEntries) {
+            throw StateError('Le dossier contient trop de morceaux.');
+          }
+        }
+      }
+    }
+    return files;
+  }
+
   Map<String, String> authorizationHeaders(
     ServerProfile profile,
     String password,

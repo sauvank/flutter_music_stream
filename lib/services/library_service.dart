@@ -119,6 +119,41 @@ class LibraryService {
     }
   }
 
+  Future<MusicTrack> importDownloadedFile({
+    required String sourcePath,
+    required String originalName,
+  }) async {
+    final source = File(sourcePath);
+    if (!await source.exists()) {
+      throw FileSystemException(
+          'Le fichier téléchargé est introuvable.', sourcePath);
+    }
+    final id = (await sha256.bind(source.openRead()).first).toString();
+    final root = await getApplicationDocumentsDirectory();
+    final musicDirectory = Directory(p.join(root.path, 'music'));
+    await musicDirectory.create(recursive: true);
+    final extension = p.extension(originalName).toLowerCase();
+    final destination = File(
+      p.join(musicDirectory.path, '${id.substring(0, 16)}$extension'),
+    );
+    if (await destination.exists()) {
+      await source.delete();
+    } else {
+      try {
+        await source.rename(destination.path);
+      } on FileSystemException {
+        await source.copy(destination.path);
+        await source.delete();
+      }
+    }
+    return _readMetadata(MusicTrack(
+      id: id,
+      title: _titleFromFilename(originalName),
+      uri: destination.uri.toString(),
+      addedAt: DateTime.now().toUtc(),
+    ));
+  }
+
   String _titleFromFilename(String name) {
     final base = p.basenameWithoutExtension(name).replaceAll('_', ' ');
     return base.trim().isEmpty ? 'Piste sans titre' : base.trim();
