@@ -49,6 +49,7 @@ app.*.map.json
 *.env.*
 *.secret
 *.private.md
+*.private.json
 *credentials*
 *service_account*.json
 google-services.json
