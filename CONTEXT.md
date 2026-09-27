@@ -7,6 +7,7 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 - La version publiée correspond à `version` dans `pubspec.yaml` et au dernier tag Git; éviter de recopier ce numéro ici afin que le script de release ne rende pas le contexte obsolète.
 - Les profils WebDAV/HTTP peuvent être importés par fichier JSON ou copier-coller. Les mots de passe vont directement dans `FlutterSecureStorage`.
 - `DownloadQueueProvider` utilise `background_downloader` 8.9.5 pour les téléchargements natifs persistants, sérialise les ajouts pour éviter les doublons et limite les transferts à deux par hôte, puis remet les fichiers terminés à `LibraryProvider` pour déduplication et lecture des tags. Les pistes téléchargées conservent leur URI source pour l’indicateur de disponibilité des dossiers; les anciennes pistes sans cette donnée ne peuvent pas être reconnues avec certitude.
+- L’état local d’un dossier apparaît sous son nom : vert avec « Tout sur le téléphone » si complet, orange avec le nombre présent/total si partiel, simple libellé « Dossier » si aucun morceau n’est reconnu.
 - La suppression de bibliothèque cible les pistes marquées `serverDownload`; les anciennes pistes sans origine connue peuvent être incluses explicitement. Les imports locaux restent conservés.
 - Android autorise explicitement le trafic HTTP car les profils serveur acceptent `http://`. Kotlin est fixé à 1.9.20 pour la compatibilité du plugin avec Flutter 3.27/AGP 8.1.
 - La file affiche progression, cause d’échec, pause, reprise, annulation et nouvelle tentative.

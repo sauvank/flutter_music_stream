@@ -669,11 +669,10 @@ class _RemoteTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
-          subtitle: const Text('Dossier'),
+          subtitle: _FolderAvailability(entry: entry),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _FolderAvailability(entry: entry),
               IconButton(
                 tooltip: 'Télécharger tout le dossier',
                 onPressed: () => _downloadFolder(context, servers),
@@ -867,38 +866,41 @@ class _FolderAvailabilityState extends State<_FolderAvailability> {
     return FutureBuilder<List<RemoteAudioEntry>>(
       future: _files,
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return const Tooltip(
-            message: 'État des fichiers indisponible',
-            child: Icon(Icons.help_outline_rounded),
-          );
-        }
-        if (!snapshot.hasData) {
-          return const SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          );
+        if (!snapshot.hasData || snapshot.hasError) {
+          return const Text('Dossier');
         }
         final files = snapshot.data!;
         final available = files
             .where((file) => downloaded.contains(file.uri.toString()))
             .length;
-        final (icon, label) = files.isEmpty || available == 0
-            ? (
-                Icons.download_for_offline_outlined,
-                'Aucun morceau sur le téléphone'
-              )
-            : available == files.length
-                ? (
-                    Icons.check_circle_rounded,
-                    'Tous les morceaux sur le téléphone'
-                  )
-                : (
-                    Icons.pie_chart_outline_rounded,
-                    '$available morceaux sur ${files.length} sur le téléphone'
-                  );
-        return Tooltip(message: label, child: Icon(icon, size: 24));
+        if (available == 0) return const Text('Dossier');
+        final complete = available == files.length;
+        final dark = Theme.of(context).brightness == Brightness.dark;
+        final color = complete
+            ? (dark ? Colors.green.shade300 : Colors.green.shade700)
+            : (dark ? Colors.orange.shade300 : Colors.orange.shade700);
+        final label = complete
+            ? 'Tout sur le téléphone'
+            : '$available/${files.length} sur le téléphone';
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              complete ? Icons.check_circle_rounded : Icons.pie_chart_rounded,
+              size: 16,
+              color: color,
+            ),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: color, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        );
       },
     );
   }
