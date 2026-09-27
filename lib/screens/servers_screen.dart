@@ -859,10 +859,7 @@ class _FolderAvailabilityState extends State<_FolderAvailability> {
   @override
   Widget build(BuildContext context) {
     final downloaded = context.select<LibraryProvider, Set<String>>(
-      (library) => library.downloadedTracks
-          .map((track) => track.sourceUri)
-          .nonNulls
-          .toSet(),
+      (library) => library.downloadedSourceUris,
     );
     return FutureBuilder<List<RemoteAudioEntry>>(
       future: _files,

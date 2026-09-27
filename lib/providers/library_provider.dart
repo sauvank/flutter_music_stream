@@ -13,12 +13,15 @@ class LibraryProvider extends ChangeNotifier {
   final PlaylistService _playlistService;
   final List<MusicTrack> _tracks = [];
   final List<MusicPlaylist> _playlists = [];
+  Set<String> _downloadedSourceUris = const {};
   bool isImporting = false;
   bool isDeleting = false;
   String query = '';
   bool favoritesOnly = false;
 
   List<MusicTrack> get allTracks => List.unmodifiable(_tracks);
+  int get trackCount => _tracks.length;
+  Set<String> get downloadedSourceUris => _downloadedSourceUris;
   List<MusicTrack> get downloadedTracks => List.unmodifiable(
         _tracks.where((track) => track.source == MusicSource.serverDownload),
       );
@@ -51,7 +54,15 @@ class LibraryProvider extends ChangeNotifier {
     _playlists
       ..clear()
       ..addAll(playlists);
+    _refreshDownloadedSourceUris();
     notifyListeners();
+  }
+
+  void _refreshDownloadedSourceUris() {
+    _downloadedSourceUris = Set.unmodifiable(_tracks
+        .where((track) => track.source == MusicSource.serverDownload)
+        .map((track) => track.sourceUri)
+        .nonNulls);
   }
 
   List<MusicTrack> tracksForPlaylist(MusicPlaylist playlist) {
@@ -137,6 +148,7 @@ class LibraryProvider extends ChangeNotifier {
     } finally {
       try {
         if (removedIds.isNotEmpty) {
+          _refreshDownloadedSourceUris();
           await _service.save(_tracks);
           for (var index = 0; index < _playlists.length; index++) {
             final playlist = _playlists[index];
@@ -225,6 +237,7 @@ class LibraryProvider extends ChangeNotifier {
       );
       if (_tracks.any((existing) => existing.id == track.id)) return false;
       _tracks.add(track);
+      _refreshDownloadedSourceUris();
       await _service.save(_tracks);
       return true;
     } finally {
@@ -264,6 +277,7 @@ class LibraryProvider extends ChangeNotifier {
         onProgress?.call(index + 1, files.length);
       }
       if (added > 0) await _service.save(_tracks);
+      if (added > 0) _refreshDownloadedSourceUris();
       return (added: added, skipped: skipped, failed: failed);
     } finally {
       isImporting = false;
@@ -283,6 +297,7 @@ class LibraryProvider extends ChangeNotifier {
     );
     if (_tracks.any((existing) => existing.id == track.id)) return false;
     _tracks.add(track);
+    _refreshDownloadedSourceUris();
     await _service.save(_tracks);
     notifyListeners();
     return true;

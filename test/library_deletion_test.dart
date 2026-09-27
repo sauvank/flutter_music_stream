@@ -58,6 +58,7 @@ void main() {
     final library = LibraryProvider(service, playlists);
     await library.load();
     expect(library.downloadedTracks.map((track) => track.id), [first.id]);
+    expect(library.downloadedSourceUris, {'https://example.com/first.mp3'});
 
     expect(await library.deleteTracks([first.id]), 1);
 
@@ -69,6 +70,7 @@ void main() {
     expect(library.allTracks.map((track) => track.id), [second.id]);
     expect(library.playlists.single.trackIds, [second.id]);
     expect(library.downloadedTracks, isEmpty);
+    expect(library.downloadedSourceUris, isEmpty);
 
     expect(
         await library.deleteTracks(library.allTracks.map((track) => track.id)),
@@ -111,6 +113,9 @@ MusicTrack _track(String id, File file, {File? artwork, MusicSource? source}) =>
       uri: file.uri.toString(),
       artworkUri: artwork?.uri.toString(),
       source: source,
+      sourceUri: source == MusicSource.serverDownload
+          ? 'https://example.com/first.mp3'
+          : null,
       metadataRead: true,
       addedAt: DateTime.utc(2026),
     );

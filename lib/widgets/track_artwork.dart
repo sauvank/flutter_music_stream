@@ -20,6 +20,9 @@ class TrackArtwork extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cacheSize = size == null
+        ? null
+        : (size! * MediaQuery.devicePixelRatioOf(context)).ceil();
     final colors = _artworkColors(track.id);
     final fallback = DecoratedBox(
       decoration: BoxDecoration(
@@ -57,6 +60,8 @@ class TrackArtwork extends StatelessWidget {
         : Image.file(
             File.fromUri(Uri.parse(artworkUri)),
             fit: BoxFit.cover,
+            cacheWidth: cacheSize,
+            cacheHeight: cacheSize,
             errorBuilder: (_, __, ___) => fallback,
           );
     final artwork = SizedBox.square(

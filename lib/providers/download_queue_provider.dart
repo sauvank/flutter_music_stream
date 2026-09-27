@@ -20,6 +20,9 @@ class DownloadQueueProvider extends ChangeNotifier {
   List<TaskRecord> _records = const [];
   Future<void> _importChain = Future.value();
   Future<void> _enqueueChain = Future.value();
+  Timer? _progressReloadTimer;
+  Future<void>? _reloadInFlight;
+  bool _reloadPending = false;
 
   List<TaskRecord> get records => List.unmodifiable(_records);
   int get activeCount =>
@@ -32,7 +35,12 @@ class DownloadQueueProvider extends ChangeNotifier {
     _downloader.registerCallbacks(
       group: group,
       taskStatusCallback: _onStatus,
-      taskProgressCallback: (_) => _reload(),
+      taskProgressCallback: (_) {
+        _progressReloadTimer ??= Timer(const Duration(milliseconds: 300), () {
+          _progressReloadTimer = null;
+          _reload();
+        });
+      },
     );
     _downloader.configureNotificationForGroup(
       group,
@@ -58,7 +66,10 @@ class DownloadQueueProvider extends ChangeNotifier {
     await _downloader.start();
     await _reload();
     for (final record in _records) {
-      if (record.status == TaskStatus.complete) _scheduleImport(record.task);
+      if (record.status == TaskStatus.complete &&
+          !_library.downloadedSourceUris.contains(record.task.url)) {
+        _scheduleImport(record.task);
+      }
     }
   }
 
@@ -84,10 +95,7 @@ class DownloadQueueProvider extends ChangeNotifier {
         .where((record) => record.status.isNotFinalState)
         .map((record) => record.task.url)
         .toSet();
-    final downloadedUrls = _library.downloadedTracks
-        .map((track) => track.sourceUri)
-        .nonNulls
-        .toSet();
+    final downloadedUrls = _library.downloadedSourceUris;
     var enqueued = 0;
     for (final file in files) {
       if (activeUrls.contains(file.uri.toString()) ||
@@ -149,7 +157,7 @@ class DownloadQueueProvider extends ChangeNotifier {
         (item) => item.task.url == task.url && item.status.isNotFinalState)) {
       return;
     }
-    if (_library.downloadedTracks.any((track) => track.sourceUri == task.url)) {
+    if (_library.downloadedSourceUris.contains(task.url)) {
       return;
     }
     final retry = DownloadTask(
@@ -174,11 +182,14 @@ class DownloadQueueProvider extends ChangeNotifier {
   }
 
   void _onStatus(TaskStatusUpdate update) {
+    _progressReloadTimer?.cancel();
+    _progressReloadTimer = null;
     _reload();
     if (update.status == TaskStatus.complete) _scheduleImport(update.task);
   }
 
   void _scheduleImport(Task task) {
+    if (_library.downloadedSourceUris.contains(task.url)) return;
     if (!_processing.add(task.taskId)) return;
     _importChain = _importChain.then((_) => _import(task)).whenComplete(() {
       _processing.remove(task.taskId);
@@ -207,9 +218,35 @@ class DownloadQueueProvider extends ChangeNotifier {
     await _reload();
   }
 
-  Future<void> _reload() async {
-    _records = await _downloader.database.allRecords(group: group);
-    _records.sort((a, b) => b.task.creationTime.compareTo(a.task.creationTime));
-    notifyListeners();
+  Future<void> _reload() {
+    if (_reloadInFlight != null) {
+      _reloadPending = true;
+      return _reloadInFlight!;
+    }
+    final reload = _performReload();
+    _reloadInFlight = reload;
+    return reload;
+  }
+
+  Future<void> _performReload() async {
+    try {
+      do {
+        _reloadPending = false;
+        final records = await _downloader.database.allRecords(group: group);
+        records.sort(
+          (a, b) => b.task.creationTime.compareTo(a.task.creationTime),
+        );
+        _records = records;
+        notifyListeners();
+      } while (_reloadPending);
+    } finally {
+      _reloadInFlight = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _progressReloadTimer?.cancel();
+    super.dispose();
   }
 }

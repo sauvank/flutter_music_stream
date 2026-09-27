@@ -18,6 +18,7 @@
 - [x] File de lecture visible et modifiable : lire ensuite, ajouter en fin, sélectionner, réordonner et retirer.
 - [x] Volume applicatif persistant et historique des morceaux réellement écoutés.
 - [x] Paroles `.lrc` locales et LRCLIB, synchronisées avec la lecture, recherche automatique après accord et traduction à la demande avec cache privé.
+- [x] Premier passage de performance pour les grandes bibliothèques et les files de téléchargement volumineuses.
 
 ## En cours
 
@@ -25,6 +26,7 @@
 
 ## À venir
 
+- [ ] Mesurer les temps de démarrage, de défilement et d'import sur appareil avec une grande bibliothèque; traiter les points chauds restants.
 - [ ] Choix explicite du thème et localisation multilingue.
 - [ ] Scan de la médiathèque de l’appareil et widget d’accueil Android.
 - [ ] Synchronisation chiffrée des métadonnées entre appareils.

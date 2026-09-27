@@ -54,8 +54,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
-    final tracks = library.tracks;
-    final history = library.listeningHistory;
+    final tracks =
+        _mode == _LibraryMode.playlists ? const <MusicTrack>[] : library.tracks;
+    final history = _mode == _LibraryMode.history
+        ? library.listeningHistory
+        : const <MusicTrack>[];
     final groups = _mode == _LibraryMode.tracks ||
             _mode == _LibraryMode.history ||
             _mode == _LibraryMode.playlists
@@ -66,12 +69,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
       slivers: [
         SliverToBoxAdapter(
           child: _LibraryHeader(
-            count: library.allTracks.length,
+            count: library.trackCount,
             importing: library.isImporting || library.isDeleting,
             favoritesOnly: library.favoritesOnly,
             onImport: () => showMusicImportSheet(context),
             onFavorites: library.toggleFavoritesFilter,
-            onDeleteAll: library.allTracks.isEmpty ||
+            onDeleteAll: library.trackCount == 0 ||
                     library.isImporting ||
                     library.isDeleting
                 ? null
@@ -143,7 +146,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           else
             _PlaylistGrid(playlists: library.playlists),
           const SliverToBoxAdapter(child: SizedBox(height: 190)),
-        ] else if (library.allTracks.isEmpty)
+        ] else if (library.trackCount == 0)
           SliverFillRemaining(
             hasScrollBody: false,
             child: _EmptyLibrary(importing: library.isImporting),

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,6 +35,7 @@ class LibraryService {
   final AudioMetadataService _metadataService;
   final LyricsService _lyricsService;
   final Future<Directory> Function() _documentsDirectory;
+  Future<void> _saveChain = Future.value();
 
   Future<void> deleteTrackFiles(MusicTrack track) async {
     final root = await _documentsDirectory();
@@ -62,7 +64,9 @@ class LibraryService {
     final serialized = preferences.getString(_libraryKey);
     if (serialized == null || serialized.isEmpty) return [];
     try {
-      final tracks = MusicTrack.decodeAll(serialized);
+      final tracks = serialized.length > 50000
+          ? await compute(MusicTrack.decodeAll, serialized)
+          : MusicTrack.decodeAll(serialized);
       var changed = false;
       for (var index = 0; index < tracks.length; index++) {
         if (tracks[index].metadataRead) continue;
@@ -76,9 +80,19 @@ class LibraryService {
     }
   }
 
-  Future<void> save(List<MusicTrack> tracks) async {
+  Future<void> save(List<MusicTrack> tracks) {
+    final snapshot = List<MusicTrack>.of(tracks);
+    final result = _saveChain.then((_) => _write(snapshot));
+    _saveChain = result.then<void>((_) {}, onError: (Object _) {});
+    return result;
+  }
+
+  Future<void> _write(List<MusicTrack> tracks) async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_libraryKey, MusicTrack.encodeAll(tracks));
+    final serialized = tracks.length > 100
+        ? await compute(MusicTrack.encodeAll, tracks)
+        : MusicTrack.encodeAll(tracks);
+    await preferences.setString(_libraryKey, serialized);
   }
 
   Future<List<MusicTrack>> pickAndImport() async {
