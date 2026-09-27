@@ -15,14 +15,14 @@
 - [x] Détection manuelle des nouveaux albums sur les serveurs configurés.
 - [x] File de lecture visible et modifiable : lire ensuite, ajouter en fin, sélectionner, réordonner et retirer.
 - [x] Volume applicatif persistant et historique des morceaux réellement écoutés.
+- [x] Paroles `.lrc` locales et LRCLIB, synchronisées avec la lecture et disponibles hors connexion après import.
 
 ## En cours
 
-- [ ] Paroles locales `.lrc` et LRCLIB, synchronisées avec la lecture.
+- [ ] Description et réorganisation manuelle des playlists.
 
 ## À venir
 
-- [ ] Description et réorganisation manuelle des playlists.
 - [ ] Choix explicite du thème et localisation multilingue.
 - [ ] Scan de la médiathèque de l’appareil et widget d’accueil Android.
 - [ ] Traduction facultative des paroles avec consentement réseau explicite.

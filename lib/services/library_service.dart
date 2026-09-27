@@ -9,10 +9,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/music_track.dart';
 import 'audio_metadata_service.dart';
+import 'lyrics_service.dart';
 
 class LibraryService {
-  LibraryService({AudioMetadataService? metadataService})
-      : _metadataService = metadataService ?? const AudioMetadataService();
+  LibraryService(
+      {AudioMetadataService? metadataService, LyricsService? lyricsService})
+      : _metadataService = metadataService ?? const AudioMetadataService(),
+        _lyricsService = lyricsService ?? LyricsService.shared;
 
   static const _libraryKey = 'music_library_v1';
   static const supportedExtensions = <String>[
@@ -25,6 +28,7 @@ class LibraryService {
     'wav'
   ];
   final AudioMetadataService _metadataService;
+  final LyricsService _lyricsService;
 
   Future<List<MusicTrack>> load() async {
     final preferences = await SharedPreferences.getInstance();
@@ -54,12 +58,25 @@ class LibraryService {
     final selection = await FilePicker.pickFiles(
       allowMultiple: true,
       type: FileType.custom,
-      allowedExtensions: supportedExtensions,
+      allowedExtensions: [...supportedExtensions, 'lrc'],
     );
     if (selection == null) return [];
-    return _importSources(selection.files
-        .where((picked) => picked.path != null)
-        .map((picked) => (path: picked.path!, name: picked.name)));
+    final selected = selection.files.where((picked) => picked.path != null);
+    final sidecars = {
+      for (final picked in selected)
+        if (p.extension(picked.name).toLowerCase() == '.lrc')
+          p.basenameWithoutExtension(picked.name).toLowerCase():
+              File(picked.path!),
+    };
+    return _importSources(selected
+        .where((picked) => supportedExtensions.contains(
+            p.extension(picked.name).replaceFirst('.', '').toLowerCase()))
+        .map((picked) => (
+              path: picked.path!,
+              name: picked.name,
+              sidecar: sidecars[
+                  p.basenameWithoutExtension(picked.name).toLowerCase()],
+            )));
   }
 
   Future<List<MusicTrack>> pickDirectoryAndImport() async {
@@ -69,21 +86,32 @@ class LibraryService {
     if (selectedPath == null) return [];
     final directory = Directory(selectedPath);
     if (!await directory.exists()) return [];
-    final sources = <({String path, String name})>[];
+    final files = <File>[];
+    final sidecars = <String, File>{};
     await for (final entity
         in directory.list(recursive: true, followLinks: false)) {
       if (entity is! File) continue;
       final extension =
           p.extension(entity.path).replaceFirst('.', '').toLowerCase();
-      if (!supportedExtensions.contains(extension)) continue;
-      sources.add((path: entity.path, name: p.basename(entity.path)));
+      if (extension == 'lrc') {
+        sidecars[p.withoutExtension(entity.path).toLowerCase()] = entity;
+      } else if (supportedExtensions.contains(extension)) {
+        files.add(entity);
+      }
     }
+    final sources = files
+        .map((file) => (
+              path: file.path,
+              name: p.basename(file.path),
+              sidecar: sidecars[p.withoutExtension(file.path).toLowerCase()],
+            ))
+        .toList();
     sources.sort((a, b) => a.path.compareTo(b.path));
     return _importSources(sources);
   }
 
   Future<List<MusicTrack>> _importSources(
-    Iterable<({String path, String name})> sources,
+    Iterable<({String path, String name, File? sidecar})> sources,
   ) async {
     final root = await getApplicationDocumentsDirectory();
     final musicDirectory = Directory(p.join(root.path, 'music'));
@@ -96,6 +124,15 @@ class LibraryService {
           '${id.substring(0, 16)}${p.extension(item.name).toLowerCase()}';
       final destination = File(p.join(musicDirectory.path, safeName));
       if (!await destination.exists()) await source.copy(destination.path);
+      if (item.sidecar != null) {
+        try {
+          await _lyricsService.importSidecar(id, item.sidecar!);
+        } on FileSystemException {
+          // A missing or unreadable sidecar must not prevent audio import.
+        } on FormatException {
+          // Invalid lyrics do not prevent audio import.
+        }
+      }
       imported.add(await _readMetadata(MusicTrack(
         id: id,
         title: _titleFromFilename(item.name),

@@ -5,6 +5,7 @@ lib/
 ├── main.dart
 ├── models/music_playlist.dart
 ├── models/music_track.dart
+├── models/lyrics_document.dart
 ├── models/server_profile.dart
 ├── models/remote_audio_entry.dart
 ├── models/remote_audio_metadata.dart
@@ -16,6 +17,7 @@ lib/
 ├── services/
 │   ├── audio_metadata_service.dart
 │   ├── library_service.dart
+│   ├── lyrics_service.dart
 │   ├── playlist_service.dart
 │   ├── remote_server_service.dart
 │   ├── remote_audio_metadata_service.dart
@@ -24,6 +26,7 @@ lib/
 │   ├── home_screen.dart
 │   ├── library_screen.dart
 │   ├── now_playing_screen.dart
+│   ├── lyrics_sheet.dart
 │   ├── servers_screen.dart
 │   └── settings_screen.dart
 └── widgets/
@@ -36,6 +39,8 @@ lib/
 `HomeScreen` porte le fond, le mini-lecteur et la navigation commune. Il utilise une barre flottante compacte sur téléphone et un `NavigationRail` sur les fenêtres d’au moins 840 pixels logiques. Les écrans Bibliothèque, Serveurs, Lecture et Réglages partagent les mêmes surfaces arrondies, dégradés, titres expressifs et marges réservées aux contrôles persistants.
 
 `PlayerProvider` centralise la file `just_audio` et les commandes de lecture. Sa liste de `MusicTrack` reste synchronisée avec la playlist mutable native pour insérer, ajouter, déplacer ou retirer une source sans reconstruire la lecture en cours. L’action « Lire ensuite » désactive l’aléatoire avant insertion afin que la prochaine piste soit déterministe. Le provider réalise aussi les fondus applicatifs par paliers de volume annulables afin qu’une commande rapide remplace proprement la précédente. `PlaybackSettingsService` persiste leur durée et le volume applicatif dans `SharedPreferences`; ce volume devient la cible des fondus. L’historique ne compte que les petits deltas continus de position pendant une lecture active et valide une écoute après 30 secondes au plus, ou à mi-parcours pour un titre court, ce qui exclut les simples sauts. Les commandes multimédias système restent gérées directement par `just_audio_background`.
+
+`LyricsDocument` transforme les lignes `.lrc` horodatées en positions triées et conserve aussi un texte non synchronisé. `LyricsService` stocke les paroles sous `lyrics/` avec un nom dérivé de l’empreinte SHA-256 de l’identifiant du morceau, copie les fichiers voisins lors d’un import local et peut recevoir un fichier choisi dans l’écran Lecture. La requête LRCLIB part uniquement après une action explicite; elle inclut les métadonnées du morceau, identifie l’application, respecte la réponse `429` et met en cache les paroles récupérées. `LyricsSheet` suit la position de `PlayerProvider`, surligne la ligne active et permet de s’y déplacer par toucher.
 
 Sur Android, le projet utilise encore AGP 8.1 avec Flutter 3.27. Les bibliothèques JNI sont donc empaquetées en mode legacy/compressé, voie de compatibilité officielle pour les appareils à pages mémoire de 16 Kio tant qu’une montée coordonnée de Flutter, AGP et Gradle n’est pas réalisée. Le retour prédictif Android est activé dans le manifeste.
 

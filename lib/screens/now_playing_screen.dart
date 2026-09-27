@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
 import '../widgets/track_artwork.dart';
+import 'lyrics_sheet.dart';
 
 class NowPlayingScreen extends StatelessWidget {
   const NowPlayingScreen({super.key});
@@ -282,6 +283,27 @@ class NowPlayingScreen extends StatelessWidget {
               label: Text(
                 'File de lecture (${player.queue.length})',
               ),
+            ),
+            const SizedBox(height: 10),
+            FilledButton.tonalIcon(
+              onPressed: () => showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                showDragHandle: true,
+                builder: (_) => Consumer<PlayerProvider>(
+                  builder: (context, currentPlayer, _) => FractionallySizedBox(
+                    heightFactor: .78,
+                    child: currentPlayer.current == null
+                        ? const Center(child: Text('Aucun morceau en lecture.'))
+                        : LyricsSheet(
+                            key: ValueKey(currentPlayer.current!.id),
+                            track: currentPlayer.current!,
+                          ),
+                  ),
+                ),
+              ),
+              icon: const Icon(Icons.lyrics_rounded),
+              label: const Text('Paroles'),
             ),
             const SizedBox(height: 18),
             Wrap(
