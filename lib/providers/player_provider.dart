@@ -11,7 +11,9 @@ class PlayerProvider extends ChangeNotifier {
     this.onPositionChanged,
     this.onFadeDurationChanged,
     Duration fadeDuration = const Duration(milliseconds: 500),
-  }) : _fadeDuration = fadeDuration {
+    AudioPlayer? audioPlayer,
+  })  : _fadeDuration = fadeDuration,
+        _player = audioPlayer ?? AudioPlayer() {
     _subscriptions
         .add(_player.playerStateStream.listen((_) => notifyListeners()));
     _subscriptions.add(_player.positionStream.listen((position) {
@@ -29,12 +31,12 @@ class PlayerProvider extends ChangeNotifier {
     _subscriptions
         .add(_player.shuffleModeEnabledStream.listen((_) => notifyListeners()));
     _subscriptions.add(_player.currentIndexStream.listen((index) {
-      if (index != null && index < _queue.length) _current = _queue[index];
+      _current = index != null && index < _queue.length ? _queue[index] : null;
       notifyListeners();
     }));
   }
 
-  final AudioPlayer _player = AudioPlayer();
+  final AudioPlayer _player;
   final List<StreamSubscription<Object?>> _subscriptions = [];
   final Future<void> Function(String id, Duration position)? onPositionChanged;
   final Future<void> Function(Duration duration)? onFadeDurationChanged;
@@ -53,26 +55,13 @@ class PlayerProvider extends ChangeNotifier {
   bool get shuffleEnabled => _player.shuffleModeEnabled;
   LoopMode get loopMode => _player.loopMode;
   Duration get fadeDuration => _fadeDuration;
+  List<MusicTrack> get queue => List.unmodifiable(_queue);
+  int? get currentIndex => _player.currentIndex;
 
   Future<void> playTrack(MusicTrack track, List<MusicTrack> library) async {
     final startIndex = library.indexWhere((item) => item.id == track.id);
     _queue = List.of(library);
-    final sources = library
-        .map((item) => AudioSource.uri(
-              Uri.parse(item.uri),
-              tag: MediaItem(
-                  id: item.id,
-                  title: item.title,
-                  artist: item.artist,
-                  album: item.album,
-                  duration: item.durationMs == null
-                      ? null
-                      : Duration(milliseconds: item.durationMs!),
-                  artUri: item.artworkUri == null
-                      ? null
-                      : Uri.parse(item.artworkUri!)),
-            ))
-        .toList();
+    final sources = library.map(_audioSource).toList();
     await _player.setAudioSources(
       sources,
       initialIndex: startIndex < 0 ? 0 : startIndex,
@@ -98,20 +87,86 @@ class PlayerProvider extends ChangeNotifier {
     _queue = [track];
     _current = track;
     await _player.setAudioSources([
-      AudioSource.uri(
-        Uri.parse(track.uri),
-        headers: headers,
-        tag: MediaItem(
-          id: track.id,
-          title: track.title,
-          artist: track.artist,
-          album: track.album,
-          artUri:
-              track.artworkUri == null ? null : Uri.parse(track.artworkUri!),
-        ),
-      ),
+      _audioSource(track, headers: headers),
     ]);
     await _playWithFade();
+  }
+
+  Future<void> playAt(int index) async {
+    if (index < 0 || index >= _queue.length) return;
+    final wasPlaying = _player.playing;
+    if (wasPlaying && !await _fadeTo(0)) return;
+    await _player.seek(Duration.zero, index: index);
+    _current = _queue[index];
+    notifyListeners();
+    if (wasPlaying) {
+      await _fadeTo(1);
+    } else {
+      await _playWithFade();
+    }
+  }
+
+  Future<void> playNext(MusicTrack track) async {
+    final index = _player.currentIndex;
+    if (_queue.isEmpty || index == null) {
+      await playTrack(track, [track]);
+      return;
+    }
+    if (_player.shuffleModeEnabled) {
+      await _player.setShuffleModeEnabled(false);
+    }
+    final insertionIndex = (index + 1).clamp(0, _queue.length);
+    await _player.insertAudioSource(insertionIndex, _audioSource(track));
+    _queue.insert(insertionIndex, track);
+    notifyListeners();
+  }
+
+  Future<void> addToQueue(MusicTrack track) async {
+    if (_queue.isEmpty) {
+      await playTrack(track, [track]);
+      return;
+    }
+    await _player.addAudioSource(_audioSource(track));
+    _queue.add(track);
+    notifyListeners();
+  }
+
+  Future<void> removeFromQueue(int index) async {
+    if (index < 0 || index >= _queue.length) return;
+    final removed = _queue.removeAt(index);
+    if (_queue.isEmpty) _current = null;
+    notifyListeners();
+    try {
+      await _player.removeAudioSourceAt(index);
+    } catch (_) {
+      _queue.insert(index, removed);
+      _syncCurrentTrack();
+      notifyListeners();
+      rethrow;
+    }
+    _syncCurrentTrack();
+    notifyListeners();
+  }
+
+  Future<void> moveQueueItem(int oldIndex, int newIndex) async {
+    if (oldIndex < 0 || oldIndex >= _queue.length) return;
+    if (newIndex < 0 || newIndex >= _queue.length || oldIndex == newIndex) {
+      return;
+    }
+    final track = _queue.removeAt(oldIndex);
+    _queue.insert(newIndex, track);
+    notifyListeners();
+    try {
+      await _player.moveAudioSource(oldIndex, newIndex);
+    } catch (_) {
+      _queue.removeAt(newIndex);
+      _queue.insert(oldIndex, track);
+      _syncCurrentTrack();
+      notifyListeners();
+      rethrow;
+    }
+    _syncCurrentTrack();
+    notifyListeners();
   }
 
   Future<void> toggle() async {
@@ -189,6 +244,31 @@ class PlayerProvider extends ChangeNotifier {
       await _player.setVolume(start + (target - start) * progress);
     }
     return operation == _fadeOperation;
+  }
+
+  AudioSource _audioSource(
+    MusicTrack track, {
+    Map<String, String> headers = const {},
+  }) =>
+      AudioSource.uri(
+        Uri.parse(track.uri),
+        headers: headers,
+        tag: MediaItem(
+          id: track.id,
+          title: track.title,
+          artist: track.artist,
+          album: track.album,
+          duration: track.durationMs == null
+              ? null
+              : Duration(milliseconds: track.durationMs!),
+          artUri:
+              track.artworkUri == null ? null : Uri.parse(track.artworkUri!),
+        ),
+      );
+
+  void _syncCurrentTrack() {
+    final index = _player.currentIndex;
+    _current = index != null && index < _queue.length ? _queue[index] : null;
   }
 
   @override

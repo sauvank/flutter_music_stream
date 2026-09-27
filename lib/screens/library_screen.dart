@@ -957,17 +957,41 @@ class _TrackTile extends StatelessWidget {
                   ),
                   PopupMenuButton<String>(
                     tooltip: 'Options du morceau',
-                    onSelected: (action) {
-                      if (action == 'add') {
+                    onSelected: (action) async {
+                      if (action == 'next') {
+                        await context.read<PlayerProvider>().playNext(track);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Lecture suivante.')),
+                          );
+                        }
+                      } else if (action == 'queue') {
+                        await context.read<PlayerProvider>().addToQueue(track);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Ajouté à la file.')),
+                          );
+                        }
+                      } else if (action == 'add') {
                         _addTrackToPlaylist(context, track);
                       } else if (action == 'remove') {
-                        context.read<LibraryProvider>().removeTrackFromPlaylist(
+                        await context
+                            .read<LibraryProvider>()
+                            .removeTrackFromPlaylist(
                               playlistId!,
                               track.id,
                             );
                       }
                     },
                     itemBuilder: (_) => [
+                      const PopupMenuItem(
+                        value: 'next',
+                        child: Text('Lire ensuite'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'queue',
+                        child: Text('Ajouter à la file'),
+                      ),
                       if (playlistId == null)
                         const PopupMenuItem(
                           value: 'add',

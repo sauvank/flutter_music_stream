@@ -35,7 +35,7 @@ lib/
 
 `HomeScreen` porte le fond, le mini-lecteur et la navigation commune. Il utilise une barre flottante compacte sur téléphone et un `NavigationRail` sur les fenêtres d’au moins 840 pixels logiques. Les écrans Bibliothèque, Serveurs, Lecture et Réglages partagent les mêmes surfaces arrondies, dégradés, titres expressifs et marges réservées aux contrôles persistants.
 
-`PlayerProvider` centralise la file `just_audio` et les commandes de lecture. Il réalise les fondus applicatifs par paliers de volume annulables afin qu’une commande rapide remplace proprement la précédente. `PlaybackSettingsService` persiste leur durée dans `SharedPreferences`. Les commandes multimédias système restent gérées directement par `just_audio_background`.
+`PlayerProvider` centralise la file `just_audio` et les commandes de lecture. Sa liste de `MusicTrack` reste synchronisée avec la playlist mutable native pour insérer, ajouter, déplacer ou retirer une source sans reconstruire la lecture en cours. L’action « Lire ensuite » désactive l’aléatoire avant insertion afin que la prochaine piste soit déterministe. Le provider réalise aussi les fondus applicatifs par paliers de volume annulables afin qu’une commande rapide remplace proprement la précédente. `PlaybackSettingsService` persiste leur durée dans `SharedPreferences`. Les commandes multimédias système restent gérées directement par `just_audio_background`.
 
 Sur Android, le projet utilise encore AGP 8.1 avec Flutter 3.27. Les bibliothèques JNI sont donc empaquetées en mode legacy/compressé, voie de compatibilité officielle pour les appareils à pages mémoire de 16 Kio tant qu’une montée coordonnée de Flutter, AGP et Gradle n’est pas réalisée. Le retour prédictif Android est activé dans le manifeste.
 

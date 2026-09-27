@@ -249,7 +249,15 @@ class NowPlayingScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 18),
+            OutlinedButton.icon(
+              onPressed: () => _showQueue(context),
+              icon: const Icon(Icons.queue_music_rounded),
+              label: Text(
+                'File de lecture (${player.queue.length})',
+              ),
+            ),
+            const SizedBox(height: 18),
             Wrap(
               alignment: WrapAlignment.center,
               spacing: 8,
@@ -279,6 +287,104 @@ class NowPlayingScreen extends StatelessWidget {
 
   Duration _remaining(Duration duration, Duration position) =>
       duration > position ? duration - position : Duration.zero;
+
+  void _showQueue(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => const _QueueSheet(),
+    );
+  }
+}
+
+class _QueueSheet extends StatelessWidget {
+  const _QueueSheet();
+
+  @override
+  Widget build(BuildContext context) => DraggableScrollableSheet(
+        initialChildSize: .62,
+        minChildSize: .35,
+        maxChildSize: .92,
+        expand: false,
+        builder: (context, scrollController) {
+          final player = context.watch<PlayerProvider>();
+          final queue = player.queue;
+          final currentIndex = player.currentIndex;
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 12, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'À suivre',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w900,
+                            ),
+                      ),
+                    ),
+                    Text(
+                        '${queue.length} morceau${queue.length > 1 ? 'x' : ''}'),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ReorderableListView.builder(
+                  scrollController: scrollController,
+                  padding: const EdgeInsets.only(bottom: 24),
+                  itemCount: queue.length,
+                  onReorder: (oldIndex, newIndex) {
+                    if (newIndex > oldIndex) newIndex--;
+                    player.moveQueueItem(oldIndex, newIndex);
+                  },
+                  itemBuilder: (context, index) {
+                    final track = queue[index];
+                    final isCurrent = index == currentIndex;
+                    return ListTile(
+                      key: ValueKey('${track.id}-$index'),
+                      leading: isCurrent
+                          ? Icon(
+                              Icons.graphic_eq_rounded,
+                              color: Theme.of(context).colorScheme.primary,
+                            )
+                          : TrackArtwork(
+                              track: track,
+                              size: 44,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                      title: Text(
+                        track.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight:
+                              isCurrent ? FontWeight.w800 : FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: Text(
+                        track.artist,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: IconButton(
+                        tooltip: 'Retirer de la file',
+                        onPressed: () => player.removeFromQueue(index),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                      onTap: () {
+                        player.playAt(index);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
+      );
 }
 
 class _MetadataPill extends StatelessWidget {
