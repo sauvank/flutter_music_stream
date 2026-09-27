@@ -142,4 +142,36 @@ void main() {
 
     expect(entries.single.name, '100%real');
   });
+
+  test('WebDAV accepts an audio href containing a literal percent sign',
+      () async {
+    final dio = Dio()
+      ..interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
+        handler.resolve(Response<String>(
+          requestOptions: options,
+          statusCode: 207,
+          data: '''<d:multistatus xmlns:d="DAV:">
+  <d:response><d:href>/dav/music/</d:href></d:response>
+  <d:response><d:href>/dav/music/100%25real.mp3</d:href>
+    <d:displayname>Track without extension</d:displayname>
+  </d:response>
+</d:multistatus>''',
+        ));
+      }));
+    const profile = ServerProfile(
+      id: 'server',
+      name: 'Example',
+      baseUrl: 'https://example.com/dav/music/',
+      type: ServerType.webdav,
+    );
+
+    final entries = await RemoteServerService(dio: dio).list(
+      profile,
+      Uri.parse(profile.baseUrl),
+      '',
+    );
+
+    expect(entries.single.name, 'Track without extension');
+    expect(entries.single.uri.pathSegments.last, '100%real.mp3');
+  });
 }

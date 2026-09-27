@@ -241,7 +241,14 @@ class RemoteServerService {
 
   String _nameFromUri(Uri uri) {
     final segments = uri.pathSegments.where((segment) => segment.isNotEmpty);
-    return segments.isEmpty ? uri.host : Uri.decodeComponent(segments.last);
+    if (segments.isEmpty) return uri.host;
+    final name = segments.last;
+    try {
+      return Uri.decodeComponent(name);
+    } on ArgumentError {
+      // pathSegments has already decoded one layer. A literal '%' is valid.
+      return name;
+    }
   }
 
   bool _sameResource(Uri left, Uri right) =>

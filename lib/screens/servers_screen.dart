@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:background_downloader/background_downloader.dart';
 import 'package:crypto/crypto.dart';
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
@@ -960,6 +961,19 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
   double? _progress;
   int? _queued;
   Object? _error;
+  String _stage = 'inventaire';
+
+  String get _errorMessage {
+    final error = _error;
+    if (error is DioException) {
+      final status = error.response?.statusCode;
+      return status == null
+          ? 'Connexion interrompue pendant $_stage du dossier.'
+          : 'Le serveur a renvoyé une erreur HTTP $status pendant $_stage du dossier.';
+    }
+    if (error is StateError) return error.message.toString();
+    return 'Impossible de terminer $_stage du dossier.';
+  }
 
   @override
   void initState() {
@@ -992,9 +1006,11 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
             : 'Ajout de ${files.length} morceaux à la file…';
       });
       if (profile.type == ServerType.ftp) {
+        _stage = 'transfert FTP';
         await _downloadFtp(profile, files);
         return;
       }
+      _stage = 'mise en file';
       final queued = await widget.downloads.enqueueAll(
         files,
         headers: widget.servers.remoteService.authorizationHeaders(
@@ -1008,6 +1024,9 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
         _progress = 1;
       });
     } catch (error) {
+      final status = error is DioException ? error.response?.statusCode : null;
+      debugPrint('Folder download failed: stage=$_stage, '
+          'type=${error.runtimeType}, httpStatus=$status');
       if (!mounted) return;
       setState(() => _error = error);
     }
@@ -1080,7 +1099,7 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (_error != null)
-              const Text('Le téléchargement du dossier a échoué.')
+              Text(_errorMessage)
             else ...[
               Text(widget.servers.selected?.type == ServerType.ftp
                   ? _status
@@ -1098,7 +1117,8 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
           if (_queued != null || _error != null)
             FilledButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(widget.servers.selected?.type == ServerType.ftp
+              child: Text(_error != null ||
+                      widget.servers.selected?.type == ServerType.ftp
                   ? 'Fermer'
                   : 'Continuer en arrière-plan'),
             ),
