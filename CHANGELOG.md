@@ -1,6 +1,6 @@
 # Historique
 
-## Non publié
+## Modifications récentes
 
 - Ajout de fondus configurables et persistants à la lecture, la pause et la navigation entre morceaux.
 - Ajout de l’import de profils serveur par fichier JSON ou texte collé, compatible MusicStream et ComicStream, avec séparation immédiate du mot de passe.
