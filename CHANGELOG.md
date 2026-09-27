@@ -2,6 +2,7 @@
 
 ## Modifications récentes
 
+- Correction de « Tout lire » afin qu’un ancien mode de répétition du morceau ne rejoue plus indéfiniment la première piste de la file.
 - Ajout de fondus configurables et persistants à la lecture, la pause et la navigation entre morceaux.
 - Ajout de l’import de profils serveur par fichier JSON ou texte collé, compatible MusicStream et ComicStream, avec séparation immédiate du mot de passe.
 - Ajout du téléchargement de dossiers distants entiers.

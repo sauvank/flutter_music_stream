@@ -339,9 +339,7 @@ class _RecentTracks extends StatelessWidget {
           child: _SectionTitle(
             title: 'Ajoutés récemment',
             action: TextButton.icon(
-              onPressed: () => context
-                  .read<PlayerProvider>()
-                  .playTrack(visible.first, visible),
+              onPressed: () => context.read<PlayerProvider>().playAll(visible),
               icon: const Icon(Icons.play_arrow_rounded),
               label: const Text('Tout lire'),
             ),
@@ -512,9 +510,8 @@ class _CollectionScreen extends StatelessWidget {
               actions: [
                 IconButton.filledTonal(
                   tooltip: 'Lire la collection',
-                  onPressed: () => context
-                      .read<PlayerProvider>()
-                      .playTrack(tracks.first, tracks),
+                  onPressed: () =>
+                      context.read<PlayerProvider>().playAll(tracks),
                   icon: const Icon(Icons.play_arrow_rounded),
                 ),
                 const SizedBox(width: 12),
@@ -685,9 +682,8 @@ class _PlaylistScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
               sliver: SliverToBoxAdapter(
                 child: FilledButton.icon(
-                  onPressed: () => context
-                      .read<PlayerProvider>()
-                      .playTrack(tracks.first, tracks),
+                  onPressed: () =>
+                      context.read<PlayerProvider>().playAll(tracks),
                   icon: const Icon(Icons.play_arrow_rounded),
                   label: const Text('Tout lire'),
                 ),

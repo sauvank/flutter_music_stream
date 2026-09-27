@@ -83,6 +83,14 @@ class PlayerProvider extends ChangeNotifier {
     await _playWithFade();
   }
 
+  Future<void> playAll(List<MusicTrack> tracks) async {
+    if (tracks.isEmpty) return;
+    if (_player.loopMode == LoopMode.one) {
+      await _player.setLoopMode(LoopMode.off);
+    }
+    await playTrack(tracks.first, tracks);
+  }
+
   Future<void> playRemote(
     MusicTrack track, {
     Map<String, String> headers = const {},
