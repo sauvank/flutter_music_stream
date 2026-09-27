@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/player_provider.dart';
+import '../services/playback_settings_service.dart';
 import '../widgets/import_music_sheet.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -61,6 +64,10 @@ class SettingsScreen extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 28),
+          const _SectionLabel('LECTURE'),
+          const SizedBox(height: 8),
+          const _FadeSettingsTile(),
+          const SizedBox(height: 22),
           _ActionCard(
             icon: Icons.library_add_rounded,
             colors: const [Color(0xFF7C4DFF), Color(0xFFEC407A)],
@@ -99,6 +106,71 @@ class SettingsScreen extends StatelessWidget {
           ),
         ],
       );
+}
+
+class _FadeSettingsTile extends StatelessWidget {
+  const _FadeSettingsTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final player = context.watch<PlayerProvider>();
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainer
+            .withValues(alpha: .56),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          const CircleAvatar(child: Icon(Icons.multitrack_audio_rounded)),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Fondus de lecture',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Adoucit lecture, pause et changements de morceau',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<Duration>(
+              value: player.fadeDuration,
+              borderRadius: BorderRadius.circular(16),
+              onChanged: (duration) {
+                if (duration != null) player.setFadeDuration(duration);
+              },
+              items: PlaybackSettingsService.supportedFadeDurations
+                  .map(
+                    (duration) => DropdownMenuItem(
+                      value: duration,
+                      child: Text(_fadeLabel(duration)),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _fadeLabel(Duration duration) => switch (duration.inMilliseconds) {
+        0 => 'Non',
+        1000 => '1 s',
+        final milliseconds => '$milliseconds ms',
+      };
 }
 
 class _ActionCard extends StatelessWidget {

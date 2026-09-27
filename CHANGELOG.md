@@ -2,6 +2,7 @@
 
 ## Non publié
 
+- Ajout de fondus configurables et persistants à la lecture, la pause et la navigation entre morceaux.
 - Ajout de l’import de profils serveur par fichier JSON ou texte collé, compatible MusicStream et ComicStream, avec séparation immédiate du mot de passe.
 - Ajout du téléchargement de dossiers distants entiers.
 - Ajout d’une file native persistante en arrière-plan avec notifications, progression, pause, reprise, annulation et nouvelle tentative.

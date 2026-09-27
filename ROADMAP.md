@@ -10,10 +10,11 @@
 - [x] Écoute directe d’un fichier distant et import récursif d’un dossier local.
 - [x] Affichage distant fiable des tags et pochettes par échantillonnage HTTP.
 - [x] Lecture aléatoire et répétition de la file ou du morceau.
+- [x] Fondus configurables à la lecture, la pause et la navigation.
 
 ## En cours
 
-- [ ] Choisir une stratégie d’égaliseur multiplateforme et ajouter les fondus.
+- [ ] Choisir une stratégie d’égaliseur multiplateforme.
 
 ## À venir
 

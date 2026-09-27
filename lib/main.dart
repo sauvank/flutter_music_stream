@@ -9,6 +9,7 @@ import 'providers/server_provider.dart';
 import 'screens/home_screen.dart';
 import 'services/library_service.dart';
 import 'services/playlist_service.dart';
+import 'services/playback_settings_service.dart';
 import 'services/remote_server_service.dart';
 import 'services/server_profile_service.dart';
 
@@ -25,6 +26,8 @@ Future<void> main() async {
     ServerProfileService(),
     RemoteServerService(),
   );
+  final playbackSettings = PlaybackSettingsService();
+  final fadeDuration = await playbackSettings.loadFadeDuration();
   await library.load();
   await downloads.initialize();
   await servers.load();
@@ -32,6 +35,8 @@ Future<void> main() async {
     library: library,
     downloads: downloads,
     servers: servers,
+    playbackSettings: playbackSettings,
+    fadeDuration: fadeDuration,
   ));
 }
 
@@ -41,10 +46,14 @@ class MusicStreamApp extends StatelessWidget {
     required this.library,
     required this.downloads,
     required this.servers,
+    required this.playbackSettings,
+    required this.fadeDuration,
   });
   final LibraryProvider library;
   final DownloadQueueProvider downloads;
   final ServerProvider servers;
+  final PlaybackSettingsService playbackSettings;
+  final Duration fadeDuration;
 
   @override
   Widget build(BuildContext context) => MultiProvider(
@@ -53,8 +62,11 @@ class MusicStreamApp extends StatelessWidget {
           ChangeNotifierProvider.value(value: downloads),
           ChangeNotifierProvider.value(value: servers),
           ChangeNotifierProvider(
-            create: (_) =>
-                PlayerProvider(onPositionChanged: library.savePosition),
+            create: (_) => PlayerProvider(
+              onPositionChanged: library.savePosition,
+              fadeDuration: fadeDuration,
+              onFadeDurationChanged: playbackSettings.saveFadeDuration,
+            ),
           ),
         ],
         child: MaterialApp(
