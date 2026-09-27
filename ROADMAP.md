@@ -12,7 +12,6 @@
 ## En cours
 
 - [ ] Fiabiliser l’affichage distant des tags et pochettes avant téléchargement.
-- [ ] Valider un téléchargement HTTP complet sur émulateur après redémarrage de celui-ci.
 
 ## À venir
 

@@ -10,5 +10,6 @@
 - Autorisation Android du trafic HTTP pour les serveurs personnels non TLS.
 - Ajout de l’écoute directe d’un morceau serveur avant téléchargement.
 - Ajout de l’import récursif d’un dossier musical local.
+- Validation sur Android physique de la lecture serveur authentifiée, du téléchargement pendant que l’app est en arrière-plan, de l’indexation avec pochette et de la sélection d’un dossier imbriqué.
 
 Les versions publiées restent décrites par les tags Git.

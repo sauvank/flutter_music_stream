@@ -20,6 +20,6 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 
 ## Problème actif
 
-L’émulateur s’est arrêté avant la validation réseau finale. Reprendre avec un morceau court : contrôler sa lecture distante, son téléchargement en arrière-plan, puis son indexation dans la bibliothèque. Vérifier aussi un petit dossier local imbriqué via le sélecteur Android.
+La lecture distante authentifiée, le téléchargement HTTP en arrière-plan, l’indexation finale et le sélecteur récursif de dossier ont été validés sur un appareil Android physique. L’extraction partielle des tags et pochettes distants reste à fiabiliser pour tous les formats.
 
 Architecture détaillée : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Travaux futurs : [ROADMAP.md](ROADMAP.md).
