@@ -64,6 +64,8 @@ class ServersScreen extends StatelessWidget {
                 return _ServerCard(
                   profile: profile,
                   onOpen: () => servers.connect(profile),
+                  onScan: () => _scanForNewAlbums(context, profile),
+                  scanning: servers.scanningProfileIds.contains(profile.id),
                   onDelete: () => servers.deleteProfile(profile),
                 );
               },
@@ -183,6 +185,69 @@ class ServersScreen extends StatelessWidget {
     password.dispose();
     if (result != null && context.mounted) {
       await context.read<ServerProvider>().addProfile(result.$1, result.$2);
+    }
+  }
+
+  Future<void> _scanForNewAlbums(
+    BuildContext context,
+    ServerProfile profile,
+  ) async {
+    try {
+      final result =
+          await context.read<ServerProvider>().scanForNewAlbums(profile);
+      if (!context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(result.baselineCreated
+              ? 'Référence créée'
+              : result.newAlbums.isEmpty
+                  ? 'Bibliothèque à jour'
+                  : 'Nouveaux albums'),
+          content: result.baselineCreated
+              ? Text(
+                  '${result.totalTracks} morceau${result.totalTracks > 1 ? 'x' : ''} mémorisé${result.totalTracks > 1 ? 's' : ''}. Les prochains scans signaleront uniquement les nouveautés.',
+                )
+              : result.newAlbums.isEmpty
+                  ? Text(
+                      'Aucun nouveau morceau parmi les ${result.totalTracks} éléments analysés.',
+                    )
+                  : SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${result.newTrackCount} nouveau${result.newTrackCount > 1 ? 'x' : ''} morceau${result.newTrackCount > 1 ? 'x' : ''} :',
+                          ),
+                          const SizedBox(height: 12),
+                          ...result.newAlbums.map(
+                            (album) => ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              leading: const Icon(Icons.album_outlined),
+                              title: Text(album.name),
+                              trailing: Text('${album.trackCount}'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Fermer'),
+            ),
+          ],
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Impossible d’analyser ce serveur pour le moment.'),
+        ),
+      );
     }
   }
 
@@ -450,10 +515,14 @@ class _ServerCard extends StatelessWidget {
   const _ServerCard({
     required this.profile,
     required this.onOpen,
+    required this.onScan,
+    required this.scanning,
     required this.onDelete,
   });
   final ServerProfile profile;
   final VoidCallback onOpen;
+  final VoidCallback onScan;
+  final bool scanning;
   final VoidCallback onDelete;
 
   @override
@@ -483,10 +552,25 @@ class _ServerCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            trailing: IconButton(
-              tooltip: 'Supprimer',
-              onPressed: onDelete,
-              icon: const Icon(Icons.delete_outline_rounded),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: 'Rechercher de nouveaux albums',
+                  onPressed: scanning ? null : onScan,
+                  icon: scanning
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.new_releases_outlined),
+                ),
+                IconButton(
+                  tooltip: 'Supprimer',
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete_outline_rounded),
+                ),
+              ],
             ),
           ),
         ),

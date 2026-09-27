@@ -12,14 +12,14 @@
 - [x] Lecture aléatoire et répétition de la file ou du morceau.
 - [x] Fondus configurables à la lecture, la pause et la navigation.
 - [x] Navigation et import de morceaux ou dossiers depuis un serveur FTP passif.
+- [x] Détection manuelle des nouveaux albums sur les serveurs configurés.
 
 ## En cours
 
-- [ ] Détection de nouveaux albums sur les serveurs configurés.
+- [ ] File de lecture visible et modifiable : lire ensuite, ajouter en fin et choisir une piste.
 
 ## À venir
 
-- [ ] File de lecture visible et modifiable : lire ensuite, ajouter en fin et choisir une piste.
 - [ ] Volume applicatif et historique des morceaux réellement écoutés.
 - [ ] Paroles locales `.lrc` et LRCLIB, synchronisées avec la lecture.
 - [ ] Description et réorganisation manuelle des playlists.

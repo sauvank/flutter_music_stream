@@ -9,17 +9,21 @@ import '../models/server_profile.dart';
 import '../services/remote_audio_metadata_service.dart';
 import '../services/remote_server_service.dart';
 import '../services/server_profile_service.dart';
+import '../services/server_scan_service.dart';
 
 class ServerProvider extends ChangeNotifier {
   ServerProvider(
     this._profilesService,
     this.remoteService, {
     RemoteAudioMetadataService? metadataService,
-  }) : _metadataService = metadataService ?? RemoteAudioMetadataService();
+    ServerScanService? scanService,
+  })  : _metadataService = metadataService ?? RemoteAudioMetadataService(),
+        _scanService = scanService ?? ServerScanService();
 
   final ServerProfileService _profilesService;
   final RemoteServerService remoteService;
   final RemoteAudioMetadataService _metadataService;
+  final ServerScanService _scanService;
   final List<ServerProfile> profiles = [];
   final List<RemoteAudioEntry> entries = [];
   final List<Uri> _history = [];
@@ -28,6 +32,7 @@ class ServerProvider extends ChangeNotifier {
   String _password = '';
   bool loading = false;
   String? error;
+  final Set<String> scanningProfileIds = {};
 
   bool get canGoBack => _history.isNotEmpty;
   String get password => _password;
@@ -160,7 +165,27 @@ class ServerProvider extends ChangeNotifier {
     if (selected?.id == profile.id) disconnect();
     await _profilesService.save(profiles);
     await _profilesService.deletePassword(profile.id);
+    await _scanService.forget(profile.id);
     notifyListeners();
+  }
+
+  Future<ServerScanResult> scanForNewAlbums(ServerProfile profile) async {
+    if (!scanningProfileIds.add(profile.id)) {
+      throw StateError('Ce serveur est déjà en cours d’analyse.');
+    }
+    notifyListeners();
+    try {
+      final password = await _profilesService.readPassword(profile.id);
+      final files = await remoteService.listRecursively(
+        profile,
+        _normalizedRoot(profile.baseUrl),
+        password,
+      );
+      return _scanService.compareAndSave(profile.id, files);
+    } finally {
+      scanningProfileIds.remove(profile.id);
+      notifyListeners();
+    }
   }
 
   Future<void> connect(ServerProfile profile) async {

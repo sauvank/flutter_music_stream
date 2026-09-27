@@ -16,13 +16,14 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 - Les actions « Tout lire » passent par `PlayerProvider.playAll`, qui désactive la répétition du morceau avant de charger la file; la répétition de toute la file reste conservée.
 - `PlayerProvider` applique un fondu aux actions lancées dans l’application (lecture, pause, morceau précédent/suivant). La durée 0/250/500/1000 ms est persistée par `PlaybackSettingsService`; les commandes système pilotées directement par `just_audio_background` ne passent pas par ce fondu.
 - Deux projets servent de références fonctionnelles locales : `../comic_reader_app` pour FTP et synchronisation chiffrée, et `https://github.com/sauvank/pinnard_music_v5` pour l’expérience lecteur (file, volume, historique, paroles, playlists, scan Android, widget, thèmes et traductions). Réutiliser les concepts, pas les données ni les secrets.
-- Le travail en cours ajoute le FTP passif sans placer les identifiants dans l’URI. HTTP/WebDAV conservent la lecture directe et la file native en arrière-plan; un morceau FTP doit d’abord être téléchargé et importé dans le stockage privé.
+- Le FTP passif ne place jamais les identifiants dans l’URI. HTTP/WebDAV conservent la lecture directe et la file native en arrière-plan; un morceau FTP doit d’abord être téléchargé et importé dans le stockage privé.
+- `ServerScanService` conserve localement une empreinte SHA-256 des URI distantes sans paramètres ni fragments. Le premier scan crée la référence; les suivants regroupent les ajouts par dossier parent. Le scan reste manuel pour éviter une connexion réseau surprise, notamment en FTP non chiffré.
 
 ## Contraintes
 
 - Ne jamais commiter le JSON serveur privé ni aucun secret, chemin personnel ou adresse privée réelle.
 - `server_profiles.private.json` et `*.private.md` restent ignorés localement.
-- Avant livraison : `flutter analyze`, `flutter test`, contrôle émulateur, puis seulement sur demande explicite commit/bump/push.
+- Avant livraison : `flutter analyze`, `flutter test`, puis commit conventionnel et publication patch via le script du projet.
 
 ## Problème actif
 
