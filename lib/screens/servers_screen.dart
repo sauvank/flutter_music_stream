@@ -686,6 +686,9 @@ class _RemoteTile extends StatelessWidget {
       );
     }
     final metadata = servers.metadataFor(entry);
+    final downloaded = context.select<LibraryProvider, bool>(
+      (library) => library.downloadedSourceUris.contains(entry.uri.toString()),
+    );
     final preview =
         context.select<PlayerProvider, ({bool selected, bool playing})>(
       (player) => (
@@ -708,37 +711,50 @@ class _RemoteTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-            subtitle: Text(
-              [
-                if (details != null) details.artist,
-                if (details?.album != null) details!.album!,
-                if (entry.size != null) _size(entry.size!),
-              ].join(' • '),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            trailing: Row(
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (servers.selected!.type != ServerType.ftp)
-                  IconButton.filledTonal(
-                    tooltip: preview.selected && preview.playing
-                        ? 'Mettre en pause'
-                        : 'Écouter depuis le serveur',
-                    onPressed: preview.selected
-                        ? context.read<PlayerProvider>().toggle
-                        : () => _preview(context, servers, details),
-                    icon: Icon(preview.selected && preview.playing
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded),
-                  ),
-                IconButton(
-                  tooltip: 'Télécharger',
-                  onPressed: () => _download(context, servers),
-                  icon: const Icon(Icons.download_rounded),
+                Text(
+                  [
+                    if (details != null) details.artist,
+                    if (details?.album != null) details!.album!,
+                    if (entry.size != null) _size(entry.size!),
+                  ].join(' • '),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
+                if (downloaded) ...[
+                  const SizedBox(height: 6),
+                  const _DownloadedBadge(),
+                ],
               ],
             ),
+            trailing: downloaded && servers.selected!.type == ServerType.ftp
+                ? null
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (servers.selected!.type != ServerType.ftp)
+                        IconButton.filledTonal(
+                          tooltip: preview.selected && preview.playing
+                              ? 'Mettre en pause'
+                              : 'Écouter depuis le serveur',
+                          onPressed: preview.selected
+                              ? context.read<PlayerProvider>().toggle
+                              : () => _preview(context, servers, details),
+                          icon: Icon(preview.selected && preview.playing
+                              ? Icons.pause_rounded
+                              : Icons.play_arrow_rounded),
+                        ),
+                      if (!downloaded)
+                        IconButton(
+                          tooltip: 'Télécharger',
+                          onPressed: () => _download(context, servers),
+                          icon: const Icon(Icons.download_rounded),
+                        ),
+                    ],
+                  ),
           );
         },
       ),
@@ -826,6 +842,38 @@ class _RemoteTile extends StatelessWidget {
   String _size(int bytes) => bytes >= 1048576
       ? '${(bytes / 1048576).toStringAsFixed(1)} Mo'
       : '${(bytes / 1024).toStringAsFixed(0)} Ko';
+}
+
+class _DownloadedBadge extends StatelessWidget {
+  const _DownloadedBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final foreground = dark ? Colors.green.shade200 : Colors.green.shade800;
+    final background = dark ? Colors.green.shade900 : Colors.green.shade50;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle_rounded, size: 14, color: foreground),
+          const SizedBox(width: 5),
+          Text(
+            'Sur le téléphone',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: foreground,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _FolderAvailability extends StatefulWidget {

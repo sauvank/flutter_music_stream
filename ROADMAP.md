@@ -19,6 +19,7 @@
 - [x] Volume applicatif persistant et historique des morceaux réellement écoutés.
 - [x] Paroles `.lrc` locales et LRCLIB, synchronisées avec la lecture, recherche automatique après accord et traduction à la demande avec cache privé.
 - [x] Premier passage de performance pour les grandes bibliothèques et les files de téléchargement volumineuses.
+- [x] Badge de disponibilité locale des morceaux dans le navigateur serveur.
 
 ## En cours
 

@@ -59,6 +59,8 @@ Le FTP utilise une connexion de contrôle explicite avec authentification, mode 
 
 Les événements de progression groupent les relectures de la base de tâches à 300 ms; les lectures simultanées sont fusionnées. Les changements de statut déclenchent une lecture immédiate.
 
+Chaque ligne de piste distante consulte l'ensemble des URI source conservées par `LibraryProvider`. Une URI reconnue affiche un badge de présence locale et masque l'action de téléchargement; l'ensemble est actualisé après import et suppression.
+
 `RemoteAudioMetadataService` ne télécharge pas le morceau complet pour remplir la liste distante. Il demande la tête du fichier et, pour les conteneurs MP4/M4A/AAC, sa fin, puis les place aux bons offsets dans un fichier creux ayant la taille logique originale. Cela permet au lecteur de tags de parcourir les atomes et métadonnées sans stocker les données audio intermédiaires. La concurrence est limitée à deux morceaux.
 
 Les secrets de production ne transitent jamais dans Git. La CI consomme seulement les secrets de l’environnement GitHub et détruit les fichiers temporaires dans une étape exécutée systématiquement.
