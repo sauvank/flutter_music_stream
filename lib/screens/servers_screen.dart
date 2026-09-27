@@ -663,8 +663,12 @@ class _RemoteTile extends StatelessWidget {
         child: ListTile(
           onTap: () => servers.openDirectory(entry),
           leading: const CircleAvatar(child: Icon(Icons.folder_outlined)),
-          title: Text(entry.name,
-              style: const TextStyle(fontWeight: FontWeight.w700)),
+          title: Text(
+            entry.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
           subtitle: const Text('Dossier'),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
