@@ -8,5 +8,7 @@
 - Indexation automatique des fichiers terminés avec déduplication, tags et pochettes.
 - Affichage distant préparé pour le titre, l’artiste et la pochette; l’extraction partielle reste à fiabiliser.
 - Autorisation Android du trafic HTTP pour les serveurs personnels non TLS.
+- Ajout de l’écoute directe d’un morceau serveur avant téléchargement.
+- Ajout de l’import récursif d’un dossier musical local.
 
 Les versions publiées restent décrites par les tags Git.

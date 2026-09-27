@@ -7,6 +7,7 @@
 - [x] Profils WebDAV/HTTP et import JSON MusicStream/ComicStream sécurisé.
 - [x] Navigation distante et téléchargement de morceaux ou dossiers entiers.
 - [x] File native persistante avec progression, notifications, pause, reprise et nouvelle tentative.
+- [x] Écoute directe d’un fichier distant et import récursif d’un dossier local.
 
 ## En cours
 
@@ -15,7 +16,6 @@
 
 ## À venir
 
-- [ ] Diffusion distante sans téléchargement préalable.
 - [ ] Répétition, lecture aléatoire, égaliseur et fondu.
 - [ ] Serveurs FTP et détection de nouveaux albums.
 - [ ] Synchronisation chiffrée des métadonnées entre appareils.

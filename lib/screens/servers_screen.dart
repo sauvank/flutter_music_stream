@@ -9,7 +9,9 @@ import 'package:uuid/uuid.dart';
 import '../models/remote_audio_entry.dart';
 import '../models/remote_audio_metadata.dart';
 import '../models/server_profile.dart';
+import '../models/music_track.dart';
 import '../providers/download_queue_provider.dart';
+import '../providers/player_provider.dart';
 import '../providers/server_provider.dart';
 
 class ServersScreen extends StatelessWidget {
@@ -566,6 +568,13 @@ class _RemoteTile extends StatelessWidget {
       );
     }
     final metadata = servers.metadataFor(entry);
+    final preview =
+        context.select<PlayerProvider, ({bool selected, bool playing})>(
+      (player) => (
+        selected: player.current?.uri == entry.uri.toString(),
+        playing: player.playing,
+      ),
+    );
     return Card(
       child: FutureBuilder<RemoteAudioMetadata>(
         future: metadata,
@@ -590,10 +599,26 @@ class _RemoteTile extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            trailing: IconButton(
-              tooltip: 'Télécharger',
-              onPressed: () => _download(context, servers),
-              icon: const Icon(Icons.download_rounded),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton.filledTonal(
+                  tooltip: preview.selected && preview.playing
+                      ? 'Mettre en pause'
+                      : 'Écouter depuis le serveur',
+                  onPressed: preview.selected
+                      ? context.read<PlayerProvider>().toggle
+                      : () => _preview(context, servers, details),
+                  icon: Icon(preview.selected && preview.playing
+                      ? Icons.pause_rounded
+                      : Icons.play_arrow_rounded),
+                ),
+                IconButton(
+                  tooltip: 'Télécharger',
+                  onPressed: () => _download(context, servers),
+                  icon: const Icon(Icons.download_rounded),
+                ),
+              ],
             ),
           );
         },
@@ -633,6 +658,37 @@ class _RemoteTile extends StatelessWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Téléchargement impossible.')));
+    }
+  }
+
+  Future<void> _preview(
+    BuildContext context,
+    ServerProvider servers,
+    RemoteAudioMetadata? metadata,
+  ) async {
+    final profile = servers.selected!;
+    final artworkPath = metadata?.artworkPath;
+    final track = MusicTrack(
+      id: 'remote:${entry.uri}',
+      title: metadata?.title ?? _titleFromFilename(entry.name),
+      artist: metadata?.artist ?? 'Artiste inconnu',
+      album: metadata?.album ?? 'Album inconnu',
+      artworkUri: artworkPath == null ? null : File(artworkPath).uri.toString(),
+      uri: entry.uri.toString(),
+      metadataRead: true,
+      addedAt: DateTime.now().toUtc(),
+    );
+    try {
+      await context.read<PlayerProvider>().playRemote(
+            track,
+            headers: servers.remoteService
+                .authorizationHeaders(profile, servers.password),
+          );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lecture depuis le serveur impossible.')),
+      );
     }
   }
 

@@ -70,6 +70,29 @@ class PlayerProvider extends ChangeNotifier {
     await _player.play();
   }
 
+  Future<void> playRemote(
+    MusicTrack track, {
+    Map<String, String> headers = const {},
+  }) async {
+    _queue = [track];
+    _current = track;
+    await _player.setAudioSources([
+      AudioSource.uri(
+        Uri.parse(track.uri),
+        headers: headers,
+        tag: MediaItem(
+          id: track.id,
+          title: track.title,
+          artist: track.artist,
+          album: track.album,
+          artUri:
+              track.artworkUri == null ? null : Uri.parse(track.artworkUri!),
+        ),
+      ),
+    ]);
+    await _player.play();
+  }
+
   Future<void> toggle() => _player.playing ? _player.pause() : _player.play();
   Future<void> seek(Duration position) => _player.seek(position);
   Future<void> next() => _player.seekToNext();

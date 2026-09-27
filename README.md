@@ -4,7 +4,7 @@ MusicStream est un lecteur de musique personnel construit avec Flutter. Il trans
 
 ## État actuel
 
-- import multiple de fichiers MP3, M4A, AAC, FLAC, OGG, OPUS et WAV ;
+- import multiple de fichiers ou de dossiers entiers en MP3, M4A, AAC, FLAC, OGG, OPUS et WAV ;
 - copie dans le stockage privé de l’application et déduplication SHA-256 ;
 - bibliothèque persistante avec recherche et favoris ;
 - lecture des tags audio, pochettes intégrées et durée à l’import ;
@@ -16,6 +16,7 @@ MusicStream est un lecteur de musique personnel construit avec Flutter. Il trans
 - lecture Android/iOS en arrière-plan avec notification et commandes système ;
 - profils WebDAV et HTTP importables par JSON ComicStream ou MusicStream, avec mot de passe transféré dans le coffre sécurisé de l’OS ;
 - navigation distante et téléchargement de morceaux ou dossiers entiers dans une file persistante en arrière-plan, avec progression, pause et reprise ;
+- écoute directe d’un morceau distant avant son téléchargement ;
 - thèmes clair et sombre Material 3.
 
 Le FTP et la synchronisation chiffrée multi-appareils sont documentés dans la feuille de route. Ils ne sont pas présentés comme déjà livrés.

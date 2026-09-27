@@ -8,6 +8,7 @@ import '../models/music_track.dart';
 import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
 import '../widgets/track_artwork.dart';
+import '../widgets/import_music_sheet.dart';
 
 enum _LibraryMode { tracks, artists, albums, genres, playlists }
 
@@ -63,7 +64,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             count: library.allTracks.length,
             importing: library.isImporting,
             favoritesOnly: library.favoritesOnly,
-            onImport: library.importFiles,
+            onImport: () => showMusicImportSheet(context),
             onFavorites: library.toggleFavoritesFilter,
           ),
         ),
@@ -786,7 +787,7 @@ class _EmptyLibrary extends StatelessWidget {
                       ),
                       onPressed: importing
                           ? null
-                          : context.read<LibraryProvider>().importFiles,
+                          : () => showMusicImportSheet(context),
                       icon: importing
                           ? const SizedBox.square(
                               dimension: 18,

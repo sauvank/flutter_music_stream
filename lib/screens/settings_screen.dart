@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-import '../providers/library_provider.dart';
+import '../widgets/import_music_sheet.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -68,7 +67,7 @@ class SettingsScreen extends StatelessWidget {
             title: 'Enrichir la bibliothèque',
             subtitle: 'MP3, M4A, AAC, FLAC, OGG, OPUS et WAV',
             actionLabel: 'Importer',
-            onTap: context.read<LibraryProvider>().importFiles,
+            onTap: () => showMusicImportSheet(context),
           ),
           const SizedBox(height: 26),
           const _SectionLabel('CONNEXIONS'),

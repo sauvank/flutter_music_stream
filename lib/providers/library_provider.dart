@@ -134,6 +134,23 @@ class LibraryProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> importDirectory() async {
+    isImporting = true;
+    notifyListeners();
+    try {
+      final incoming = await _service.pickDirectoryAndImport();
+      for (final track in incoming) {
+        if (_tracks.every((existing) => existing.id != track.id)) {
+          _tracks.add(track);
+        }
+      }
+      await _service.save(_tracks);
+    } finally {
+      isImporting = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> toggleFavorite(String id) async {
     final index = _tracks.indexWhere((track) => track.id == id);
     if (index == -1) return;

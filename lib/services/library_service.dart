@@ -57,22 +57,48 @@ class LibraryService {
       allowedExtensions: supportedExtensions,
     );
     if (selection == null) return [];
+    return _importSources(selection.files
+        .where((picked) => picked.path != null)
+        .map((picked) => (path: picked.path!, name: picked.name)));
+  }
+
+  Future<List<MusicTrack>> pickDirectoryAndImport() async {
+    final selectedPath = await FilePicker.getDirectoryPath(
+      dialogTitle: 'Choisir un dossier de musique',
+    );
+    if (selectedPath == null) return [];
+    final directory = Directory(selectedPath);
+    if (!await directory.exists()) return [];
+    final sources = <({String path, String name})>[];
+    await for (final entity
+        in directory.list(recursive: true, followLinks: false)) {
+      if (entity is! File) continue;
+      final extension =
+          p.extension(entity.path).replaceFirst('.', '').toLowerCase();
+      if (!supportedExtensions.contains(extension)) continue;
+      sources.add((path: entity.path, name: p.basename(entity.path)));
+    }
+    sources.sort((a, b) => a.path.compareTo(b.path));
+    return _importSources(sources);
+  }
+
+  Future<List<MusicTrack>> _importSources(
+    Iterable<({String path, String name})> sources,
+  ) async {
     final root = await getApplicationDocumentsDirectory();
     final musicDirectory = Directory(p.join(root.path, 'music'));
     await musicDirectory.create(recursive: true);
     final imported = <MusicTrack>[];
-    for (final picked in selection.files) {
-      final sourcePath = picked.path;
-      if (sourcePath == null) continue;
-      final source = File(sourcePath);
+    for (final item in sources) {
+      final source = File(item.path);
       final id = (await sha256.bind(source.openRead()).first).toString();
       final safeName =
-          '${id.substring(0, 16)}${p.extension(picked.name).toLowerCase()}';
+          '${id.substring(0, 16)}${p.extension(item.name).toLowerCase()}';
       final destination = File(p.join(musicDirectory.path, safeName));
       if (!await destination.exists()) await source.copy(destination.path);
       imported.add(await _readMetadata(MusicTrack(
         id: id,
-        title: _titleFromFilename(picked.name),
+        title: _titleFromFilename(item.name),
         uri: destination.uri.toString(),
         addedAt: DateTime.now().toUtc(),
       )));
