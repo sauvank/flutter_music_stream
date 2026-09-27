@@ -10,11 +10,12 @@ import '../providers/player_provider.dart';
 import '../widgets/track_artwork.dart';
 import '../widgets/import_music_sheet.dart';
 
-enum _LibraryMode { tracks, artists, albums, genres, playlists }
+enum _LibraryMode { tracks, history, artists, albums, genres, playlists }
 
 extension on _LibraryMode {
   String get label => switch (this) {
         _LibraryMode.tracks => 'Morceaux',
+        _LibraryMode.history => 'Historique',
         _LibraryMode.artists => 'Artistes',
         _LibraryMode.albums => 'Albums',
         _LibraryMode.genres => 'Genres',
@@ -23,6 +24,7 @@ extension on _LibraryMode {
 
   IconData get icon => switch (this) {
         _LibraryMode.tracks => Icons.music_note_rounded,
+        _LibraryMode.history => Icons.history_rounded,
         _LibraryMode.artists => Icons.mic_external_on_rounded,
         _LibraryMode.albums => Icons.album_rounded,
         _LibraryMode.genres => Icons.auto_awesome_rounded,
@@ -31,6 +33,7 @@ extension on _LibraryMode {
 
   String valueFor(MusicTrack track) => switch (this) {
         _LibraryMode.tracks => track.title,
+        _LibraryMode.history => '',
         _LibraryMode.artists => track.artist,
         _LibraryMode.albums => track.album,
         _LibraryMode.genres => track.genre,
@@ -52,10 +55,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
     final tracks = library.tracks;
-    final groups =
-        _mode == _LibraryMode.tracks || _mode == _LibraryMode.playlists
-            ? const <String, List<MusicTrack>>{}
-            : _group(tracks, _mode);
+    final history = library.listeningHistory;
+    final groups = _mode == _LibraryMode.tracks ||
+            _mode == _LibraryMode.history ||
+            _mode == _LibraryMode.playlists
+        ? const <String, List<MusicTrack>>{}
+        : _group(tracks, _mode);
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
@@ -143,7 +148,41 @@ class _LibraryScreenState extends State<LibraryScreen> {
             hasScrollBody: false,
             child: _NoResults(),
           )
-        else if (_mode == _LibraryMode.tracks) ...[
+        else if (_mode == _LibraryMode.history) ...[
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+            sliver: SliverToBoxAdapter(
+              child: _SectionTitle(
+                title: 'Écoutés récemment',
+                detail: _trackCount(history.length),
+                action: history.isEmpty
+                    ? null
+                    : TextButton.icon(
+                        onPressed: () =>
+                            context.read<PlayerProvider>().playAll(history),
+                        icon: const Icon(Icons.play_arrow_rounded),
+                        label: const Text('Tout lire'),
+                      ),
+              ),
+            ),
+          ),
+          if (history.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: _EmptyHistory(),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 190),
+              sliver: SliverList.builder(
+                itemCount: history.length,
+                itemBuilder: (context, index) => _StaggeredEntry(
+                  index: index,
+                  child: _TrackTile(track: history[index], queue: history),
+                ),
+              ),
+            ),
+        ] else if (_mode == _LibraryMode.tracks) ...[
           SliverToBoxAdapter(child: _RecentTracks(tracks: tracks)),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 26, 20, 10),
@@ -798,6 +837,43 @@ class _EmptyLibrary extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ),
+      );
+}
+
+class _EmptyHistory extends StatelessWidget {
+  const _EmptyHistory();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(28, 24, 28, 190),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.history_toggle_off_rounded,
+                size: 64,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Votre historique est encore vide',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Les morceaux suffisamment écoutés apparaîtront ici.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
         ),
       );

@@ -204,6 +204,8 @@ class LibraryService {
         durationMs: metadata.durationMs ?? track.durationMs,
         favorite: track.favorite,
         lastPositionMs: track.lastPositionMs,
+        lastPlayedAt: track.lastPlayedAt,
+        playCount: track.playCount,
         metadataRead: true,
         addedAt: track.addedAt,
       );
@@ -240,6 +242,8 @@ class LibraryService {
         durationMs: track.durationMs,
         favorite: track.favorite,
         lastPositionMs: track.lastPositionMs,
+        lastPlayedAt: track.lastPlayedAt,
+        playCount: track.playCount,
         metadataRead: true,
         addedAt: track.addedAt,
       );

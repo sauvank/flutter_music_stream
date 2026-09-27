@@ -28,6 +28,7 @@ Future<void> main() async {
   );
   final playbackSettings = PlaybackSettingsService();
   final fadeDuration = await playbackSettings.loadFadeDuration();
+  final volume = await playbackSettings.loadVolume();
   await library.load();
   await downloads.initialize();
   await servers.load();
@@ -37,6 +38,7 @@ Future<void> main() async {
     servers: servers,
     playbackSettings: playbackSettings,
     fadeDuration: fadeDuration,
+    volume: volume,
   ));
 }
 
@@ -48,12 +50,14 @@ class MusicStreamApp extends StatelessWidget {
     required this.servers,
     required this.playbackSettings,
     required this.fadeDuration,
+    required this.volume,
   });
   final LibraryProvider library;
   final DownloadQueueProvider downloads;
   final ServerProvider servers;
   final PlaybackSettingsService playbackSettings;
   final Duration fadeDuration;
+  final double volume;
 
   @override
   Widget build(BuildContext context) => MultiProvider(
@@ -64,8 +68,11 @@ class MusicStreamApp extends StatelessWidget {
           ChangeNotifierProvider(
             create: (_) => PlayerProvider(
               onPositionChanged: library.savePosition,
+              onTrackListened: library.recordPlayed,
               fadeDuration: fadeDuration,
+              volume: volume,
               onFadeDurationChanged: playbackSettings.saveFadeDuration,
+              onVolumeChanged: playbackSettings.saveVolume,
             ),
           ),
         ],

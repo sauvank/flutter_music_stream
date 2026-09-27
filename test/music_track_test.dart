@@ -17,6 +17,8 @@ void main() {
         durationMs: 195000,
         favorite: true,
         lastPositionMs: 42000,
+        lastPlayedAt: DateTime.utc(2026, 2, 2),
+        playCount: 4,
         metadataRead: true,
         addedAt: DateTime.utc(2026, 1, 1),
       ),
@@ -27,6 +29,8 @@ void main() {
     expect(decoded.single.id, 'track-id');
     expect(decoded.single.favorite, isTrue);
     expect(decoded.single.lastPositionMs, 42000);
+    expect(decoded.single.lastPlayedAt, DateTime.utc(2026, 2, 2));
+    expect(decoded.single.playCount, 4);
     expect(decoded.single.genre, 'Synthwave');
     expect(decoded.single.artworkUri, 'file:///media/music/night-drive.jpg');
     expect(decoded.single.trackNumber, 3);
@@ -48,5 +52,7 @@ void main() {
     expect(track.album, 'Album inconnu');
     expect(track.genre, 'Genre inconnu');
     expect(track.metadataRead, isFalse);
+    expect(track.lastPlayedAt, isNull);
+    expect(track.playCount, 0);
   });
 }

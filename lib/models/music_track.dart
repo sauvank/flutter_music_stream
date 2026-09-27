@@ -15,6 +15,8 @@ class MusicTrack {
     this.durationMs,
     this.favorite = false,
     this.lastPositionMs = 0,
+    this.lastPlayedAt,
+    this.playCount = 0,
     this.metadataRead = false,
   });
 
@@ -30,10 +32,18 @@ class MusicTrack {
   final int? durationMs;
   final bool favorite;
   final int lastPositionMs;
+  final DateTime? lastPlayedAt;
+  final int playCount;
   final bool metadataRead;
   final DateTime addedAt;
 
-  MusicTrack copyWith({bool? favorite, int? lastPositionMs}) => MusicTrack(
+  MusicTrack copyWith({
+    bool? favorite,
+    int? lastPositionMs,
+    DateTime? lastPlayedAt,
+    int? playCount,
+  }) =>
+      MusicTrack(
         id: id,
         title: title,
         artist: artist,
@@ -46,6 +56,8 @@ class MusicTrack {
         durationMs: durationMs,
         favorite: favorite ?? this.favorite,
         lastPositionMs: lastPositionMs ?? this.lastPositionMs,
+        lastPlayedAt: lastPlayedAt ?? this.lastPlayedAt,
+        playCount: playCount ?? this.playCount,
         metadataRead: metadataRead,
         addedAt: addedAt,
       );
@@ -63,6 +75,8 @@ class MusicTrack {
         'durationMs': durationMs,
         'favorite': favorite,
         'lastPositionMs': lastPositionMs,
+        'lastPlayedAt': lastPlayedAt?.toIso8601String(),
+        'playCount': playCount,
         'metadataRead': metadataRead,
         'addedAt': addedAt.toIso8601String(),
       };
@@ -80,6 +94,11 @@ class MusicTrack {
         durationMs: json['durationMs'] as int?,
         favorite: json['favorite'] as bool? ?? false,
         lastPositionMs: json['lastPositionMs'] as int? ?? 0,
+        lastPlayedAt: switch (json['lastPlayedAt']) {
+          final String value => DateTime.tryParse(value),
+          _ => null,
+        },
+        playCount: json['playCount'] as int? ?? 0,
         metadataRead: json['metadataRead'] as bool? ?? false,
         addedAt: DateTime.parse(json['addedAt']! as String),
       );

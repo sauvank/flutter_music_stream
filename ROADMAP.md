@@ -14,14 +14,14 @@
 - [x] Navigation et import de morceaux ou dossiers depuis un serveur FTP passif.
 - [x] Détection manuelle des nouveaux albums sur les serveurs configurés.
 - [x] File de lecture visible et modifiable : lire ensuite, ajouter en fin, sélectionner, réordonner et retirer.
+- [x] Volume applicatif persistant et historique des morceaux réellement écoutés.
 
 ## En cours
 
-- [ ] Volume applicatif et historique des morceaux réellement écoutés.
+- [ ] Paroles locales `.lrc` et LRCLIB, synchronisées avec la lecture.
 
 ## À venir
 
-- [ ] Paroles locales `.lrc` et LRCLIB, synchronisées avec la lecture.
 - [ ] Description et réorganisation manuelle des playlists.
 - [ ] Choix explicite du thème et localisation multilingue.
 - [ ] Scan de la médiathèque de l’appareil et widget d’accueil Android.

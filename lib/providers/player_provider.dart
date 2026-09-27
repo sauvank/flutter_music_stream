@@ -10,14 +10,20 @@ class PlayerProvider extends ChangeNotifier {
   PlayerProvider({
     this.onPositionChanged,
     this.onFadeDurationChanged,
+    this.onVolumeChanged,
+    this.onTrackListened,
     Duration fadeDuration = const Duration(milliseconds: 500),
+    double volume = 1,
     AudioPlayer? audioPlayer,
   })  : _fadeDuration = fadeDuration,
+        _volume = volume.clamp(0, 1),
         _player = audioPlayer ?? AudioPlayer() {
+    unawaited(_player.setVolume(_volume));
     _subscriptions
         .add(_player.playerStateStream.listen((_) => notifyListeners()));
     _subscriptions.add(_player.positionStream.listen((position) {
       final track = _current;
+      _trackListening(track, position);
       final now = DateTime.now();
       if (track != null &&
           now.difference(_lastPersistedAt) >= const Duration(seconds: 5)) {
@@ -32,6 +38,7 @@ class PlayerProvider extends ChangeNotifier {
         .add(_player.shuffleModeEnabledStream.listen((_) => notifyListeners()));
     _subscriptions.add(_player.currentIndexStream.listen((index) {
       _current = index != null && index < _queue.length ? _queue[index] : null;
+      _resetListeningSession(_current);
       notifyListeners();
     }));
   }
@@ -40,11 +47,18 @@ class PlayerProvider extends ChangeNotifier {
   final List<StreamSubscription<Object?>> _subscriptions = [];
   final Future<void> Function(String id, Duration position)? onPositionChanged;
   final Future<void> Function(Duration duration)? onFadeDurationChanged;
+  final Future<void> Function(double volume)? onVolumeChanged;
+  final Future<void> Function(String id)? onTrackListened;
   List<MusicTrack> _queue = [];
   MusicTrack? _current;
   Duration _fadeDuration;
+  double _volume;
   int _fadeOperation = 0;
   DateTime _lastPersistedAt = DateTime.fromMillisecondsSinceEpoch(0);
+  String? _listeningTrackId;
+  Duration? _lastObservedPosition;
+  Duration _listenedDuration = Duration.zero;
+  bool _historyRecorded = false;
 
   MusicTrack? get current => _current;
   bool get playing => _player.playing;
@@ -55,6 +69,7 @@ class PlayerProvider extends ChangeNotifier {
   bool get shuffleEnabled => _player.shuffleModeEnabled;
   LoopMode get loopMode => _player.loopMode;
   Duration get fadeDuration => _fadeDuration;
+  double get volume => _volume;
   List<MusicTrack> get queue => List.unmodifiable(_queue);
   int? get currentIndex => _player.currentIndex;
 
@@ -69,6 +84,7 @@ class PlayerProvider extends ChangeNotifier {
       preload: true,
     );
     _current = track;
+    _resetListeningSession(track, force: true);
     await _playWithFade();
   }
 
@@ -86,6 +102,7 @@ class PlayerProvider extends ChangeNotifier {
   }) async {
     _queue = [track];
     _current = track;
+    _resetListeningSession(track, force: true);
     await _player.setAudioSources([
       _audioSource(track, headers: headers),
     ]);
@@ -173,7 +190,7 @@ class PlayerProvider extends ChangeNotifier {
     if (_player.playing) {
       if (await _fadeTo(0)) {
         await _player.pause();
-        await _player.setVolume(1);
+        await _player.setVolume(_volume);
       }
       return;
     }
@@ -184,9 +201,19 @@ class PlayerProvider extends ChangeNotifier {
     if (_fadeDuration == duration) return;
     _fadeDuration = duration;
     _fadeOperation++;
-    await _player.setVolume(1);
+    await _player.setVolume(_volume);
     notifyListeners();
     await onFadeDurationChanged?.call(duration);
+  }
+
+  Future<void> setVolume(double volume) async {
+    final normalized = volume.clamp(0, 1).toDouble();
+    if (_volume == normalized) return;
+    _volume = normalized;
+    _fadeOperation++;
+    await _player.setVolume(normalized);
+    notifyListeners();
+    await onVolumeChanged?.call(normalized);
   }
 
   Future<void> toggleShuffle() async {
@@ -209,20 +236,20 @@ class PlayerProvider extends ChangeNotifier {
   Future<void> _playWithFade() async {
     _fadeOperation++;
     if (_fadeDuration == Duration.zero) {
-      await _player.setVolume(1);
+      await _player.setVolume(_volume);
       unawaited(_player.play());
       return;
     }
     await _player.setVolume(0);
     unawaited(_player.play());
-    await _fadeTo(1);
+    await _fadeTo(_volume);
   }
 
   Future<void> _changeTrack(Future<void> Function() change) async {
     final wasPlaying = _player.playing;
     if (wasPlaying && !await _fadeTo(0)) return;
     await change();
-    if (wasPlaying) await _fadeTo(1);
+    if (wasPlaying) await _fadeTo(_volume);
   }
 
   Future<bool> _fadeTo(double target) async {
@@ -269,6 +296,43 @@ class PlayerProvider extends ChangeNotifier {
   void _syncCurrentTrack() {
     final index = _player.currentIndex;
     _current = index != null && index < _queue.length ? _queue[index] : null;
+  }
+
+  void _resetListeningSession(MusicTrack? track, {bool force = false}) {
+    if (!force && track?.id == _listeningTrackId) return;
+    _listeningTrackId = track?.id;
+    _lastObservedPosition = null;
+    _listenedDuration = Duration.zero;
+    _historyRecorded = false;
+  }
+
+  void _trackListening(MusicTrack? track, Duration position) {
+    if (track == null) return;
+    if (track.id != _listeningTrackId) _resetListeningSession(track);
+    final previous = _lastObservedPosition;
+    _lastObservedPosition = position;
+    if (!_player.playing || _historyRecorded || previous == null) return;
+
+    final progress = position - previous;
+    if (progress <= Duration.zero || progress > const Duration(seconds: 2)) {
+      return;
+    }
+    _listenedDuration += progress;
+    final knownDuration = _player.duration ??
+        (track.durationMs == null
+            ? null
+            : Duration(milliseconds: track.durationMs!));
+    final halfDuration = knownDuration != null && knownDuration > Duration.zero
+        ? Duration(
+            microseconds: (knownDuration.inMicroseconds / 2).round(),
+          )
+        : const Duration(seconds: 30);
+    final required = halfDuration < const Duration(seconds: 30)
+        ? halfDuration
+        : const Duration(seconds: 30);
+    if (_listenedDuration < required) return;
+    _historyRecorded = true;
+    unawaited(onTrackListened?.call(track.id));
   }
 
   @override

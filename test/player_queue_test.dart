@@ -52,6 +52,48 @@ void main() {
     expect(player.current?.id, '2');
     player.dispose();
   });
+
+  test('persists application volume changes', () async {
+    final audioPlayer = _FakeAudioPlayer();
+    double? persistedVolume;
+    final player = PlayerProvider(
+      audioPlayer: audioPlayer,
+      fadeDuration: Duration.zero,
+      volume: .4,
+      onVolumeChanged: (volume) async => persistedVolume = volume,
+    );
+
+    await player.setVolume(.65);
+
+    expect(player.volume, .65);
+    expect(audioPlayer.currentVolume, .65);
+    expect(persistedVolume, .65);
+    player.dispose();
+  });
+
+  test('records history only after continuous listened progress', () async {
+    final audioPlayer = _FakeAudioPlayer();
+    final listened = <String>[];
+    final player = PlayerProvider(
+      audioPlayer: audioPlayer,
+      fadeDuration: Duration.zero,
+      onTrackListened: (id) async => listened.add(id),
+    );
+    final track = _track('1');
+    await player.playTrack(track, [track]);
+
+    audioPlayer.emitPosition(const Duration(seconds: 30));
+    await Future<void>.delayed(Duration.zero);
+    expect(listened, isEmpty, reason: 'A seek must not count as listening');
+
+    for (var second = 31; second <= 60; second++) {
+      audioPlayer.emitPosition(Duration(seconds: second));
+    }
+    await Future<void>.delayed(Duration.zero);
+
+    expect(listened, ['1']);
+    player.dispose();
+  });
 }
 
 MusicTrack _track(String id) => MusicTrack(
@@ -74,6 +116,7 @@ class _FakeAudioPlayer extends AudioPlayer {
   bool shuffleEnabled = false;
   int? index;
   double currentVolume = 1;
+  Duration currentPosition = Duration.zero;
 
   @override
   Stream<PlayerState> get playerStateStream => _playerState.stream;
@@ -97,7 +140,7 @@ class _FakeAudioPlayer extends AudioPlayer {
   bool get playing => isPlaying;
 
   @override
-  Duration get position => Duration.zero;
+  Duration get position => currentPosition;
 
   @override
   Duration? get duration => null;
@@ -184,6 +227,11 @@ class _FakeAudioPlayer extends AudioPlayer {
   @override
   Future<void> setVolume(double volume) async {
     currentVolume = volume;
+  }
+
+  void emitPosition(Duration position) {
+    currentPosition = position;
+    _position.add(position);
   }
 
   @override

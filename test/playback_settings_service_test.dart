@@ -43,4 +43,17 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test('persists the application volume', () async {
+    final service = PlaybackSettingsService();
+
+    expect(await service.loadVolume(), PlaybackSettingsService.defaultVolume);
+    await service.saveVolume(.42);
+    expect(await service.loadVolume(), .42);
+  });
+
+  test('rejects a volume outside the supported range', () {
+    expect(
+        () => PlaybackSettingsService().saveVolume(1.1), throwsArgumentError);
+  });
 }

@@ -249,6 +249,32 @@ class NowPlayingScreen extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(
+                  player.volume == 0
+                      ? Icons.volume_off_rounded
+                      : Icons.volume_down_rounded,
+                  size: 22,
+                ),
+                Expanded(
+                  child: Slider(
+                    value: player.volume,
+                    onChanged: player.setVolume,
+                  ),
+                ),
+                const Icon(Icons.volume_up_rounded, size: 22),
+                SizedBox(
+                  width: 44,
+                  child: Text(
+                    '${(player.volume * 100).round()} %',
+                    textAlign: TextAlign.end,
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 18),
             OutlinedButton.icon(
               onPressed: () => _showQueue(context),

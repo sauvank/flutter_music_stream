@@ -20,6 +20,12 @@ class LibraryProvider extends ChangeNotifier {
   List<MusicTrack> get allTracks => List.unmodifiable(_tracks);
   List<MusicPlaylist> get playlists => List.unmodifiable(_playlists);
 
+  List<MusicTrack> get listeningHistory {
+    final history = tracks.where((track) => track.lastPlayedAt != null).toList()
+      ..sort((a, b) => b.lastPlayedAt!.compareTo(a.lastPlayedAt!));
+    return history;
+  }
+
   List<MusicTrack> get tracks {
     final needle = query.trim().toLowerCase();
     return _tracks.where((track) {
@@ -242,5 +248,17 @@ class LibraryProvider extends ChangeNotifier {
     _tracks[index] =
         _tracks[index].copyWith(lastPositionMs: position.inMilliseconds);
     await _service.save(_tracks);
+  }
+
+  Future<void> recordPlayed(String id) async {
+    final index = _tracks.indexWhere((track) => track.id == id);
+    if (index == -1) return;
+    final track = _tracks[index];
+    _tracks[index] = track.copyWith(
+      lastPlayedAt: DateTime.now().toUtc(),
+      playCount: track.playCount + 1,
+    );
+    await _service.save(_tracks);
+    notifyListeners();
   }
 }
