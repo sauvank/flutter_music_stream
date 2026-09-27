@@ -20,6 +20,8 @@ void main() {
         lastPlayedAt: DateTime.utc(2026, 2, 2),
         playCount: 4,
         metadataRead: true,
+        source: MusicSource.serverDownload,
+        sourceUri: 'https://example.com/music/night-drive.mp3',
         addedAt: DateTime.utc(2026, 1, 1),
       ),
     ];
@@ -37,6 +39,9 @@ void main() {
     expect(decoded.single.discNumber, 1);
     expect(decoded.single.durationMs, 195000);
     expect(decoded.single.metadataRead, isTrue);
+    expect(decoded.single.source, MusicSource.serverDownload);
+    expect(
+        decoded.single.sourceUri, 'https://example.com/music/night-drive.mp3');
   });
 
   test('legacy tracks remain compatible and request one metadata migration',
@@ -54,5 +59,6 @@ void main() {
     expect(track.metadataRead, isFalse);
     expect(track.lastPlayedAt, isNull);
     expect(track.playCount, 0);
+    expect(track.sourceUri, isNull);
   });
 }

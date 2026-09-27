@@ -14,10 +14,16 @@ class LibraryProvider extends ChangeNotifier {
   final List<MusicTrack> _tracks = [];
   final List<MusicPlaylist> _playlists = [];
   bool isImporting = false;
+  bool isDeleting = false;
   String query = '';
   bool favoritesOnly = false;
 
   List<MusicTrack> get allTracks => List.unmodifiable(_tracks);
+  List<MusicTrack> get downloadedTracks => List.unmodifiable(
+        _tracks.where((track) => track.source == MusicSource.serverDownload),
+      );
+  List<MusicTrack> get unknownSourceTracks =>
+      List.unmodifiable(_tracks.where((track) => track.source == null));
   List<MusicPlaylist> get playlists => List.unmodifiable(_playlists);
 
   List<MusicTrack> get listeningHistory {
@@ -111,6 +117,44 @@ class LibraryProvider extends ChangeNotifier {
     );
     await _playlistService.save(_playlists);
     notifyListeners();
+  }
+
+  Future<int> deleteTracks(Iterable<String> ids) async {
+    if (isDeleting || isImporting) return 0;
+    isDeleting = true;
+    notifyListeners();
+    final removedIds = <String>{};
+    try {
+      for (final id in ids.toSet()) {
+        final track =
+            _tracks.where((candidate) => candidate.id == id).firstOrNull;
+        if (track == null) continue;
+        await _service.deleteTrackFiles(track);
+        _tracks.removeWhere((candidate) => candidate.id == id);
+        removedIds.add(id);
+      }
+      return removedIds.length;
+    } finally {
+      try {
+        if (removedIds.isNotEmpty) {
+          await _service.save(_tracks);
+          for (var index = 0; index < _playlists.length; index++) {
+            final playlist = _playlists[index];
+            if (playlist.trackIds.any(removedIds.contains)) {
+              _playlists[index] = playlist.copyWith(
+                trackIds: playlist.trackIds
+                    .where((id) => !removedIds.contains(id))
+                    .toList(),
+              );
+            }
+          }
+          await _playlistService.save(_playlists);
+        }
+      } finally {
+        isDeleting = false;
+        notifyListeners();
+      }
+    }
   }
 
   void setQuery(String value) {
@@ -230,10 +274,12 @@ class LibraryProvider extends ChangeNotifier {
   Future<bool> importDownloadedFile({
     required String sourcePath,
     required String originalName,
+    String? sourceUri,
   }) async {
     final track = await _service.importDownloadedFile(
       sourcePath: sourcePath,
       originalName: originalName,
+      sourceUri: sourceUri,
     );
     if (_tracks.any((existing) => existing.id == track.id)) return false;
     _tracks.add(track);

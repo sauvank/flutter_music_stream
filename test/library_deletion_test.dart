@@ -1,0 +1,116 @@
+import 'dart:io';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:music_reader_app/models/music_playlist.dart';
+import 'package:music_reader_app/models/music_track.dart';
+import 'package:music_reader_app/providers/library_provider.dart';
+import 'package:music_reader_app/services/library_service.dart';
+import 'package:music_reader_app/services/lyrics_service.dart';
+import 'package:music_reader_app/services/playlist_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  late Directory root;
+
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    root = await Directory.systemTemp.createTemp('musicstream-delete-');
+  });
+
+  tearDown(() async => root.delete(recursive: true));
+
+  test('deletes one private copy, its artwork and lyrics, and playlist links',
+      () async {
+    final music = await Directory('${root.path}/music').create();
+    final artwork = await Directory('${root.path}/artwork').create();
+    final firstFile = File('${music.path}/first.mp3')
+      ..writeAsStringSync('first');
+    final secondFile = File('${music.path}/second.mp3')
+      ..writeAsStringSync('second');
+    final original = File('${root.path}/original.mp3')
+      ..writeAsStringSync('original');
+    final cover = File('${artwork.path}/first.jpg')..writeAsStringSync('cover');
+    final first = _track('first', firstFile,
+        artwork: cover, source: MusicSource.serverDownload);
+    final second =
+        _track('second', secondFile, source: MusicSource.localImport);
+    final lyrics = LyricsService(documentsDirectory: () async => root);
+    final sidecar = File('${root.path}/source.lrc')
+      ..writeAsStringSync('[00:01.00] Example');
+    await lyrics.importSidecar(first.id, sidecar);
+    final service = LibraryService(
+      lyricsService: lyrics,
+      documentsDirectory: () async => root,
+    );
+    final playlists = PlaylistService();
+    await service.save([first, second]);
+    await playlists.save([
+      MusicPlaylist(
+        id: 'playlist',
+        name: 'Favorites',
+        trackIds: [first.id, second.id],
+        createdAt: DateTime.utc(2026),
+        updatedAt: DateTime.utc(2026),
+      ),
+    ]);
+    final library = LibraryProvider(service, playlists);
+    await library.load();
+    expect(library.downloadedTracks.map((track) => track.id), [first.id]);
+
+    expect(await library.deleteTracks([first.id]), 1);
+
+    expect(await firstFile.exists(), isFalse);
+    expect(await cover.exists(), isFalse);
+    expect(await lyrics.load(first.id), isNull);
+    expect(await original.exists(), isTrue);
+    expect(await secondFile.exists(), isTrue);
+    expect(library.allTracks.map((track) => track.id), [second.id]);
+    expect(library.playlists.single.trackIds, [second.id]);
+    expect(library.downloadedTracks, isEmpty);
+
+    expect(
+        await library.deleteTracks(library.allTracks.map((track) => track.id)),
+        1);
+    expect(await secondFile.exists(), isFalse);
+    expect(library.allTracks, isEmpty);
+    expect(library.playlists.single.trackIds, isEmpty);
+  });
+
+  test('refuses to delete a file outside the private music directory',
+      () async {
+    final external = File('${root.path}/source.mp3')..writeAsStringSync('keep');
+    final service = LibraryService(documentsDirectory: () async => root);
+
+    await expectLater(
+      service.deleteTrackFiles(_track('outside', external)),
+      throwsStateError,
+    );
+    expect(await external.exists(), isTrue);
+  });
+
+  test('legacy tracks with unknown origin are excluded from bulk downloads',
+      () async {
+    final file = File('${root.path}/legacy.mp3')..writeAsStringSync('legacy');
+    final service = LibraryService(documentsDirectory: () async => root);
+    await service.save([_track('legacy', file)]);
+    final library = LibraryProvider(service, PlaylistService());
+    await library.load();
+
+    expect(library.downloadedTracks, isEmpty);
+    expect(library.allTracks, hasLength(1));
+    expect(library.unknownSourceTracks.single.id, 'legacy');
+  });
+}
+
+MusicTrack _track(String id, File file, {File? artwork, MusicSource? source}) =>
+    MusicTrack(
+      id: id,
+      title: id,
+      uri: file.uri.toString(),
+      artworkUri: artwork?.uri.toString(),
+      source: source,
+      metadataRead: true,
+      addedAt: DateTime.utc(2026),
+    );

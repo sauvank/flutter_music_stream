@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/player_provider.dart';
+import '../providers/server_provider.dart';
 import '../widgets/track_artwork.dart';
 import 'library_screen.dart';
 import 'now_playing_screen.dart';
@@ -19,6 +20,21 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _index = 0;
 
+  void _handleBack() {
+    if (_index == 1) {
+      final servers = context.read<ServerProvider>();
+      if (servers.selected != null) {
+        if (servers.canGoBack) {
+          servers.goBack();
+        } else {
+          servers.disconnect();
+        }
+        return;
+      }
+    }
+    if (_index != 0) setState(() => _index = 0);
+  }
+
   @override
   Widget build(BuildContext context) {
     const screens = [
@@ -30,16 +46,22 @@ class _HomeScreenState extends State<HomeScreen> {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final overlay =
         dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark;
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: overlay.copyWith(
-        statusBarColor: Colors.transparent,
-        systemNavigationBarColor: Colors.transparent,
-        systemNavigationBarContrastEnforced: false,
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) => constraints.maxWidth >= 840
-            ? _wideLayout(context, screens, dark)
-            : _compactLayout(context, screens, dark),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _handleBack();
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: overlay.copyWith(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: Colors.transparent,
+          systemNavigationBarContrastEnforced: false,
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) => constraints.maxWidth >= 840
+              ? _wideLayout(context, screens, dark)
+              : _compactLayout(context, screens, dark),
+        ),
       ),
     );
   }

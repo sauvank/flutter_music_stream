@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
@@ -82,10 +83,8 @@ class RemoteServerService {
   }
 
   Future<List<RemoteAudioEntry>> _listWebDav(
-    ServerProfile profile,
-    Uri uri,
-    String password,
-  ) async {
+      ServerProfile profile, Uri uri, String password,
+      {bool tryWithoutTrailingSlash = true}) async {
     final response = await _dio.request<String>(
       uri.toString(),
       options: Options(
@@ -102,21 +101,36 @@ class RemoteServerService {
     );
     final document = XmlDocument.parse(response.data ?? '');
     final entries = <RemoteAudioEntry>[];
+    var responseCount = 0;
+    var directoryCount = 0;
+    var fileCount = 0;
     for (final node in document.descendants.whereType<XmlElement>().where(
           (element) => element.name.local == 'response',
         )) {
+      responseCount++;
       final href = _firstLocal(node, 'href')?.innerText.trim();
       if (href == null || href.isEmpty) continue;
-      final resolved = uri.resolve(href);
+      final resolutionBase =
+          uri.path.endsWith('/') ? uri : uri.replace(path: '${uri.path}/');
+      final resolved = resolutionBase.resolve(href);
       if (_sameResource(resolved, uri)) continue;
       final isDirectory = node.descendants
           .whereType<XmlElement>()
           .any((element) => element.name.local == 'collection');
+      if (isDirectory) {
+        directoryCount++;
+      } else {
+        fileCount++;
+      }
       final displayName = _firstLocal(node, 'displayname')?.innerText.trim();
       final name = displayName == null || displayName.isEmpty
           ? _nameFromUri(resolved)
           : displayName;
-      if (!isDirectory && !_isAudio(name)) continue;
+      if (!isDirectory &&
+          !_isAudio(name) &&
+          !_isAudio(_nameFromUri(resolved))) {
+        continue;
+      }
       entries.add(RemoteAudioEntry(
         name: name,
         uri: resolved,
@@ -125,6 +139,31 @@ class RemoteServerService {
           _firstLocal(node, 'getcontentlength')?.innerText.trim() ?? '',
         ),
       ));
+    }
+    assert(() {
+      if (entries.isEmpty) {
+        debugPrint('WebDAV listing empty: responses=$responseCount, '
+            'directories=$directoryCount, files=$fileCount, '
+            'trailingSlash=${uri.path.endsWith('/')}');
+      }
+      return true;
+    }());
+    if (entries.isEmpty &&
+        responseCount <= 1 &&
+        tryWithoutTrailingSlash &&
+        uri.path.endsWith('/') &&
+        uri.path != '/') {
+      try {
+        final fallback = await _listWebDav(
+          profile,
+          uri.replace(path: uri.path.substring(0, uri.path.length - 1)),
+          password,
+          tryWithoutTrailingSlash: false,
+        );
+        if (fallback.isNotEmpty) return fallback;
+      } on DioException {
+        // Some servers require a trailing slash and reject the alternative.
+      }
     }
     return _sorted(entries);
   }
@@ -206,14 +245,22 @@ class RemoteServerService {
   }
 
   bool _sameResource(Uri left, Uri right) =>
-      left
-          .replace(query: '', fragment: '')
-          .toString()
-          .replaceAll(RegExp(r'/+$'), '') ==
-      right
-          .replace(query: '', fragment: '')
-          .toString()
-          .replaceAll(RegExp(r'/+$'), '');
+      _normalizedPath(left) == _normalizedPath(right);
+
+  String _normalizedPath(Uri uri) =>
+      uri.pathSegments.where((segment) => segment.isNotEmpty).map((segment) {
+        var decoded = segment;
+        for (var attempt = 0; attempt < 3; attempt++) {
+          try {
+            final next = Uri.decodeComponent(decoded);
+            if (next == decoded) break;
+            decoded = next;
+          } on ArgumentError {
+            break;
+          }
+        }
+        return decoded;
+      }).join('/');
 
   List<RemoteAudioEntry> _sorted(List<RemoteAudioEntry> entries) => entries
     ..sort((left, right) {

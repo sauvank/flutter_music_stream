@@ -13,9 +13,13 @@ import 'lyrics_service.dart';
 
 class LibraryService {
   LibraryService(
-      {AudioMetadataService? metadataService, LyricsService? lyricsService})
+      {AudioMetadataService? metadataService,
+      LyricsService? lyricsService,
+      Future<Directory> Function()? documentsDirectory})
       : _metadataService = metadataService ?? const AudioMetadataService(),
-        _lyricsService = lyricsService ?? LyricsService.shared;
+        _lyricsService = lyricsService ?? LyricsService.shared,
+        _documentsDirectory =
+            documentsDirectory ?? getApplicationDocumentsDirectory;
 
   static const _libraryKey = 'music_library_v1';
   static const supportedExtensions = <String>[
@@ -29,6 +33,29 @@ class LibraryService {
   ];
   final AudioMetadataService _metadataService;
   final LyricsService _lyricsService;
+  final Future<Directory> Function() _documentsDirectory;
+
+  Future<void> deleteTrackFiles(MusicTrack track) async {
+    final root = await _documentsDirectory();
+    final musicDirectory = p.normalize(p.join(root.path, 'music'));
+    final audioUri = Uri.parse(track.uri);
+    if (audioUri.scheme != 'file' ||
+        p.dirname(p.normalize(audioUri.toFilePath())) != musicDirectory) {
+      throw StateError(
+          'Le morceau ne se trouve pas dans le stockage de l’application.');
+    }
+    final audio = File.fromUri(audioUri);
+    if (await audio.exists()) await audio.delete();
+
+    final artworkUri = Uri.tryParse(track.artworkUri ?? '');
+    if (artworkUri?.scheme == 'file' &&
+        p.dirname(p.normalize(artworkUri!.toFilePath())) ==
+            p.normalize(p.join(root.path, 'artwork'))) {
+      final artwork = File.fromUri(artworkUri);
+      if (await artwork.exists()) await artwork.delete();
+    }
+    await _lyricsService.delete(track.id);
+  }
 
   Future<List<MusicTrack>> load() async {
     final preferences = await SharedPreferences.getInstance();
@@ -138,6 +165,7 @@ class LibraryService {
         title: _titleFromFilename(item.name),
         uri: destination.uri.toString(),
         addedAt: DateTime.now().toUtc(),
+        source: MusicSource.localImport,
       )));
     }
     return imported;
@@ -176,6 +204,8 @@ class LibraryService {
         title: _titleFromFilename(name),
         uri: destination.uri.toString(),
         addedAt: DateTime.now().toUtc(),
+        source: MusicSource.serverDownload,
+        sourceUri: uri.toString(),
       ));
     } finally {
       if (await temporary.exists()) await temporary.delete();
@@ -185,6 +215,7 @@ class LibraryService {
   Future<MusicTrack> importDownloadedFile({
     required String sourcePath,
     required String originalName,
+    String? sourceUri,
   }) async {
     final source = File(sourcePath);
     if (!await source.exists()) {
@@ -214,6 +245,8 @@ class LibraryService {
       title: _titleFromFilename(originalName),
       uri: destination.uri.toString(),
       addedAt: DateTime.now().toUtc(),
+      source: MusicSource.serverDownload,
+      sourceUri: sourceUri,
     ));
   }
 
@@ -244,6 +277,8 @@ class LibraryService {
         lastPlayedAt: track.lastPlayedAt,
         playCount: track.playCount,
         metadataRead: true,
+        source: track.source,
+        sourceUri: track.sourceUri,
         addedAt: track.addedAt,
       );
     } catch (_) {
@@ -282,6 +317,8 @@ class LibraryService {
         lastPlayedAt: track.lastPlayedAt,
         playCount: track.playCount,
         metadataRead: true,
+        source: track.source,
+        sourceUri: track.sourceUri,
         addedAt: track.addedAt,
       );
 }

@@ -173,6 +173,18 @@ class PlayerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> removeTracksByIds(Set<String> ids) async {
+    if (ids.isEmpty || !_queue.any((track) => ids.contains(track.id))) return;
+    _fadeOperation++;
+    if (_current != null && ids.contains(_current!.id)) {
+      await _player.pause();
+    }
+    for (var index = _queue.length - 1; index >= 0; index--) {
+      if (ids.contains(_queue[index].id)) await removeFromQueue(index);
+    }
+    if (_queue.isEmpty) await _player.stop();
+  }
+
   Future<void> moveQueueItem(int oldIndex, int newIndex) async {
     if (oldIndex < 0 || oldIndex >= _queue.length) return;
     if (newIndex < 0 || newIndex >= _queue.length || oldIndex == newIndex) {

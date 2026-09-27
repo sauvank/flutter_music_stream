@@ -12,6 +12,8 @@
 - [x] Lecture aléatoire et répétition de la file ou du morceau.
 - [x] Fondus configurables à la lecture, la pause et la navigation.
 - [x] Navigation et import de morceaux ou dossiers depuis un serveur FTP passif.
+- [x] Déduplication des téléchargements de dossiers imbriqués, limitation des transferts par serveur et état local complet/partiel/absent des dossiers.
+- [x] Suppression individuelle ou globale des téléchargements serveur sans effacer les imports locaux.
 - [x] Détection manuelle des nouveaux albums sur les serveurs configurés.
 - [x] File de lecture visible et modifiable : lire ensuite, ajouter en fin, sélectionner, réordonner et retirer.
 - [x] Volume applicatif persistant et historique des morceaux réellement écoutés.

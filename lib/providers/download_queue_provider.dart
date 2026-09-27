@@ -19,12 +19,16 @@ class DownloadQueueProvider extends ChangeNotifier {
   final Set<String> _processing = {};
   List<TaskRecord> _records = const [];
   Future<void> _importChain = Future.value();
+  Future<void> _enqueueChain = Future.value();
 
   List<TaskRecord> get records => List.unmodifiable(_records);
   int get activeCount =>
       _records.where((record) => record.status.isNotFinalState).length;
 
   Future<void> initialize() async {
+    await _downloader.configure(globalConfig: [
+      (Config.holdingQueue, (3, 2, 3)),
+    ]);
     _downloader.registerCallbacks(
       group: group,
       taskStatusCallback: _onStatus,
@@ -61,6 +65,18 @@ class DownloadQueueProvider extends ChangeNotifier {
   Future<int> enqueueAll(
     List<RemoteAudioEntry> files, {
     Map<String, String> headers = const {},
+  }) =>
+      _serializeEnqueue(() => _enqueueAll(files, headers: headers));
+
+  Future<T> _serializeEnqueue<T>(Future<T> Function() action) {
+    final result = _enqueueChain.then((_) => action());
+    _enqueueChain = result.then<void>((_) {}, onError: (Object _) {});
+    return result;
+  }
+
+  Future<int> _enqueueAll(
+    List<RemoteAudioEntry> files, {
+    required Map<String, String> headers,
   }) async {
     await _downloader.permissions.request(PermissionType.notifications);
     final records = await _downloader.database.allRecords(group: group);
@@ -68,9 +84,16 @@ class DownloadQueueProvider extends ChangeNotifier {
         .where((record) => record.status.isNotFinalState)
         .map((record) => record.task.url)
         .toSet();
+    final downloadedUrls = _library.downloadedTracks
+        .map((track) => track.sourceUri)
+        .nonNulls
+        .toSet();
     var enqueued = 0;
     for (final file in files) {
-      if (activeUrls.contains(file.uri.toString())) continue;
+      if (activeUrls.contains(file.uri.toString()) ||
+          downloadedUrls.contains(file.uri.toString())) {
+        continue;
+      }
       final extension = p.extension(file.name).toLowerCase();
       final digest =
           sha256.convert(utf8.encode(file.uri.toString())).toString();
@@ -115,10 +138,20 @@ class DownloadQueueProvider extends ChangeNotifier {
     await _reload();
   }
 
-  Future<void> retry(String taskId) async {
+  Future<void> retry(String taskId) => _serializeEnqueue(() => _retry(taskId));
+
+  Future<void> _retry(String taskId) async {
     final record = _records.where((item) => item.taskId == taskId).firstOrNull;
     final task = record?.task;
     if (task is! DownloadTask) return;
+    final records = await _downloader.database.allRecords(group: group);
+    if (records.any(
+        (item) => item.task.url == task.url && item.status.isNotFinalState)) {
+      return;
+    }
+    if (_library.downloadedTracks.any((track) => track.sourceUri == task.url)) {
+      return;
+    }
     final retry = DownloadTask(
       url: task.url,
       filename: task.filename,
@@ -166,6 +199,7 @@ class DownloadQueueProvider extends ChangeNotifier {
       await _library.importDownloadedFile(
         sourcePath: path,
         originalName: originalName,
+        sourceUri: task.url,
       );
     } catch (error, stackTrace) {
       debugPrint('Unable to index background download: $error\n$stackTrace');

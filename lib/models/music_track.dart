@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+enum MusicSource { localImport, serverDownload }
+
 class MusicTrack {
   const MusicTrack({
     required this.id,
@@ -18,6 +20,8 @@ class MusicTrack {
     this.lastPlayedAt,
     this.playCount = 0,
     this.metadataRead = false,
+    this.source,
+    this.sourceUri,
   });
 
   final String id;
@@ -35,6 +39,8 @@ class MusicTrack {
   final DateTime? lastPlayedAt;
   final int playCount;
   final bool metadataRead;
+  final MusicSource? source;
+  final String? sourceUri;
   final DateTime addedAt;
 
   MusicTrack copyWith({
@@ -59,6 +65,8 @@ class MusicTrack {
         lastPlayedAt: lastPlayedAt ?? this.lastPlayedAt,
         playCount: playCount ?? this.playCount,
         metadataRead: metadataRead,
+        source: source,
+        sourceUri: sourceUri,
         addedAt: addedAt,
       );
 
@@ -78,6 +86,8 @@ class MusicTrack {
         'lastPlayedAt': lastPlayedAt?.toIso8601String(),
         'playCount': playCount,
         'metadataRead': metadataRead,
+        'source': source?.name,
+        'sourceUri': sourceUri,
         'addedAt': addedAt.toIso8601String(),
       };
 
@@ -100,6 +110,12 @@ class MusicTrack {
         },
         playCount: json['playCount'] as int? ?? 0,
         metadataRead: json['metadataRead'] as bool? ?? false,
+        source: switch (json['source']) {
+          'localImport' => MusicSource.localImport,
+          'serverDownload' => MusicSource.serverDownload,
+          _ => null,
+        },
+        sourceUri: json['sourceUri'] as String?,
         addedAt: DateTime.parse(json['addedAt']! as String),
       );
 

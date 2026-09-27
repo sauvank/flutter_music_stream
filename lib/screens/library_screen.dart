@@ -67,10 +67,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
         SliverToBoxAdapter(
           child: _LibraryHeader(
             count: library.allTracks.length,
-            importing: library.isImporting,
+            importing: library.isImporting || library.isDeleting,
             favoritesOnly: library.favoritesOnly,
             onImport: () => showMusicImportSheet(context),
             onFavorites: library.toggleFavoritesFilter,
+            onDeleteAll: library.allTracks.isEmpty ||
+                    library.isImporting ||
+                    library.isDeleting
+                ? null
+                : () => _confirmDeleteDownloads(context),
           ),
         ),
         SliverPadding(
@@ -251,6 +256,7 @@ class _LibraryHeader extends StatelessWidget {
     required this.favoritesOnly,
     required this.onImport,
     required this.onFavorites,
+    required this.onDeleteAll,
   });
 
   final int count;
@@ -258,6 +264,7 @@ class _LibraryHeader extends StatelessWidget {
   final bool favoritesOnly;
   final VoidCallback onImport;
   final VoidCallback onFavorites;
+  final VoidCallback? onDeleteAll;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -317,6 +324,12 @@ class _LibraryHeader extends StatelessWidget {
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded),
                 ),
+                if (count > 0)
+                  IconButton(
+                    tooltip: 'Supprimer les téléchargements du téléphone',
+                    onPressed: onDeleteAll,
+                    icon: const Icon(Icons.delete_sweep_outlined),
+                  ),
                 IconButton.filled(
                   tooltip: 'Importer des morceaux',
                   onPressed: importing ? null : onImport,
@@ -398,6 +411,7 @@ class _RecentTracks extends StatelessWidget {
                 child: InkWell(
                   onTap: () =>
                       context.read<PlayerProvider>().playTrack(track, visible),
+                  onLongPress: () => _confirmDeleteTracks(context, [track]),
                   borderRadius: BorderRadius.circular(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -540,51 +554,62 @@ class _CollectionScreen extends StatelessWidget {
   final List<MusicTrack> tracks;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        body: CustomScrollView(
-          slivers: [
-            SliverAppBar.large(
-              expandedHeight: 310,
-              pinned: true,
-              actions: [
-                IconButton.filledTonal(
-                  tooltip: 'Lire la collection',
-                  onPressed: () =>
-                      context.read<PlayerProvider>().playAll(tracks),
-                  icon: const Icon(Icons.play_arrow_rounded),
-                ),
-                const SizedBox(width: 12),
-              ],
-              flexibleSpace: FlexibleSpaceBar(
-                title: Text(title, maxLines: 1),
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    TrackArtwork(track: tracks.first),
-                    const DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.transparent, Color(0xCC0D0C14)],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+  Widget build(BuildContext context) {
+    final available = {
+      for (final track in context.watch<LibraryProvider>().allTracks)
+        track.id: track,
+    };
+    final visible =
+        tracks.map((track) => available[track.id]).nonNulls.toList();
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar.large(
+            expandedHeight: 310,
+            pinned: true,
+            actions: [
+              IconButton.filledTonal(
+                tooltip: 'Lire la collection',
+                onPressed: visible.isEmpty
+                    ? null
+                    : () => context.read<PlayerProvider>().playAll(visible),
+                icon: const Icon(Icons.play_arrow_rounded),
+              ),
+              const SizedBox(width: 12),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(title, maxLines: 1),
+              background: visible.isEmpty
+                  ? null
+                  : Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        TrackArtwork(track: visible.first),
+                        const DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.transparent, Color(0xCC0D0C14)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 32),
-              sliver: SliverList.builder(
-                itemCount: tracks.length,
-                itemBuilder: (context, index) =>
-                    _TrackTile(track: tracks[index], queue: tracks),
-              ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 32),
+            sliver: SliverList.builder(
+              itemCount: visible.length,
+              itemBuilder: (context, index) =>
+                  _TrackTile(track: visible[index], queue: visible),
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _PlaylistGrid extends StatelessWidget {
@@ -988,6 +1013,7 @@ class _TrackTile extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(22),
             onTap: () => context.read<PlayerProvider>().playTrack(track, queue),
+            onLongPress: () => _confirmDeleteTracks(context, [track]),
             child: Padding(
               padding: const EdgeInsets.all(8),
               child: Row(
@@ -1057,6 +1083,8 @@ class _TrackTile extends StatelessWidget {
                               playlistId!,
                               track.id,
                             );
+                      } else if (action == 'delete') {
+                        await _confirmDeleteTracks(context, [track]);
                       }
                     },
                     itemBuilder: (_) => [
@@ -1078,6 +1106,10 @@ class _TrackTile extends StatelessWidget {
                           value: 'remove',
                           child: Text('Retirer de la playlist'),
                         ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Text('Supprimer du téléphone'),
+                      ),
                     ],
                   ),
                 ],
@@ -1201,6 +1233,97 @@ Future<String?> _askForName(
       ],
     ),
   );
+}
+
+Future<void> _confirmDeleteDownloads(BuildContext context) async {
+  final library = context.read<LibraryProvider>();
+  final downloads = library.downloadedTracks;
+  final unknown = library.unknownSourceTracks;
+  var includeUnknown = false;
+  if (unknown.isNotEmpty) {
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Anciens morceaux'),
+        content: Text(
+          '${unknown.length} morceau${unknown.length > 1 ? 'x' : ''} ajouté${unknown.length > 1 ? 's' : ''} avant cette version n’indique${unknown.length > 1 ? 'nt' : ''} pas leur origine. Ne les incluez que si vous savez qu’ils viennent tous du serveur : un ancien import local serait aussi supprimé.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Annuler'),
+          ),
+          if (downloads.isNotEmpty)
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, 'known'),
+              child: const Text('Téléchargements identifiés'),
+            ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, 'all'),
+            child: const Text('Inclure les anciens'),
+          ),
+        ],
+      ),
+    );
+    if (choice == null || !context.mounted) return;
+    includeUnknown = choice == 'all';
+  }
+  await _confirmDeleteTracks(
+    context,
+    [...downloads, if (includeUnknown) ...unknown],
+    bulk: true,
+    includeLegacy: includeUnknown,
+  );
+}
+
+Future<void> _confirmDeleteTracks(
+  BuildContext context,
+  Iterable<MusicTrack> tracks, {
+  bool bulk = false,
+  bool includeLegacy = false,
+}) async {
+  final library = context.read<LibraryProvider>();
+  if (library.isDeleting || library.isImporting) return;
+  final ids = tracks.map((track) => track.id).toSet();
+  if (ids.isEmpty) return;
+  final count = ids.length;
+  final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(bulk
+              ? 'Supprimer les téléchargements ?'
+              : 'Supprimer ce morceau ?'),
+          content: Text(bulk
+              ? 'Les $count morceau${count > 1 ? 'x' : ''} sélectionné${count > 1 ? 's' : ''} seront supprimés de MusicStream sur ce téléphone. ${includeLegacy ? 'Cela inclut les anciens morceaux que vous avez choisis.' : 'Les imports locaux sont conservés.'}'
+              : 'Le morceau et ses fichiers associés seront supprimés de MusicStream sur ce téléphone. Le fichier d’origine est conservé.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Supprimer'),
+            ),
+          ],
+        ),
+      ) ??
+      false;
+  if (!confirmed || !context.mounted) return;
+  try {
+    await context.read<PlayerProvider>().removeTracksByIds(ids);
+    final removed = await library.deleteTracks(ids);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(
+          '$removed morceau${removed > 1 ? 'x' : ''} supprimé${removed > 1 ? 's' : ''} du téléphone.'),
+    ));
+  } catch (_) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Suppression impossible. Réessayez.'),
+    ));
+  }
 }
 
 Future<bool> _confirmDelete(BuildContext context, String name) async =>

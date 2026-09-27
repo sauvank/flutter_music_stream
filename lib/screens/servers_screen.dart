@@ -673,6 +673,7 @@ class _RemoteTile extends StatelessWidget {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              _FolderAvailability(entry: entry),
               IconButton(
                 tooltip: 'Télécharger tout le dossier',
                 onPressed: () => _downloadFolder(context, servers),
@@ -827,6 +828,82 @@ class _RemoteTile extends StatelessWidget {
       : '${(bytes / 1024).toStringAsFixed(0)} Ko';
 }
 
+class _FolderAvailability extends StatefulWidget {
+  const _FolderAvailability({required this.entry});
+  final RemoteAudioEntry entry;
+
+  @override
+  State<_FolderAvailability> createState() => _FolderAvailabilityState();
+}
+
+class _FolderAvailabilityState extends State<_FolderAvailability> {
+  late Future<List<RemoteAudioEntry>> _files;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant _FolderAvailability oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.entry.uri != widget.entry.uri) _load();
+  }
+
+  void _load() {
+    final servers = context.read<ServerProvider>();
+    _files = servers.filesInFolder(widget.entry.uri);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final downloaded = context.select<LibraryProvider, Set<String>>(
+      (library) => library.downloadedTracks
+          .map((track) => track.sourceUri)
+          .nonNulls
+          .toSet(),
+    );
+    return FutureBuilder<List<RemoteAudioEntry>>(
+      future: _files,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Tooltip(
+            message: 'État des fichiers indisponible',
+            child: Icon(Icons.help_outline_rounded),
+          );
+        }
+        if (!snapshot.hasData) {
+          return const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          );
+        }
+        final files = snapshot.data!;
+        final available = files
+            .where((file) => downloaded.contains(file.uri.toString()))
+            .length;
+        final (icon, label) = files.isEmpty || available == 0
+            ? (
+                Icons.download_for_offline_outlined,
+                'Aucun morceau sur le téléphone'
+              )
+            : available == files.length
+                ? (
+                    Icons.check_circle_rounded,
+                    'Tous les morceaux sur le téléphone'
+                  )
+                : (
+                    Icons.pie_chart_outline_rounded,
+                    '$available morceaux sur ${files.length} sur le téléphone'
+                  );
+        return Tooltip(message: label, child: Icon(icon, size: 24));
+      },
+    );
+  }
+}
+
 class _RemoteArtwork extends StatelessWidget {
   const _RemoteArtwork({required this.metadata});
   final RemoteAudioMetadata? metadata;
@@ -972,6 +1049,7 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
         final imported = await library.importDownloadedFile(
           sourcePath: temporary.path,
           originalName: file.name,
+          sourceUri: file.uri.toString(),
         );
         imported ? added++ : skipped++;
       } catch (_) {

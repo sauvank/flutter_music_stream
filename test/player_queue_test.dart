@@ -53,6 +53,24 @@ void main() {
     player.dispose();
   });
 
+  test('removes every queued copy of a deleted track', () async {
+    final audioPlayer = _FakeAudioPlayer();
+    final player = PlayerProvider(
+      audioPlayer: audioPlayer,
+      fadeDuration: Duration.zero,
+    );
+    final first = _track('1');
+    final second = _track('2');
+
+    await player.playTrack(first, [first, second, first]);
+    await player.removeTracksByIds({first.id});
+
+    expect(player.queue.map((track) => track.id), ['2']);
+    expect(player.current?.id, '2');
+    expect(audioPlayer.sources, hasLength(1));
+    player.dispose();
+  });
+
   test('persists application volume changes', () async {
     final audioPlayer = _FakeAudioPlayer();
     double? persistedVolume;
@@ -260,6 +278,12 @@ class _FakeAudioPlayer extends AudioPlayer {
   Future<void> pause() async {
     isPlaying = false;
     _playerState.add(PlayerState(false, ProcessingState.ready));
+  }
+
+  @override
+  Future<void> stop() async {
+    isPlaying = false;
+    _playerState.add(PlayerState(false, ProcessingState.idle));
   }
 
   @override

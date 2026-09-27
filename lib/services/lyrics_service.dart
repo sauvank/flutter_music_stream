@@ -55,6 +55,15 @@ class LyricsService {
     return null;
   }
 
+  Future<void> delete(String trackId) async {
+    final directory = await _lyricsDirectory();
+    final stem = _fileStem(trackId);
+    for (final extension in ['lrc', 'txt']) {
+      final file = File(p.join(directory.path, '$stem.$extension'));
+      if (await file.exists()) await file.delete();
+    }
+  }
+
   Future<bool> importFile(String trackId) async {
     final selection = await FilePicker.pickFiles(
       type: FileType.custom,

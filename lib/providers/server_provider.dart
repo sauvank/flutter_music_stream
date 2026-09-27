@@ -33,9 +33,26 @@ class ServerProvider extends ChangeNotifier {
   bool loading = false;
   String? error;
   final Set<String> scanningProfileIds = {};
+  final Map<Uri, Future<List<RemoteAudioEntry>>> _folderFiles = {};
+  Future<void> _folderScanChain = Future.value();
 
   bool get canGoBack => _history.isNotEmpty;
   String get password => _password;
+
+  Future<List<RemoteAudioEntry>> filesInFolder(Uri uri) {
+    return _folderFiles.putIfAbsent(uri, () {
+      final profile = selected!;
+      final password = _password;
+      final result = _folderScanChain
+          .then((_) => remoteService.listRecursively(profile, uri, password));
+      _folderScanChain = result.then<void>((_) {}, onError: (Object _) {});
+      result.catchError((Object _) {
+        _folderFiles.remove(uri);
+        return <RemoteAudioEntry>[];
+      });
+      return result;
+    });
+  }
 
   Future<RemoteAudioMetadata> metadataFor(RemoteAudioEntry entry) {
     final profile = selected;
@@ -189,6 +206,7 @@ class ServerProvider extends ChangeNotifier {
   }
 
   Future<void> connect(ServerProfile profile) async {
+    _folderFiles.clear();
     selected = profile;
     _password = await _profilesService.readPassword(profile.id);
     _history.clear();
@@ -207,6 +225,7 @@ class ServerProvider extends ChangeNotifier {
   }
 
   void disconnect() {
+    _folderFiles.clear();
     selected = null;
     currentUri = null;
     _password = '';
