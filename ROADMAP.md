@@ -9,10 +9,11 @@
 - [x] File native persistante avec progression, notifications, pause, reprise et nouvelle tentative.
 - [x] Écoute directe d’un fichier distant et import récursif d’un dossier local.
 - [x] Affichage distant fiable des tags et pochettes par échantillonnage HTTP.
+- [x] Lecture aléatoire et répétition de la file ou du morceau.
 
 ## En cours
 
-- [ ] Ajouter répétition, lecture aléatoire, égaliseur et fondu.
+- [ ] Choisir une stratégie d’égaliseur multiplateforme et ajouter les fondus.
 
 ## À venir
 
@@ -22,3 +23,4 @@
 ## Décision ouverte
 
 - Déterminer si HTTP non chiffré doit rester autorisé globalement sur Android ou être limité par une configuration réseau fournie hors dépôt.
+- L’égaliseur fourni par `just_audio` est Android uniquement; définir l’expérience iOS avant de l’exposer dans l’interface.

@@ -21,6 +21,9 @@ class PlayerProvider extends ChangeNotifier {
       notifyListeners();
     }));
     _subscriptions.add(_player.durationStream.listen((_) => notifyListeners()));
+    _subscriptions.add(_player.loopModeStream.listen((_) => notifyListeners()));
+    _subscriptions
+        .add(_player.shuffleModeEnabledStream.listen((_) => notifyListeners()));
     _subscriptions.add(_player.currentIndexStream.listen((index) {
       if (index != null && index < _queue.length) _current = _queue[index];
       notifyListeners();
@@ -40,6 +43,8 @@ class PlayerProvider extends ChangeNotifier {
   Duration get duration => _player.duration ?? Duration.zero;
   bool get hasNext => _player.hasNext;
   bool get hasPrevious => _player.hasPrevious;
+  bool get shuffleEnabled => _player.shuffleModeEnabled;
+  LoopMode get loopMode => _player.loopMode;
 
   Future<void> playTrack(MusicTrack track, List<MusicTrack> library) async {
     final startIndex = library.indexWhere((item) => item.id == track.id);
@@ -94,6 +99,19 @@ class PlayerProvider extends ChangeNotifier {
   }
 
   Future<void> toggle() => _player.playing ? _player.pause() : _player.play();
+  Future<void> toggleShuffle() async {
+    final enabled = !_player.shuffleModeEnabled;
+    if (enabled) await _player.shuffle();
+    await _player.setShuffleModeEnabled(enabled);
+  }
+
+  Future<void> cycleLoopMode() =>
+      _player.setLoopMode(switch (_player.loopMode) {
+        LoopMode.off => LoopMode.all,
+        LoopMode.all => LoopMode.one,
+        LoopMode.one => LoopMode.off,
+      });
+
   Future<void> seek(Duration position) => _player.seek(position);
   Future<void> next() => _player.seekToNext();
   Future<void> previous() => _player.seekToPrevious();

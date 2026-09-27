@@ -12,5 +12,6 @@
 - Ajout de l’import récursif d’un dossier musical local.
 - Validation sur Android physique de la lecture serveur authentifiée, du téléchargement pendant que l’app est en arrière-plan, de l’indexation avec pochette et de la sélection d’un dossier imbriqué.
 - Fiabilisation des tags distants avec des échantillons creux tête/fin, limitation à deux requêtes simultanées et test HTTP M4A dédié.
+- Ajout des commandes de lecture aléatoire et de répétition désactivée/file/morceau, validées sur Android physique.
 
 Les versions publiées restent décrites par les tags Git.

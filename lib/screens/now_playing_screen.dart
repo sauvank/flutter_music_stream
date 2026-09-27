@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/library_provider.dart';
@@ -161,16 +162,26 @@ class NowPlayingScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
-                  iconSize: 42,
+                  tooltip: player.shuffleEnabled
+                      ? 'Désactiver la lecture aléatoire'
+                      : 'Activer la lecture aléatoire',
+                  color: player.shuffleEnabled
+                      ? Theme.of(context).colorScheme.primary
+                      : null,
+                  onPressed: player.toggleShuffle,
+                  icon: const Icon(Icons.shuffle_rounded),
+                ),
+                IconButton(
+                  iconSize: 38,
                   tooltip: 'Précédent',
                   onPressed: player.hasPrevious ? player.previous : null,
                   icon: const Icon(Icons.skip_previous_rounded),
                 ),
-                const SizedBox(width: 20),
+                const SizedBox(width: 8),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 220),
-                  width: 78,
-                  height: 78,
+                  width: 72,
+                  height: 72,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -210,12 +221,26 @@ class NowPlayingScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 20),
+                const SizedBox(width: 8),
                 IconButton(
-                  iconSize: 42,
+                  iconSize: 38,
                   tooltip: 'Suivant',
                   onPressed: player.hasNext ? player.next : null,
                   icon: const Icon(Icons.skip_next_rounded),
+                ),
+                IconButton(
+                  tooltip: switch (player.loopMode) {
+                    LoopMode.off => 'Répéter la file',
+                    LoopMode.all => 'Répéter ce morceau',
+                    LoopMode.one => 'Désactiver la répétition',
+                  },
+                  color: player.loopMode == LoopMode.off
+                      ? null
+                      : Theme.of(context).colorScheme.primary,
+                  onPressed: player.cycleLoopMode,
+                  icon: Icon(player.loopMode == LoopMode.one
+                      ? Icons.repeat_one_rounded
+                      : Icons.repeat_rounded),
                 ),
               ],
             ),

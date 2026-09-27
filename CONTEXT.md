@@ -12,6 +12,7 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 - `PlayerProvider.playRemote` lit un fichier serveur avec ses en-têtes d’authentification sans l’ajouter à la bibliothèque.
 - Le sélecteur d’import propose des fichiers ou un dossier; un dossier est parcouru récursivement et filtré par extension audio.
 - `RemoteAudioMetadataService` construit un fichier creux de taille réelle à partir des plages HTTP de tête et, pour MP4/M4A/AAC, de fin. Deux requêtes au maximum s’exécutent simultanément.
+- `PlayerProvider` expose l’aléatoire et les cycles de répétition natifs de `just_audio`; l’écran de lecture affiche leurs états actifs.
 
 ## Contraintes
 
@@ -21,6 +22,6 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 
 ## Problème actif
 
-La lecture distante authentifiée, le téléchargement HTTP en arrière-plan, l’indexation finale, le sélecteur récursif de dossier et l’extraction distante des pochettes ont été validés sur un appareil Android physique. Le prochain chantier actif concerne les modes de lecture.
+La lecture distante authentifiée, le téléchargement HTTP en arrière-plan, l’indexation finale, le sélecteur récursif de dossier, l’extraction distante des pochettes et les modes aléatoire/répétition ont été validés sur un appareil Android physique. L’égaliseur natif disponible est Android uniquement; ne pas l’exposer avant une décision multiplateforme.
 
 Architecture détaillée : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Travaux futurs : [ROADMAP.md](ROADMAP.md).
