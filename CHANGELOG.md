@@ -11,5 +11,6 @@
 - Ajout de l’écoute directe d’un morceau serveur avant téléchargement.
 - Ajout de l’import récursif d’un dossier musical local.
 - Validation sur Android physique de la lecture serveur authentifiée, du téléchargement pendant que l’app est en arrière-plan, de l’indexation avec pochette et de la sélection d’un dossier imbriqué.
+- Fiabilisation des tags distants avec des échantillons creux tête/fin, limitation à deux requêtes simultanées et test HTTP M4A dédié.
 
 Les versions publiées restent décrites par les tags Git.

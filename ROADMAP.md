@@ -8,14 +8,14 @@
 - [x] Navigation distante et téléchargement de morceaux ou dossiers entiers.
 - [x] File native persistante avec progression, notifications, pause, reprise et nouvelle tentative.
 - [x] Écoute directe d’un fichier distant et import récursif d’un dossier local.
+- [x] Affichage distant fiable des tags et pochettes par échantillonnage HTTP.
 
 ## En cours
 
-- [ ] Fiabiliser l’affichage distant des tags et pochettes avant téléchargement.
+- [ ] Ajouter répétition, lecture aléatoire, égaliseur et fondu.
 
 ## À venir
 
-- [ ] Répétition, lecture aléatoire, égaliseur et fondu.
 - [ ] Serveurs FTP et détection de nouveaux albums.
 - [ ] Synchronisation chiffrée des métadonnées entre appareils.
 

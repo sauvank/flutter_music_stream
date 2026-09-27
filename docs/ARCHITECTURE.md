@@ -41,6 +41,8 @@ Sur Android, le projet utilise encore AGP 8.1 avec Flutter 3.27. Les bibliothèq
 
 `DownloadQueueProvider` confie les fichiers à `background_downloader`, dont la file native persiste lorsque l’interface passe en arrière-plan. Les tâches conservent leurs en-têtes d’authentification uniquement dans le stockage privé de l’application. Une fois un fichier terminé, `LibraryService` le déplace dans `music/`, calcule son empreinte, le déduplique et extrait ses tags. Android autorise le trafic non chiffré pour rester compatible avec les profils HTTP explicitement pris en charge. Le FTP devra converger vers les mêmes modèles.
 
+`RemoteAudioMetadataService` ne télécharge pas le morceau complet pour remplir la liste distante. Il demande la tête du fichier et, pour les conteneurs MP4/M4A/AAC, sa fin, puis les place aux bons offsets dans un fichier creux ayant la taille logique originale. Cela permet au lecteur de tags de parcourir les atomes et métadonnées sans stocker les données audio intermédiaires. La concurrence est limitée à deux morceaux.
+
 Les secrets de production ne transitent jamais dans Git. La CI consomme seulement les secrets de l’environnement GitHub et détruit les fichiers temporaires dans une étape exécutée systématiquement.
 
 Le script `scripts/sync_music_rclone_crypt.sh` est un outil d'exploitation externe à l'application Flutter. Il maintient une copie chiffrée de la bibliothèque audio avec un remote rclone `crypt` configuré localement. Ses contrôles bloquent les racines système, les sources indisponibles ou sans audio et les exécutions miroir non confirmées. Ce miroir des fichiers ne doit pas être confondu avec la synchronisation applicative des métadonnées décrite dans la feuille de route.
