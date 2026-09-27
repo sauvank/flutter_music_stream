@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dio/dio.dart';
 import 'package:music_reader_app/models/remote_audio_entry.dart';
 import 'package:music_reader_app/services/audio_metadata_service.dart';
 import 'package:music_reader_app/services/remote_audio_metadata_service.dart';
@@ -33,43 +34,21 @@ class _InspectingMetadataService extends AudioMetadataService {
 
 void main() {
   test('builds a sparse M4A sample from HTTP head and tail ranges', () async {
-    const totalSize = 18 * 1024 * 1024;
-    final requestedRanges = <String>[];
-    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    final serving = server.forEach((request) async {
-      final range = request.headers.value(HttpHeaders.rangeHeader)!;
-      requestedRanges.add(range);
-      final match = RegExp(r'bytes=(\d+)-(\d+)').firstMatch(range)!;
-      final start = int.parse(match.group(1)!);
-      final requestedEnd = int.parse(match.group(2)!);
-      final end = requestedEnd.clamp(start, totalSize - 1);
-      final bytes = Uint8List(end - start + 1);
-      if (start == 0) bytes.setRange(0, 4, utf8.encode('HEAD'));
-      if (end == totalSize - 1) {
-        bytes.setRange(bytes.length - 4, bytes.length, utf8.encode('TAIL'));
-      }
-      request.response
-        ..statusCode = HttpStatus.partialContent
-        ..headers.set(
-          HttpHeaders.contentRangeHeader,
-          'bytes $start-$end/$totalSize',
-        )
-        ..contentLength = bytes.length
-        ..add(bytes);
-      await request.response.close();
-    });
+    const sampleLimit = 64 * 1024;
+    const totalSize = sampleLimit * 3;
+    final adapter = _RangeAdapter(totalSize);
+    final dio = Dio()..httpClientAdapter = adapter;
     final temporary = await Directory.systemTemp.createTemp('remote_metadata_');
     addTearDown(() async {
-      await server.close(force: true);
-      await serving;
+      dio.close(force: true);
       await temporary.delete(recursive: true);
     });
-    final uri = Uri.parse(
-      'http://${server.address.address}:${server.port}/sample.m4a',
-    );
+    final uri = Uri.parse('https://music.example.test/sample.m4a');
     final service = RemoteAudioMetadataService(
+      dio: dio,
       metadataService: _InspectingMetadataService(totalSize),
       cacheDirectory: () async => temporary,
+      sampleLimit: sampleLimit,
     );
 
     final metadata = await service.load(RemoteAudioEntry(
@@ -82,9 +61,9 @@ void main() {
     expect(metadata.title, 'Titre distant');
     expect(metadata.artist, 'Artiste distant');
     expect(metadata.album, 'Album distant');
-    expect(requestedRanges, hasLength(2));
-    expect(requestedRanges.first, startsWith('bytes=0-'));
-    expect(requestedRanges.last, endsWith('-${totalSize - 1}'));
+    expect(adapter.requestedRanges, hasLength(2));
+    expect(adapter.requestedRanges.first, startsWith('bytes=0-'));
+    expect(adapter.requestedRanges.last, endsWith('-${totalSize - 1}'));
     expect(metadata.artworkPath, isNotNull);
     expect(await File(metadata.artworkPath!).readAsBytes(), [1, 2, 3]);
     final cachedFiles = await Directory(
@@ -92,4 +71,41 @@ void main() {
     ).list().toList();
     expect(cachedFiles, hasLength(1));
   });
+}
+
+class _RangeAdapter implements HttpClientAdapter {
+  _RangeAdapter(this.totalSize);
+
+  final int totalSize;
+  final List<String> requestedRanges = [];
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    final range = options.headers['Range']! as String;
+    requestedRanges.add(range);
+    final match = RegExp(r'bytes=(\d+)-(\d+)').firstMatch(range)!;
+    final start = int.parse(match.group(1)!);
+    final requestedEnd = int.parse(match.group(2)!);
+    final end = requestedEnd.clamp(start, totalSize - 1);
+    final bytes = Uint8List(end - start + 1);
+    if (start == 0) bytes.setRange(0, 4, utf8.encode('HEAD'));
+    if (end == totalSize - 1) {
+      bytes.setRange(bytes.length - 4, bytes.length, utf8.encode('TAIL'));
+    }
+    return ResponseBody.fromBytes(
+      bytes,
+      HttpStatus.partialContent,
+      headers: {
+        'content-range': ['bytes $start-$end/$totalSize'],
+        Headers.contentLengthHeader: ['${bytes.length}'],
+      },
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
 }

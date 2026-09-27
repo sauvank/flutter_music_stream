@@ -18,19 +18,22 @@ class RemoteAudioMetadataService {
     AudioMetadataService? metadataService,
     Future<Directory> Function()? cacheDirectory,
     int maximumConcurrentRequests = 2,
+    int sampleLimit = 8 * 1024 * 1024,
   })  : _dio = dio ?? Dio(),
         _metadataService = metadataService ?? const AudioMetadataService(),
         _cacheDirectory = cacheDirectory ?? getTemporaryDirectory,
-        _maximumConcurrentRequests = maximumConcurrentRequests {
+        _maximumConcurrentRequests = maximumConcurrentRequests,
+        _sampleLimit = sampleLimit {
     assert(maximumConcurrentRequests > 0);
+    assert(sampleLimit > 0);
   }
 
-  static const _sampleLimit = 8 * 1024 * 1024;
   static const _tailExtensions = {'aac', 'm4a', 'm4b', 'mp4'};
   final Dio _dio;
   final AudioMetadataService _metadataService;
   final Future<Directory> Function() _cacheDirectory;
   final int _maximumConcurrentRequests;
+  final int _sampleLimit;
   final Map<String, Future<RemoteAudioMetadata>> _cache = {};
   final Queue<Completer<void>> _waiting = Queue();
   int _activeRequests = 0;

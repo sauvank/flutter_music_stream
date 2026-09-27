@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-enum ServerType { webdav, http }
+enum ServerType { webdav, http, ftp }
 
 class ServerProfile {
   const ServerProfile({

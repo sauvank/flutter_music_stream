@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:background_downloader/background_downloader.dart';
+import 'package:crypto/crypto.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
@@ -11,6 +15,7 @@ import '../models/remote_audio_metadata.dart';
 import '../models/server_profile.dart';
 import '../models/music_track.dart';
 import '../providers/download_queue_provider.dart';
+import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
 import '../providers/server_provider.dart';
 
@@ -93,18 +98,36 @@ class ServersScreen extends StatelessWidget {
                     ButtonSegment(
                         value: ServerType.webdav, label: Text('WebDAV')),
                     ButtonSegment(value: ServerType.http, label: Text('HTTP')),
+                    ButtonSegment(value: ServerType.ftp, label: Text('FTP')),
                   ],
                   selected: {type},
-                  onSelectionChanged: (value) =>
-                      setState(() => type = value.single),
+                  onSelectionChanged: (value) => setState(() {
+                    type = value.single;
+                    if (url.text == 'https://' || url.text == 'ftp://') {
+                      url.text = type == ServerType.ftp ? 'ftp://' : 'https://';
+                    }
+                  }),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: url,
                   keyboardType: TextInputType.url,
-                  decoration:
-                      const InputDecoration(labelText: 'Adresse HTTPS ou HTTP'),
+                  decoration: InputDecoration(
+                    labelText: type == ServerType.ftp
+                        ? 'Adresse FTP'
+                        : 'Adresse HTTPS ou HTTP',
+                  ),
                 ),
+                if (type == ServerType.ftp)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'FTP transmet les identifiants et les fichiers sans chiffrement.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                    ),
+                  ),
                 TextField(
                     controller: username,
                     decoration: const InputDecoration(
@@ -124,10 +147,14 @@ class ServersScreen extends StatelessWidget {
             FilledButton(
               onPressed: () {
                 final uri = Uri.tryParse(url.text.trim());
+                final validScheme = type == ServerType.ftp
+                    ? uri?.scheme == 'ftp'
+                    : {'http', 'https'}.contains(uri?.scheme);
                 if (name.text.trim().isEmpty ||
                     uri == null ||
-                    !{'http', 'https'}.contains(uri.scheme) ||
-                    uri.host.isEmpty) {
+                    !validScheme ||
+                    uri.host.isEmpty ||
+                    uri.userInfo.isNotEmpty) {
                   return;
                 }
                 Navigator.pop(
@@ -387,7 +414,7 @@ class _EmptyServers extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Parcourez un serveur WebDAV ou HTTP, puis gardez vos morceaux préférés hors connexion.',
+                  'Parcourez un serveur WebDAV, HTTP ou FTP, puis gardez vos morceaux préférés hors connexion.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.white.withValues(alpha: .82),
                         height: 1.45,
@@ -443,9 +470,11 @@ class _ServerCard extends StatelessWidget {
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             onTap: onOpen,
             leading: CircleAvatar(
-              child: Icon(profile.type == ServerType.webdav
-                  ? Icons.cloud_outlined
-                  : Icons.http_rounded),
+              child: Icon(switch (profile.type) {
+                ServerType.webdav => Icons.cloud_outlined,
+                ServerType.http => Icons.http_rounded,
+                ServerType.ftp => Icons.dns_outlined,
+              }),
             ),
             title: Text(profile.name,
                 style: const TextStyle(fontWeight: FontWeight.w800)),
@@ -602,17 +631,18 @@ class _RemoteTile extends StatelessWidget {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton.filledTonal(
-                  tooltip: preview.selected && preview.playing
-                      ? 'Mettre en pause'
-                      : 'Écouter depuis le serveur',
-                  onPressed: preview.selected
-                      ? context.read<PlayerProvider>().toggle
-                      : () => _preview(context, servers, details),
-                  icon: Icon(preview.selected && preview.playing
-                      ? Icons.pause_rounded
-                      : Icons.play_arrow_rounded),
-                ),
+                if (servers.selected!.type != ServerType.ftp)
+                  IconButton.filledTonal(
+                    tooltip: preview.selected && preview.playing
+                        ? 'Mettre en pause'
+                        : 'Écouter depuis le serveur',
+                    onPressed: preview.selected
+                        ? context.read<PlayerProvider>().toggle
+                        : () => _preview(context, servers, details),
+                    icon: Icon(preview.selected && preview.playing
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded),
+                  ),
                 IconButton(
                   tooltip: 'Télécharger',
                   onPressed: () => _download(context, servers),
@@ -642,6 +672,18 @@ class _RemoteTile extends StatelessWidget {
 
   Future<void> _download(BuildContext context, ServerProvider servers) async {
     final profile = servers.selected!;
+    if (profile.type == ServerType.ftp) {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => _FolderDownloadDialog(
+          entry: entry,
+          servers: servers,
+          downloads: context.read<DownloadQueueProvider>(),
+        ),
+      );
+      return;
+    }
     try {
       final added = await context.read<DownloadQueueProvider>().enqueueAll(
         [entry],
@@ -761,11 +803,13 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
   Future<void> _start() async {
     try {
       final profile = widget.servers.selected!;
-      final files = await widget.servers.remoteService.listRecursively(
-        profile,
-        widget.entry.uri,
-        widget.servers.password,
-      );
+      final files = widget.entry.isDirectory
+          ? await widget.servers.remoteService.listRecursively(
+              profile,
+              widget.entry.uri,
+              widget.servers.password,
+            )
+          : [widget.entry];
       if (!mounted) return;
       if (files.isEmpty) {
         setState(() {
@@ -776,8 +820,14 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
         return;
       }
       setState(() {
-        _status = 'Ajout de ${files.length} morceaux à la file…';
+        _status = profile.type == ServerType.ftp
+            ? 'Téléchargement de ${files.length} morceau${files.length > 1 ? 'x' : ''}…'
+            : 'Ajout de ${files.length} morceaux à la file…';
       });
+      if (profile.type == ServerType.ftp) {
+        await _downloadFtp(profile, files);
+        return;
+      }
       final queued = await widget.downloads.enqueueAll(
         files,
         headers: widget.servers.remoteService.authorizationHeaders(
@@ -796,6 +846,64 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
     }
   }
 
+  Future<void> _downloadFtp(
+    ServerProfile profile,
+    List<RemoteAudioEntry> files,
+  ) async {
+    final library = context.read<LibraryProvider>();
+    final root = Directory(
+      p.join((await getTemporaryDirectory()).path, 'ftp_downloads'),
+    );
+    await root.create(recursive: true);
+    var added = 0;
+    var skipped = 0;
+    var failed = 0;
+    for (var index = 0; index < files.length; index++) {
+      final file = files[index];
+      final digest =
+          sha256.convert(utf8.encode(file.uri.toString())).toString();
+      final temporary = File(
+        p.join(
+            root.path, '${digest.substring(0, 24)}${p.extension(file.name)}'),
+      );
+      try {
+        await widget.servers.remoteService.downloadFtp(
+          profile,
+          file,
+          widget.servers.password,
+          temporary.path,
+          onProgress: (received, total) {
+            if (!mounted) return;
+            final fileProgress = total > 0 ? received / total : 0.0;
+            setState(() {
+              _status = 'Téléchargement ${index + 1} / ${files.length}';
+              _progress = (index + fileProgress) / files.length;
+            });
+          },
+        );
+        final imported = await library.importDownloadedFile(
+          sourcePath: temporary.path,
+          originalName: file.name,
+        );
+        imported ? added++ : skipped++;
+      } catch (_) {
+        failed++;
+        if (await temporary.exists()) await temporary.delete();
+      }
+      if (mounted) setState(() => _progress = (index + 1) / files.length);
+    }
+    if (!mounted) return;
+    setState(() {
+      _queued = added;
+      _status = [
+        '$added ajouté${added > 1 ? 's' : ''}',
+        if (skipped > 0) '$skipped déjà présent${skipped > 1 ? 's' : ''}',
+        if (failed > 0) '$failed échec${failed > 1 ? 's' : ''}',
+      ].join(' • ');
+      _progress = 1;
+    });
+  }
+
   @override
   Widget build(BuildContext context) => AlertDialog(
         title: Text('Télécharger « ${widget.entry.name} »'),
@@ -806,11 +914,13 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
             if (_error != null)
               const Text('Le téléchargement du dossier a échoué.')
             else ...[
-              Text(_queued == null
+              Text(widget.servers.selected?.type == ServerType.ftp
                   ? _status
-                  : _queued == 0
-                      ? 'Aucun nouveau téléchargement à ajouter.'
-                      : '$_queued morceau${_queued! > 1 ? 'x' : ''} ajouté${_queued! > 1 ? 's' : ''}. Vous pouvez fermer cette fenêtre : le téléchargement continue en arrière-plan.'),
+                  : _queued == null
+                      ? _status
+                      : _queued == 0
+                          ? 'Aucun nouveau téléchargement à ajouter.'
+                          : '$_queued morceau${_queued! > 1 ? 'x' : ''} ajouté${_queued! > 1 ? 's' : ''}. Vous pouvez fermer cette fenêtre : le téléchargement continue en arrière-plan.'),
               const SizedBox(height: 16),
               LinearProgressIndicator(value: _progress),
             ],
@@ -820,7 +930,9 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
           if (_queued != null || _error != null)
             FilledButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Continuer en arrière-plan'),
+              child: Text(widget.servers.selected?.type == ServerType.ftp
+                  ? 'Fermer'
+                  : 'Continuer en arrière-plan'),
             ),
         ],
       );

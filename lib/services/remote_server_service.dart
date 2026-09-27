@@ -7,19 +7,40 @@ import 'package:xml/xml.dart';
 import '../models/remote_audio_entry.dart';
 import '../models/server_profile.dart';
 import 'library_service.dart';
+import 'ftp_service.dart';
 
 class RemoteServerService {
-  RemoteServerService({Dio? dio}) : _dio = dio ?? Dio();
+  RemoteServerService({Dio? dio, FtpService? ftpService})
+      : _dio = dio ?? Dio(),
+        _ftpService = ftpService ?? FtpService();
   final Dio _dio;
+  final FtpService _ftpService;
 
   Future<List<RemoteAudioEntry>> list(
     ServerProfile profile,
     Uri uri,
     String password,
   ) =>
-      profile.type == ServerType.webdav
-          ? _listWebDav(profile, uri, password)
-          : _listHttp(profile, uri, password);
+      switch (profile.type) {
+        ServerType.webdav => _listWebDav(profile, uri, password),
+        ServerType.http => _listHttp(profile, uri, password),
+        ServerType.ftp => _ftpService.list(profile, uri, password),
+      };
+
+  Future<void> downloadFtp(
+    ServerProfile profile,
+    RemoteAudioEntry entry,
+    String password,
+    String destinationPath, {
+    void Function(int received, int total)? onProgress,
+  }) =>
+      _ftpService.download(
+        profile,
+        entry.uri,
+        password,
+        destinationPath,
+        onProgress: onProgress,
+      );
 
   Future<List<RemoteAudioEntry>> listRecursively(
     ServerProfile profile,

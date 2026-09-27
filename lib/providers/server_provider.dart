@@ -35,6 +35,12 @@ class ServerProvider extends ChangeNotifier {
   Future<RemoteAudioMetadata> metadataFor(RemoteAudioEntry entry) {
     final profile = selected;
     if (profile == null) throw StateError('Aucun serveur connecté.');
+    if (profile.type == ServerType.ftp) {
+      return Future.value(RemoteAudioMetadata(
+        title: _titleFromFilename(entry.name),
+        artist: 'Artiste inconnu',
+      ));
+    }
     return _metadataService.load(
       entry,
       headers: remoteService.authorizationHeaders(profile, _password),
@@ -71,23 +77,30 @@ class ServerProvider extends ChangeNotifier {
     for (final value in values) {
       if (value is! Map) throw const FormatException('Profil JSON invalide');
       final map = value.cast<String, Object?>();
-      final baseUrl = _importedBaseUrl(map);
       final typeName = map['type'] as String? ?? map['serverType'] as String?;
       final name = map['name'] as String?;
-      if (baseUrl == null || typeName == null || name == null) {
+      if (typeName == null || name == null) {
         throw const FormatException('Champs de profil manquants');
-      }
-      final uri = Uri.tryParse(baseUrl);
-      if (uri == null ||
-          !{'http', 'https'}.contains(uri.scheme) ||
-          uri.host.isEmpty) {
-        throw const FormatException('Adresse de serveur invalide');
       }
       final type = switch (typeName) {
         'webdav' => ServerType.webdav,
         'http' || 'httpDirectory' => ServerType.http,
+        'ftp' => ServerType.ftp,
         _ => throw const FormatException('Type de serveur invalide'),
       };
+      final baseUrl = _importedBaseUrl(map, type);
+      if (baseUrl == null) {
+        throw const FormatException('Champs de profil manquants');
+      }
+      final uri = Uri.tryParse(baseUrl);
+      if (uri == null ||
+          !(type == ServerType.ftp
+              ? uri.scheme == 'ftp'
+              : {'http', 'https'}.contains(uri.scheme)) ||
+          uri.host.isEmpty ||
+          uri.userInfo.isNotEmpty) {
+        throw const FormatException('Adresse de serveur invalide');
+      }
       final username = map['username'] as String? ?? '';
       final importedPassword = map['password'] as String? ?? password;
       final duplicate = profiles.any((profile) =>
@@ -111,20 +124,31 @@ class ServerProvider extends ChangeNotifier {
     return imported;
   }
 
-  String? _importedBaseUrl(Map<String, Object?> map) {
+  String? _importedBaseUrl(
+    Map<String, Object?> map,
+    ServerType type,
+  ) {
     final current = map['baseUrl'] as String?;
     if (current != null) return current;
     final rawHost = map['host'] as String?;
     if (rawHost == null || rawHost.trim().isEmpty) return null;
     final isHttps = map['isHttps'] as bool? ?? false;
-    final scheme = isHttps ? 'https' : 'http';
+    final scheme = type == ServerType.ftp
+        ? 'ftp'
+        : isHttps
+            ? 'https'
+            : 'http';
     final host = rawHost
         .trim()
-        .replaceFirst(RegExp(r'^https?://'), '')
+        .replaceFirst(RegExp(r'^(?:https?|ftp)://'), '')
         .replaceFirst(RegExp(r'/+$'), '');
-    final port = map['port'] as int? ?? (isHttps ? 443 : 80);
-    final portPart =
-        (isHttps && port == 443) || (!isHttps && port == 80) ? '' : ':$port';
+    final defaultPort = type == ServerType.ftp
+        ? 21
+        : isHttps
+            ? 443
+            : 80;
+    final port = map['port'] as int? ?? defaultPort;
+    final portPart = port == defaultPort ? '' : ':$port';
     var path = map['path'] as String? ?? '/';
     if (!path.startsWith('/')) path = '/$path';
     if (!path.endsWith('/')) path = '$path/';
@@ -190,5 +214,12 @@ class ServerProvider extends ChangeNotifier {
   Uri _normalizedRoot(String value) {
     final uri = Uri.parse(value.trim());
     return uri.path.endsWith('/') ? uri : uri.replace(path: '${uri.path}/');
+  }
+
+  String _titleFromFilename(String name) {
+    final extension = name.lastIndexOf('.');
+    var value = extension > 0 ? name.substring(0, extension) : name;
+    value = value.replaceAll('_', ' ').trim();
+    return value.replaceFirst(RegExp(r'^\d+\s*[-.]\s*'), '').trim();
   }
 }

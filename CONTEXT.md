@@ -15,6 +15,8 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 - `PlayerProvider` expose l’aléatoire et les cycles de répétition natifs de `just_audio`; l’écran de lecture affiche leurs états actifs.
 - Les actions « Tout lire » passent par `PlayerProvider.playAll`, qui désactive la répétition du morceau avant de charger la file; la répétition de toute la file reste conservée.
 - `PlayerProvider` applique un fondu aux actions lancées dans l’application (lecture, pause, morceau précédent/suivant). La durée 0/250/500/1000 ms est persistée par `PlaybackSettingsService`; les commandes système pilotées directement par `just_audio_background` ne passent pas par ce fondu.
+- Deux projets servent de références fonctionnelles locales : `../comic_reader_app` pour FTP et synchronisation chiffrée, et `https://github.com/sauvank/pinnard_music_v5` pour l’expérience lecteur (file, volume, historique, paroles, playlists, scan Android, widget, thèmes et traductions). Réutiliser les concepts, pas les données ni les secrets.
+- Le travail en cours ajoute le FTP passif sans placer les identifiants dans l’URI. HTTP/WebDAV conservent la lecture directe et la file native en arrière-plan; un morceau FTP doit d’abord être téléchargé et importé dans le stockage privé.
 
 ## Contraintes
 
@@ -24,6 +26,6 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 
 ## Problème actif
 
-La lecture distante authentifiée, le téléchargement HTTP en arrière-plan, l’indexation finale, le sélecteur récursif de dossier, l’extraction distante des pochettes et les modes aléatoire/répétition ont été validés sur un appareil Android physique. Les fondus doivent encore être contrôlés sur appareil. L’égaliseur natif disponible est Android uniquement; ne pas l’exposer avant une décision multiplateforme.
+La lecture distante authentifiée, le téléchargement HTTP en arrière-plan, l’indexation finale, le sélecteur récursif de dossier, l’extraction distante des pochettes et les modes aléatoire/répétition ont été validés sur un appareil Android physique. Les fondus, l’adaptation verticale de l’écran Lecture et le FTP doivent encore être contrôlés sur appareil. L’égaliseur est différé tant qu’aucune solution Android/iOS cohérente n’est disponible.
 
 Architecture détaillée : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Travaux futurs : [ROADMAP.md](ROADMAP.md).

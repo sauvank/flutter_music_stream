@@ -18,4 +18,21 @@ void main() {
     expect(decoded.type, ServerType.webdav);
     expect(decoded.username, 'user');
   });
+
+  test('serializes FTP profiles without credentials in the URL', () {
+    const profile = ServerProfile(
+      id: 'ftp-server',
+      name: 'Archives musicales',
+      baseUrl: 'ftp://music.example.test:2121/media/music/',
+      type: ServerType.ftp,
+      username: 'user',
+    );
+
+    final encoded = ServerProfile.encodeAll([profile]);
+    final decoded = ServerProfile.decodeAll(encoded).single;
+
+    expect(decoded.type, ServerType.ftp);
+    expect(decoded.baseUrl, profile.baseUrl);
+    expect(encoded, isNot(contains('private-password')));
+  });
 }

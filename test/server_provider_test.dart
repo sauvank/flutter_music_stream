@@ -68,6 +68,33 @@ void main() {
     expect(ServerProfile.encodeAll(provider.profiles),
         isNot(contains('password')));
   });
+
+  test('imports a legacy FTP profile without storing its password', () async {
+    final service = _MemoryServerProfileService();
+    final provider = ServerProvider(service, RemoteServerService());
+
+    final count = await provider.importProfilesFromJson(
+      '''
+      {
+        "name": "Archives musicales",
+        "host": "music.example.test",
+        "port": 2121,
+        "path": "/media/music",
+        "serverType": "ftp",
+        "username": "user",
+        "password": "private-password"
+      }
+      ''',
+    );
+
+    expect(count, 1);
+    expect(provider.profiles.single.baseUrl,
+        'ftp://music.example.test:2121/media/music/');
+    expect(provider.profiles.single.type, ServerType.ftp);
+    expect(service.passwords.values.single, 'private-password');
+    expect(ServerProfile.encodeAll(provider.profiles),
+        isNot(contains('private-password')));
+  });
 }
 
 class _MemoryServerProfileService extends ServerProfileService {

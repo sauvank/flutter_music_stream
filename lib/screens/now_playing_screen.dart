@@ -21,6 +21,8 @@ class NowPlayingScreen extends StatelessWidget {
         .toDouble();
     final value =
         player.position.inMilliseconds.toDouble().clamp(0, maximum).toDouble();
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final compactHeight = screenHeight < 760;
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 500),
       switchInCurve: Curves.easeOutCubic,
@@ -55,10 +57,13 @@ class NowPlayingScreen extends StatelessWidget {
                 const SizedBox(width: 38),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: compactHeight ? 14 : 24),
             LayoutBuilder(
               builder: (context, constraints) {
-                final artworkSize = constraints.maxWidth.clamp(240.0, 460.0);
+                final widthLimit = constraints.maxWidth.clamp(180.0, 460.0);
+                final heightLimit = (screenHeight - 450).clamp(180.0, 460.0);
+                final artworkSize =
+                    widthLimit < heightLimit ? widthLimit : heightLimit;
                 return Container(
                   width: artworkSize,
                   height: artworkSize,
@@ -84,7 +89,7 @@ class NowPlayingScreen extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: 34),
+            SizedBox(height: compactHeight ? 18 : 34),
             Row(
               children: [
                 Expanded(
@@ -128,7 +133,7 @@ class NowPlayingScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 22),
+            SizedBox(height: compactHeight ? 12 : 22),
             SliderTheme(
               data: SliderTheme.of(context).copyWith(
                 trackHeight: 6,
@@ -157,7 +162,7 @@ class NowPlayingScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 22),
+            SizedBox(height: compactHeight ? 12 : 22),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
