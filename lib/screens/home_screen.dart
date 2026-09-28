@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/download_queue_provider.dart';
 import '../providers/player_provider.dart';
 import '../providers/server_provider.dart';
 import '../widgets/track_artwork.dart';
@@ -18,9 +19,23 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final _library = GlobalKey<LibraryScreenState>();
   int _index = 0;
+  // Visited tabs, most recent last, so back returns where the user was.
+  final List<int> _visited = [];
+
+  void _select(int value) {
+    if (value == _index) return;
+    setState(() {
+      _visited
+        ..remove(_index)
+        ..add(_index);
+      _index = value;
+    });
+  }
 
   void _handleBack() {
+    if (_index == 0 && (_library.currentState?.handleBack() ?? false)) return;
     if (_index == 1) {
       final servers = context.read<ServerProvider>();
       if (servers.selected != null) {
@@ -32,16 +47,21 @@ class _HomeScreenState extends State<HomeScreen> {
         return;
       }
     }
-    if (_index != 0) setState(() => _index = 0);
+    _visited.remove(_index);
+    if (_visited.isNotEmpty) {
+      setState(() => _index = _visited.removeLast());
+    } else if (_index != 0) {
+      setState(() => _index = 0);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    const screens = [
-      LibraryScreen(),
-      ServersScreen(),
-      NowPlayingScreen(),
-      SettingsScreen(),
+    final screens = [
+      LibraryScreen(key: _library),
+      const ServersScreen(),
+      const NowPlayingScreen(),
+      const SettingsScreen(),
     ];
     final dark = Theme.of(context).brightness == Brightness.dark;
     final overlay =
@@ -86,8 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (_index != 2)
-                _MiniPlayer(onOpen: () => setState(() => _index = 2)),
+              if (_index != 2) _MiniPlayer(onOpen: () => _select(2)),
               DecoratedBox(
                 decoration: BoxDecoration(
                   color: Theme.of(context)
@@ -113,8 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     labelBehavior:
                         NavigationDestinationLabelBehavior.onlyShowSelected,
                     selectedIndex: _index,
-                    onDestinationSelected: (value) =>
-                        setState(() => _index = value),
+                    onDestinationSelected: _select,
                     destinations: const [
                       NavigationDestination(
                         icon: Icon(Icons.headphones_outlined),
@@ -122,8 +140,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         label: 'Bibliothèque',
                       ),
                       NavigationDestination(
-                        icon: Icon(Icons.cloud_outlined),
-                        selectedIcon: Icon(Icons.cloud_rounded),
+                        icon:
+                            _DownloadsBadge(child: Icon(Icons.cloud_outlined)),
+                        selectedIcon:
+                            _DownloadsBadge(child: Icon(Icons.cloud_rounded)),
                         label: 'Serveurs',
                       ),
                       NavigationDestination(
@@ -171,8 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       backgroundColor: Colors.transparent,
                       extended: MediaQuery.sizeOf(context).width >= 1100,
                       selectedIndex: _index,
-                      onDestinationSelected: (value) =>
-                          setState(() => _index = value),
+                      onDestinationSelected: _select,
                       leading: const Padding(
                         padding: EdgeInsets.only(top: 12, bottom: 20),
                         child: CircleAvatar(
@@ -187,8 +206,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           label: Text('Bibliothèque'),
                         ),
                         NavigationRailDestination(
-                          icon: Icon(Icons.cloud_outlined),
-                          selectedIcon: Icon(Icons.cloud_rounded),
+                          icon: _DownloadsBadge(
+                              child: Icon(Icons.cloud_outlined)),
+                          selectedIcon:
+                              _DownloadsBadge(child: Icon(Icons.cloud_rounded)),
                           label: Text('Serveurs'),
                         ),
                         NavigationRailDestination(
@@ -217,9 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
                             child: _index == 2
                                 ? const SizedBox.shrink()
-                                : _MiniPlayer(
-                                    onOpen: () => setState(() => _index = 2),
-                                  ),
+                                : _MiniPlayer(onOpen: () => _select(2)),
                           ),
                         ),
                       ),
@@ -253,6 +272,23 @@ class _Background extends StatelessWidget {
       );
 }
 
+/// Shows the number of running or queued downloads on the Servers tab.
+class _DownloadsBadge extends StatelessWidget {
+  const _DownloadsBadge({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final active =
+        context.select<DownloadQueueProvider, int>((d) => d.activeCount);
+    return Badge(
+      isLabelVisible: active > 0,
+      label: Text('$active'),
+      child: child,
+    );
+  }
+}
+
 class _MiniPlayer extends StatelessWidget {
   const _MiniPlayer({required this.onOpen});
 
@@ -268,84 +304,99 @@ class _MiniPlayer extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: onOpen,
-          borderRadius: BorderRadius.circular(24),
-          child: Ink(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.primaryContainer,
-                  Theme.of(context).colorScheme.tertiaryContainer,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
-                  child: Row(
-                    children: [
-                      TrackArtwork(
-                        track: track,
-                        size: 50,
-                        borderRadius: BorderRadius.circular(17),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              track.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                            Text(
-                              track.artist,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: player.playing ? 'Pause' : 'Lire',
-                        onPressed: player.toggle,
-                        icon: Icon(player.playing
-                            ? Icons.pause_rounded
-                            : Icons.play_arrow_rounded),
-                      ),
-                      IconButton(
-                        tooltip: 'Suivant',
-                        onPressed: player.hasNext ? player.next : null,
-                        icon: const Icon(Icons.skip_next_rounded),
-                      ),
-                    ],
-                  ),
+        // Swipe sideways to change track, swipe up to open Now Playing.
+        child: GestureDetector(
+          onHorizontalDragEnd: (details) {
+            final velocity = details.primaryVelocity ?? 0;
+            if (velocity < -300 && player.hasNext) {
+              player.next();
+            } else if (velocity > 300 && player.hasPrevious) {
+              player.previous();
+            }
+          },
+          onVerticalDragEnd: (details) {
+            if ((details.primaryVelocity ?? 0) < -300) onOpen();
+          },
+          child: InkWell(
+            onTap: onOpen,
+            borderRadius: BorderRadius.circular(24),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.primaryContainer,
+                    Theme.of(context).colorScheme.tertiaryContainer,
+                  ],
                 ),
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(24),
-                  ),
-                  child: ValueListenableBuilder<Duration>(
-                    valueListenable: player.positionListenable,
-                    builder: (context, position, _) => LinearProgressIndicator(
-                      value: duration <= 0
-                          ? 0.0
-                          : (position.inMilliseconds / duration)
-                              .clamp(0.0, 1.0),
-                      minHeight: 3,
-                      backgroundColor: Colors.transparent,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
+                    child: Row(
+                      children: [
+                        TrackArtwork(
+                          track: track,
+                          size: 50,
+                          borderRadius: BorderRadius.circular(17),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                track.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700),
+                              ),
+                              Text(
+                                track.artist,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: player.playing ? 'Pause' : 'Lire',
+                          onPressed: player.toggle,
+                          icon: Icon(player.playing
+                              ? Icons.pause_rounded
+                              : Icons.play_arrow_rounded),
+                        ),
+                        IconButton(
+                          tooltip: 'Suivant',
+                          onPressed: player.hasNext ? player.next : null,
+                          icon: const Icon(Icons.skip_next_rounded),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(24),
+                    ),
+                    child: ValueListenableBuilder<Duration>(
+                      valueListenable: player.positionListenable,
+                      builder: (context, position, _) =>
+                          LinearProgressIndicator(
+                        value: duration <= 0
+                            ? 0.0
+                            : (position.inMilliseconds / duration)
+                                .clamp(0.0, 1.0),
+                        minHeight: 3,
+                        backgroundColor: Colors.transparent,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

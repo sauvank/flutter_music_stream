@@ -11,6 +11,7 @@ MusicStream est un lecteur de musique personnel construit avec Flutter. Il trans
 - lecture des tags audio, pochettes intégrées et durée à l’import ;
 - navigation par morceaux, artistes, albums et genres ;
 - création et modification de playlists locales ; lecture aléatoire des morceaux, favoris, collections et playlists ;
+- mini-lecteur à gestes (glisser pour changer de morceau, vers le haut pour ouvrir Lecture), repère du morceau en cours dans les listes et retour système vers l’onglet précédent ;
 - lecture, pause, file visible et réorganisable, « lire ensuite », reprise, aléatoire, répétition, volume persistant et fondus configurables ;
 - historique local des morceaux réellement écoutés, classé par écoute récente ;
 - paroles `.lrc` synchronisées importées avec les fichiers locaux ou manuellement depuis Lecture ; recherche LRCLIB automatique après accord, conservée hors connexion, et traduction à la demande ;
@@ -20,6 +21,8 @@ MusicStream est un lecteur de musique personnel construit avec Flutter. Il trans
 - profils WebDAV, HTTP et FTP importables par JSON ComicStream ou MusicStream, avec mot de passe transféré dans le coffre sécurisé de l’OS ;
 - navigation distante et téléchargement de morceaux ou dossiers entiers, avec état local explicite sous chaque dossier (vert si complet, orange si partiel) ; HTTP/WebDAV utilisent une file persistante en arrière-plan, limitée à deux transferts simultanés par serveur, tandis que FTP importe au premier plan ;
 - badge « Sur le téléphone » à la place du bouton de téléchargement pour les morceaux distants déjà importés ;
+- file de téléchargement accessible depuis la liste des serveurs, badge du nombre de transferts actifs sur l’onglet Serveurs, relance des échecs, nettoyage des terminés et annulation groupée ;
+- navigation distante avec fil d’Ariane cliquable et filtre des dossiers volumineux ;
 - suppression des téléchargements serveur depuis le menu d’un morceau ou globalement depuis la bibliothèque ;
 - détection à la demande des nouveaux albums d’un serveur, après création d’une référence locale ;
 - écoute directe d’un morceau ou d’un dossier distant (récursif, dans l’ordre des chemins) avant son téléchargement ; les morceaux déjà importés sont lus depuis le téléphone ;

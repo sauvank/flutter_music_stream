@@ -437,6 +437,22 @@ class _ServerHeader extends StatelessWidget {
                     ],
                   ),
                 ),
+                Consumer<DownloadQueueProvider>(
+                  builder: (context, downloads, _) => downloads.records.isEmpty
+                      ? const SizedBox.shrink()
+                      : Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Badge(
+                            isLabelVisible: downloads.activeCount > 0,
+                            label: Text('${downloads.activeCount}'),
+                            child: IconButton.filledTonal(
+                              tooltip: 'Téléchargements',
+                              onPressed: () => _showDownloadQueue(context),
+                              icon: const Icon(Icons.download_rounded),
+                            ),
+                          ),
+                        ),
+                ),
                 IconButton.filledTonal(
                   tooltip: 'Importer un fichier JSON',
                   onPressed: onImport,
@@ -607,89 +623,206 @@ class _ServerCard extends StatelessWidget {
       );
 }
 
-class _Browser extends StatelessWidget {
+class _Browser extends StatefulWidget {
   const _Browser({required this.provider});
   final ServerProvider provider;
 
   @override
-  Widget build(BuildContext context) => Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 12, 12, 8),
-            child: Row(
-              children: [
-                IconButton.filledTonal(
-                  onPressed: provider.canGoBack
-                      ? provider.goBack
-                      : provider.disconnect,
-                  icon: const Icon(Icons.arrow_back_rounded),
+  State<_Browser> createState() => _BrowserState();
+}
+
+class _BrowserState extends State<_Browser> {
+  static const _filterThreshold = 15;
+  final _filter = TextEditingController();
+  Uri? _filteredUri;
+
+  @override
+  void dispose() {
+    _filter.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = widget.provider;
+    // A filter only applies to the folder it was typed in.
+    if (_filteredUri != provider.currentUri) {
+      _filteredUri = provider.currentUri;
+      _filter.clear();
+    }
+    final needle = _filter.text.trim().toLowerCase();
+    final entries = needle.isEmpty
+        ? provider.entries
+        : provider.entries
+            .where((entry) => entry.name.toLowerCase().contains(needle))
+            .toList();
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(10, 12, 12, 8),
+          child: Row(
+            children: [
+              IconButton.filledTonal(
+                onPressed:
+                    provider.canGoBack ? provider.goBack : provider.disconnect,
+                icon: const Icon(Icons.arrow_back_rounded),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  provider.selected!.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    provider.selected!.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
-                  ),
-                ),
-                if (provider.selected!.type != ServerType.ftp &&
-                    provider.currentUri != null &&
-                    !provider.loading &&
-                    provider.error == null &&
-                    provider.entries.isNotEmpty)
-                  IconButton(
-                    tooltip: 'Lire ce dossier',
-                    onPressed: () => _playRemoteFolder(
-                        context, provider, provider.currentUri!),
-                    icon: const Icon(Icons.play_circle_outline_rounded),
-                  ),
-                Consumer<DownloadQueueProvider>(
-                  builder: (context, downloads, _) => Badge(
-                    isLabelVisible: downloads.activeCount > 0,
-                    label: Text('${downloads.activeCount}'),
-                    child: IconButton(
-                      onPressed: () => _showDownloadQueue(context),
-                      tooltip: 'Téléchargements',
-                      icon: const Icon(Icons.download_rounded),
-                    ),
-                  ),
-                ),
+              ),
+              if (provider.selected!.type != ServerType.ftp &&
+                  provider.currentUri != null &&
+                  !provider.loading &&
+                  provider.error == null &&
+                  provider.entries.isNotEmpty)
                 IconButton(
-                  onPressed: provider.disconnect,
-                  tooltip: 'Déconnecter',
-                  icon: const Icon(Icons.close_rounded),
+                  tooltip: 'Lire ce dossier',
+                  onPressed: () => _playRemoteFolder(
+                      context, provider, provider.currentUri!),
+                  icon: const Icon(Icons.play_circle_outline_rounded),
                 ),
-              ],
+              Consumer<DownloadQueueProvider>(
+                builder: (context, downloads, _) => Badge(
+                  isLabelVisible: downloads.activeCount > 0,
+                  label: Text('${downloads.activeCount}'),
+                  child: IconButton(
+                    onPressed: () => _showDownloadQueue(context),
+                    tooltip: 'Téléchargements',
+                    icon: const Icon(Icons.download_rounded),
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: provider.disconnect,
+                tooltip: 'Déconnecter',
+                icon: const Icon(Icons.close_rounded),
+              ),
+            ],
+          ),
+        ),
+        _Breadcrumbs(provider: provider),
+        if (!provider.loading &&
+            provider.error == null &&
+            provider.entries.length >= _filterThreshold)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+            child: TextField(
+              controller: _filter,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                isDense: true,
+                prefixIcon: const Icon(Icons.filter_list_rounded),
+                hintText: 'Filtrer ce dossier',
+                suffixIcon: _filter.text.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Effacer le filtre',
+                        onPressed: () => setState(_filter.clear),
+                        icon: const Icon(Icons.clear_rounded),
+                      ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
             ),
           ),
-          Expanded(
-            child: provider.loading
-                ? const Center(child: CircularProgressIndicator())
-                : provider.error != null
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Text(provider.error!,
-                              textAlign: TextAlign.center),
+        Expanded(
+          child: provider.loading
+              ? const Center(child: CircularProgressIndicator())
+              : provider.error != null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child:
+                            Text(provider.error!, textAlign: TextAlign.center),
+                      ),
+                    )
+                  : entries.isEmpty
+                      ? Center(
+                          child: Text(provider.entries.isEmpty
+                              ? 'Aucun morceau compatible dans ce dossier.'
+                              : 'Aucun élément ne correspond au filtre.'),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 190),
+                          itemCount: entries.length,
+                          itemBuilder: (context, index) =>
+                              _RemoteTile(entry: entries[index]),
                         ),
-                      )
-                    : provider.entries.isEmpty
-                        ? const Center(
-                            child: Text(
-                                'Aucun morceau compatible dans ce dossier.'),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 190),
-                            itemCount: provider.entries.length,
-                            itemBuilder: (context, index) =>
-                                _RemoteTile(entry: provider.entries[index]),
-                          ),
-          ),
-        ],
-      );
+        ),
+      ],
+    );
+  }
+}
+
+/// Clickable path from the server root to the current folder.
+class _Breadcrumbs extends StatelessWidget {
+  const _Breadcrumbs({required this.provider});
+  final ServerProvider provider;
+
+  @override
+  Widget build(BuildContext context) {
+    final crumbs = provider.breadcrumbs;
+    if (crumbs.length < 2) return const SizedBox.shrink();
+    final last = crumbs.length - 1;
+    return SizedBox(
+      height: 40,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        reverse: true,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            for (var index = 0; index <= last; index++) ...[
+              if (index > 0) const Icon(Icons.chevron_right_rounded, size: 18),
+              TextButton(
+                onPressed: index == last || provider.loading
+                    ? null
+                    : () => provider.goToLevel(index),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                child: Text(
+                  index == 0
+                      ? provider.selected!.name
+                      : _folderName(crumbs[index]),
+                  style: TextStyle(
+                    fontWeight:
+                        index == last ? FontWeight.w800 : FontWeight.w500,
+                    color: index == last
+                        ? Theme.of(context).colorScheme.onSurface
+                        : null,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _folderName(Uri uri) {
+    final raw = uri.path.split('/').lastWhere(
+          (part) => part.isNotEmpty,
+          orElse: () => '/',
+        );
+    try {
+      return Uri.decodeComponent(raw);
+    } catch (_) {
+      // Servers may expose a literal percent sign that is not an escape.
+      return raw;
+    }
+  }
 }
 
 class _RemoteTile extends StatelessWidget {
@@ -1224,13 +1357,39 @@ class _DownloadQueueSheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+              padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
               child: Text(
                 'Téléchargements',
                 style: Theme.of(context)
                     .textTheme
                     .headlineSmall
                     ?.copyWith(fontWeight: FontWeight.w900),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Wrap(
+                spacing: 8,
+                children: [
+                  if (downloads.hasFailed)
+                    ActionChip(
+                      avatar: const Icon(Icons.refresh_rounded, size: 18),
+                      label: const Text('Réessayer les échecs'),
+                      onPressed: downloads.retryFailed,
+                    ),
+                  if (downloads.hasClearable)
+                    ActionChip(
+                      avatar: const Icon(Icons.clear_all_rounded, size: 18),
+                      label: const Text('Effacer les terminés'),
+                      onPressed: downloads.clearFinished,
+                    ),
+                  if (downloads.activeCount > 0)
+                    ActionChip(
+                      avatar: const Icon(Icons.cancel_outlined, size: 18),
+                      label: const Text('Tout annuler'),
+                      onPressed: () => _confirmCancelAll(context, downloads),
+                    ),
+                ],
               ),
             ),
             Expanded(
@@ -1276,6 +1435,32 @@ class _DownloadQueueSheet extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _confirmCancelAll(
+  BuildContext context,
+  DownloadQueueProvider downloads,
+) async {
+  final count = downloads.activeCount;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Tout annuler ?'),
+      content: Text(
+          '$count téléchargement${count > 1 ? 's' : ''} en cours ou en attente ${count > 1 ? 'seront annulés' : 'sera annulé'}. Les morceaux déjà importés sont conservés.'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: const Text('Continuer'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          child: const Text('Tout annuler'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed == true) await downloads.cancelAll();
 }
 
 class _DownloadActions extends StatelessWidget {

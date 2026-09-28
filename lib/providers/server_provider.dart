@@ -37,6 +37,19 @@ class ServerProvider extends ChangeNotifier {
   Future<void> _folderScanChain = Future.value();
 
   bool get canGoBack => _history.isNotEmpty;
+
+  /// Folders from the server root to the current one.
+  List<Uri> get breadcrumbs =>
+      List.unmodifiable([..._history, if (currentUri != null) currentUri!]);
+
+  /// Jumps back to an ancestor listed in [breadcrumbs].
+  Future<void> goToLevel(int index) async {
+    if (index < 0 || index >= _history.length) return;
+    final target = _history[index];
+    _history.removeRange(index, _history.length);
+    await _open(target);
+  }
+
   String get password => _password;
 
   Future<List<RemoteAudioEntry>> filesInFolder(Uri uri) {

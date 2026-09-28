@@ -45,12 +45,19 @@ class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
 
   @override
-  State<LibraryScreen> createState() => _LibraryScreenState();
+  State<LibraryScreen> createState() => LibraryScreenState();
 }
 
-class _LibraryScreenState extends State<LibraryScreen> {
+class LibraryScreenState extends State<LibraryScreen> {
   _LibraryMode _mode = _LibraryMode.tracks;
   final _TrackSelection _selection = _TrackSelection();
+
+  /// Consumes a system back press to leave selection mode.
+  bool handleBack() {
+    if (!_selection.active) return false;
+    _selection.clear();
+    return true;
+  }
 
   @override
   void dispose() {
@@ -61,29 +68,24 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   Widget build(BuildContext context) => ChangeNotifierProvider.value(
         value: _selection,
-        child: PopScope(
-          onPopInvokedWithResult: (didPop, _) {
-            if (_selection.active) _selection.clear();
-          },
-          child: Stack(
-            children: [
-              _content(context),
-              Positioned(
-                top: 8,
-                left: 12,
-                right: 12,
-                child: _SelectionBar(
-                  visible: switch (_mode) {
-                    _LibraryMode.tracks =>
-                      context.watch<LibraryProvider>().tracks,
-                    _LibraryMode.history =>
-                      context.watch<LibraryProvider>().listeningHistory,
-                    _ => const <MusicTrack>[],
-                  },
-                ),
+        child: Stack(
+          children: [
+            _content(context),
+            Positioned(
+              top: 8,
+              left: 12,
+              right: 12,
+              child: _SelectionBar(
+                visible: switch (_mode) {
+                  _LibraryMode.tracks =>
+                    context.watch<LibraryProvider>().tracks,
+                  _LibraryMode.history =>
+                    context.watch<LibraryProvider>().listeningHistory,
+                  _ => const <MusicTrack>[],
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
 
@@ -1279,6 +1281,9 @@ class _TrackTileState extends State<_TrackTile> {
     final track = widget.track;
     final selection = context.watch<_TrackSelection?>();
     final selected = selection?.contains(track.id) ?? false;
+    final current = context.select<PlayerProvider?, bool>(
+      (player) => player?.current?.id == track.id,
+    );
     final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
@@ -1324,10 +1329,24 @@ class _TrackTileState extends State<_TrackTile> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(track.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.w800)),
+                      Row(
+                        children: [
+                          if (current) ...[
+                            Icon(Icons.graphic_eq_rounded,
+                                size: 16, color: colors.primary),
+                            const SizedBox(width: 4),
+                          ],
+                          Expanded(
+                            child: Text(track.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  color: current ? colors.primary : null,
+                                )),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 3),
                       Text('${track.artist}  •  ${track.album}',
                           maxLines: 1,

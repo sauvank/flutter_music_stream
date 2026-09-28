@@ -181,6 +181,44 @@ class DownloadQueueProvider extends ChangeNotifier {
     await _reload();
   }
 
+  bool get hasFailed => _records.any(_isFailed);
+
+  /// Finished records that can be forgotten without losing an import:
+  /// completed downloads already in the library, and canceled tasks.
+  bool get hasClearable => _records.any(_isClearable);
+
+  static bool _isFailed(TaskRecord record) =>
+      record.status == TaskStatus.failed ||
+      record.status == TaskStatus.notFound;
+
+  bool _isClearable(TaskRecord record) =>
+      record.status == TaskStatus.canceled ||
+      (record.status == TaskStatus.complete &&
+          _library.downloadedSourceUris.contains(record.task.url));
+
+  Future<void> retryFailed() async {
+    for (final record in _records.where(_isFailed).toList()) {
+      await retry(record.taskId);
+    }
+  }
+
+  Future<void> clearFinished() async {
+    final ids = _records.where(_isClearable).map((record) => record.taskId);
+    if (ids.isEmpty) return;
+    await _downloader.database.deleteRecordsWithIds(ids.toList());
+    await _reload();
+  }
+
+  Future<void> cancelAll() async {
+    final ids = _records
+        .where((record) => record.status.isNotFinalState)
+        .map((record) => record.taskId)
+        .toList();
+    if (ids.isEmpty) return;
+    await _downloader.cancelTasksWithIds(ids);
+    await _reload();
+  }
+
   void _onStatus(TaskStatusUpdate update) {
     _progressReloadTimer?.cancel();
     _progressReloadTimer = null;

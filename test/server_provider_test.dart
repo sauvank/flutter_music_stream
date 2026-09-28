@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:music_reader_app/models/remote_audio_entry.dart';
 import 'package:music_reader_app/models/server_profile.dart';
 import 'package:music_reader_app/providers/server_provider.dart';
 import 'package:music_reader_app/services/remote_server_service.dart';
@@ -95,9 +96,56 @@ void main() {
     expect(ServerProfile.encodeAll(provider.profiles),
         isNot(contains('private-password')));
   });
+
+  test('breadcrumbs jump back to an ancestor folder', () async {
+    final remote = _FolderRemoteService();
+    final provider = ServerProvider(_MemoryServerProfileService(), remote);
+    const profile = ServerProfile(
+      id: 'server',
+      name: 'Serveur',
+      baseUrl: 'https://192.168.1.100/music/',
+      type: ServerType.webdav,
+      username: 'user',
+    );
+
+    await provider.connect(profile);
+    await provider.openDirectory(provider.entries.single);
+    await provider.openDirectory(provider.entries.single);
+    expect(provider.breadcrumbs.map((uri) => uri.path),
+        ['/music/', '/music/sub/', '/music/sub/sub/']);
+
+    await provider.goToLevel(0);
+    expect(provider.currentUri?.path, '/music/');
+    expect(provider.breadcrumbs, hasLength(1));
+    expect(provider.canGoBack, isFalse);
+  });
+}
+
+class _FolderRemoteService extends RemoteServerService {
+  final List<Uri> listed = [];
+
+  @override
+  Future<List<RemoteAudioEntry>> list(
+    ServerProfile profile,
+    Uri uri,
+    String password,
+  ) async {
+    listed.add(uri);
+    return [
+      RemoteAudioEntry(
+        name: 'sub',
+        uri: uri.resolve('sub/'),
+        isDirectory: true,
+      ),
+    ];
+  }
 }
 
 class _MemoryServerProfileService extends ServerProfileService {
+  @override
+  Future<String> readPassword(String profileId) async =>
+      passwords[profileId] ?? '';
+
   List<ServerProfile> saved = [];
   final Map<String, String> passwords = {};
 
