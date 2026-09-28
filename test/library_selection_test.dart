@@ -6,9 +6,12 @@ import 'package:music_reader_app/providers/library_provider.dart';
 import 'package:music_reader_app/screens/library_screen.dart';
 import 'package:music_reader_app/services/library_service.dart';
 import 'package:music_reader_app/services/playlist_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   testWidgets('long press selects tracks instead of deleting them',
       (tester) async {
     tester.view.physicalSize = const Size(1080, 2400);

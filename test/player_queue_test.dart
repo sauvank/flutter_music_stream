@@ -137,6 +137,34 @@ void main() {
     player.dispose();
   });
 
+  test('streams a folder queue and keeps credentials off local files',
+      () async {
+    final audioPlayer = _FakeAudioPlayer();
+    final player = PlayerProvider(
+      audioPlayer: audioPlayer,
+      fadeDuration: Duration.zero,
+    );
+    final remote = MusicTrack(
+      id: 'remote:1',
+      title: 'Remote',
+      uri: 'https://192.168.1.100/music/1.mp3',
+      addedAt: DateTime.utc(2026),
+    );
+
+    await player.playRemoteQueue(
+      [_track('local'), remote],
+      startIndex: 1,
+      headers: const {'Authorization': 'Basic 0123456789ABCDEF'},
+    );
+
+    expect(player.current?.id, 'remote:1');
+    expect(audioPlayer.index, 1);
+    final sources = audioPlayer.sources.cast<UriAudioSource>();
+    expect(sources.first.headers, anyOf(isNull, isEmpty));
+    expect(sources.last.headers, {'Authorization': 'Basic 0123456789ABCDEF'});
+    player.dispose();
+  });
+
   test('publishes position ticks without notifying provider listeners',
       () async {
     final audioPlayer = _FakeAudioPlayer();

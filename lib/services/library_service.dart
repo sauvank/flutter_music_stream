@@ -28,6 +28,7 @@ class LibraryService {
 
   static const _libraryKey = 'music_library_v1';
   static const _positionsKey = 'music_positions_v1';
+  static const _sortKey = 'library_sort_v1';
   static const supportedExtensions = <String>[
     'mp3',
     'm4a',
@@ -96,6 +97,12 @@ class LibraryService {
       return [];
     }
   }
+
+  Future<String?> loadSort() async =>
+      (await SharedPreferences.getInstance()).getString(_sortKey);
+
+  Future<void> saveSort(String value) async =>
+      (await SharedPreferences.getInstance()).setString(_sortKey, value);
 
   Future<void> save(List<MusicTrack> tracks) {
     final snapshot = List<MusicTrack>.of(tracks);

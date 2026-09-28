@@ -4,8 +4,11 @@ import 'package:music_reader_app/models/music_track.dart';
 import 'package:music_reader_app/providers/library_provider.dart';
 import 'package:music_reader_app/services/library_service.dart';
 import 'package:music_reader_app/services/playlist_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   test('playlists round-trip with their ordered track references', () {
     final playlists = [
       MusicPlaylist(
@@ -76,6 +79,67 @@ void main() {
     expect(playlistService.saved.single.trackIds, ['b', 'c', 'a']);
     expect(provider.tracksByIds(['c', 'missing', 'a']).map((t) => t.id),
         ['c', 'a']);
+  });
+
+  test('sorts tracks without accent bias and remembers the choice', () async {
+    MusicTrack track(String id, String title, String artist,
+            {String album = 'Album', int? number}) =>
+        MusicTrack(
+          id: id,
+          title: title,
+          artist: artist,
+          album: album,
+          trackNumber: number,
+          uri: 'file:///media/music/$id.mp3',
+          addedAt: DateTime.utc(2026, 1, int.parse(id)),
+          metadataRead: true,
+        );
+    final tracks = [
+      track('1', 'Zèbre', 'Björk', number: 2),
+      track('2', 'Écho', 'Björk', number: 1),
+      track('3', 'avion', 'Air', album: 'Best of'),
+    ];
+    final provider = LibraryProvider(
+        _MemoryLibraryService(tracks), _MemoryPlaylistService());
+    await provider.load();
+
+    expect(provider.tracks.map((t) => t.id), ['3', '2', '1']);
+    await provider.setSort(TrackSort.artist);
+    expect(provider.tracks.map((t) => t.id), ['3', '2', '1']);
+    await provider.setSort(TrackSort.recent);
+    expect(provider.tracks.map((t) => t.id), ['3', '2', '1']);
+    await provider.setSort(TrackSort.album);
+    expect(provider.tracks.map((t) => t.id), ['2', '1', '3']);
+
+    final reloaded = LibraryProvider(
+        _MemoryLibraryService(tracks), _MemoryPlaylistService());
+    await reloaded.load();
+    expect(reloaded.sort, TrackSort.album);
+  });
+
+  test('finds the imported copy of a server file', () async {
+    final provider = LibraryProvider(
+      _MemoryLibraryService([
+        MusicTrack(
+          id: 'local',
+          title: 'Local',
+          uri: 'file:///media/music/local.mp3',
+          addedAt: DateTime.utc(2026),
+          metadataRead: true,
+          source: MusicSource.serverDownload,
+          sourceUri: 'https://192.168.1.100/music/local.mp3',
+        ),
+      ]),
+      _MemoryPlaylistService(),
+    );
+    await provider.load();
+
+    expect(
+      provider.trackForSourceUri('https://192.168.1.100/music/local.mp3')?.id,
+      'local',
+    );
+    expect(
+        provider.trackForSourceUri('https://192.168.1.100/other.mp3'), isNull);
   });
 }
 

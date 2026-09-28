@@ -237,12 +237,32 @@ class _LibraryScreenState extends State<LibraryScreen> {
               child: _SectionTitle(
                 title:
                     library.favoritesOnly ? 'Vos favoris' : 'Tous les morceaux',
-                detail: _trackCount(tracks.length),
-                action: TextButton.icon(
-                  onPressed: () =>
-                      context.read<PlayerProvider>().playShuffled(tracks),
-                  icon: const Icon(Icons.shuffle_rounded),
-                  label: const Text('Aléatoire'),
+                detail:
+                    '${_trackCount(tracks.length)} · ${library.sort.label.toLowerCase()}',
+                action: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    PopupMenuButton<TrackSort>(
+                      tooltip: 'Trier par ${library.sort.label.toLowerCase()}',
+                      icon: const Icon(Icons.sort_rounded),
+                      initialValue: library.sort,
+                      onSelected: library.setSort,
+                      itemBuilder: (_) => [
+                        for (final value in TrackSort.values)
+                          CheckedPopupMenuItem(
+                            value: value,
+                            checked: value == library.sort,
+                            child: Text(value.label),
+                          ),
+                      ],
+                    ),
+                    TextButton.icon(
+                      onPressed: () =>
+                          context.read<PlayerProvider>().playShuffled(tracks),
+                      icon: const Icon(Icons.shuffle_rounded),
+                      label: const Text('Aléatoire'),
+                    ),
+                  ],
                 ),
               ),
             ),

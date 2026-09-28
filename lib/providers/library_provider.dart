@@ -9,6 +9,16 @@ import '../services/playlist_service.dart';
 
 typedef LocalImportSummary = ({int added, int skipped, int failed});
 
+enum TrackSort {
+  title('Titre'),
+  artist('Artiste'),
+  album('Album'),
+  recent('Ajout récent');
+
+  const TrackSort(this.label);
+  final String label;
+}
+
 class LibraryProvider extends ChangeNotifier {
   LibraryProvider(this._service, this._playlistService);
   final LibraryService _service;
@@ -20,11 +30,13 @@ class LibraryProvider extends ChangeNotifier {
   bool isDeleting = false;
   String query = '';
   bool favoritesOnly = false;
+  TrackSort sort = TrackSort.title;
 
   List<MusicTrack>? _allTracksCache;
   List<MusicTrack>? _tracksCache;
   List<MusicTrack>? _historyCache;
   Map<String, MusicTrack>? _byIdCache;
+  Map<String, MusicTrack>? _bySourceUriCache;
 
   List<MusicTrack> get allTracks =>
       _allTracksCache ??= List.unmodifiable(_tracks);
@@ -46,13 +58,73 @@ class LibraryProvider extends ChangeNotifier {
     final cached = _tracksCache;
     if (cached != null) return cached;
     final needle = query.trim().toLowerCase();
-    return _tracksCache = List.unmodifiable(_tracks.where((track) {
+    final filtered = _tracks.where((track) {
       if (favoritesOnly && !track.favorite) return false;
       return needle.isEmpty ||
           track.title.toLowerCase().contains(needle) ||
           track.artist.toLowerCase().contains(needle) ||
           track.album.toLowerCase().contains(needle);
-    }));
+    });
+    return _tracksCache = List.unmodifiable(sortTracks(filtered, sort));
+  }
+
+  /// Sorts with precomputed accent-insensitive keys; ties keep album order.
+  static List<MusicTrack> sortTracks(
+    Iterable<MusicTrack> tracks,
+    TrackSort sort,
+  ) {
+    if (sort == TrackSort.recent) {
+      return tracks.toList()..sort((a, b) => b.addedAt.compareTo(a.addedAt));
+    }
+    final keyed = [
+      for (final track in tracks)
+        (
+          key: switch (sort) {
+            TrackSort.artist =>
+              '${_fold(track.artist)}\u0000${_fold(track.album)}',
+            TrackSort.album => _fold(track.album),
+            _ => _fold(track.title),
+          },
+          track: track,
+        ),
+    ];
+    keyed.sort((a, b) {
+      final byKey = a.key.compareTo(b.key);
+      if (byKey != 0) return byKey;
+      final disc = (a.track.discNumber ?? 0).compareTo(b.track.discNumber ?? 0);
+      if (disc != 0) return disc;
+      final number =
+          (a.track.trackNumber ?? 0).compareTo(b.track.trackNumber ?? 0);
+      return number != 0
+          ? number
+          : _fold(a.track.title).compareTo(_fold(b.track.title));
+    });
+    return [for (final item in keyed) item.track];
+  }
+
+  static const _accents = {
+    'à': 'a', 'â': 'a', 'ä': 'a', 'á': 'a', 'ã': 'a', 'å': 'a', //
+    'ç': 'c', 'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e', //
+    'î': 'i', 'ï': 'i', 'í': 'i', 'ì': 'i', 'ñ': 'n', //
+    'ô': 'o', 'ö': 'o', 'ó': 'o', 'ò': 'o', 'õ': 'o', 'ø': 'o', //
+    'ù': 'u', 'û': 'u', 'ü': 'u', 'ú': 'u', 'ÿ': 'y', 'œ': 'oe', 'æ': 'ae',
+  };
+
+  static String _fold(String value) {
+    final lower = value.trim().toLowerCase();
+    final buffer = StringBuffer();
+    for (final rune in lower.runes) {
+      final char = String.fromCharCode(rune);
+      buffer.write(_accents[char] ?? char);
+    }
+    return buffer.toString();
+  }
+
+  Future<void> setSort(TrackSort value) async {
+    if (sort == value) return;
+    sort = value;
+    notifyListeners();
+    await _service.saveSort(value.name);
   }
 
   Map<String, MusicTrack> get _byId =>
@@ -65,6 +137,7 @@ class LibraryProvider extends ChangeNotifier {
     _tracksCache = null;
     _historyCache = null;
     _byIdCache = null;
+    _bySourceUriCache = null;
   }
 
   @override
@@ -75,6 +148,11 @@ class LibraryProvider extends ChangeNotifier {
 
   Future<void> load() async {
     final playlists = await _playlistService.load();
+    final savedSort = await _service.loadSort();
+    sort = TrackSort.values
+            .where((value) => value.name == savedSort)
+            .firstOrNull ??
+        TrackSort.title;
     _tracks
       ..clear()
       ..addAll(await _service.load());
@@ -93,6 +171,12 @@ class LibraryProvider extends ChangeNotifier {
   }
 
   bool? isFavorite(String id) => _byId[id]?.favorite;
+
+  /// The imported copy of a server file, used to play it offline.
+  MusicTrack? trackForSourceUri(String sourceUri) => (_bySourceUriCache ??= {
+        for (final track in _tracks)
+          if (track.sourceUri != null) track.sourceUri!: track,
+      })[sourceUri];
 
   /// Resolves ids in the given order, skipping tracks that no longer exist.
   List<MusicTrack> tracksByIds(Iterable<String> ids) {
@@ -282,6 +366,7 @@ class LibraryProvider extends ChangeNotifier {
       _allTracksCache = null;
       _tracksCache = null;
       _historyCache = null;
+      _bySourceUriCache = null;
     }
     return added;
   }

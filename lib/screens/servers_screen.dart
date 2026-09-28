@@ -635,6 +635,17 @@ class _Browser extends StatelessWidget {
                         ),
                   ),
                 ),
+                if (provider.selected!.type != ServerType.ftp &&
+                    provider.currentUri != null &&
+                    !provider.loading &&
+                    provider.error == null &&
+                    provider.entries.isNotEmpty)
+                  IconButton(
+                    tooltip: 'Lire ce dossier',
+                    onPressed: () => _playRemoteFolder(
+                        context, provider, provider.currentUri!),
+                    icon: const Icon(Icons.play_circle_outline_rounded),
+                  ),
                 Consumer<DownloadQueueProvider>(
                   builder: (context, downloads, _) => Badge(
                     isLabelVisible: downloads.activeCount > 0,
@@ -703,6 +714,13 @@ class _RemoteTile extends StatelessWidget {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (servers.selected!.type != ServerType.ftp)
+                IconButton(
+                  tooltip: 'Lire le dossier',
+                  onPressed: () =>
+                      _playRemoteFolder(context, servers, entry.uri),
+                  icon: const Icon(Icons.play_circle_outline_rounded),
+                ),
               IconButton(
                 tooltip: 'Télécharger tout le dossier',
                 onPressed: () => _downloadFolder(context, servers),
@@ -721,7 +739,8 @@ class _RemoteTile extends StatelessWidget {
     final preview =
         context.select<PlayerProvider, ({bool selected, bool playing})>(
       (player) => (
-        selected: player.current?.uri == entry.uri.toString(),
+        selected: player.current?.uri == entry.uri.toString() ||
+            player.current?.sourceUri == entry.uri.toString(),
         playing: player.playing,
       ),
     );
@@ -841,31 +860,15 @@ class _RemoteTile extends StatelessWidget {
     BuildContext context,
     ServerProvider servers,
     RemoteAudioMetadata? metadata,
-  ) async {
-    final profile = servers.selected!;
-    final artworkPath = metadata?.artworkPath;
-    final track = MusicTrack(
-      id: 'remote:${entry.uri}',
-      title: metadata?.title ?? _titleFromFilename(entry.name),
-      artist: metadata?.artist ?? 'Artiste inconnu',
-      album: metadata?.album ?? 'Album inconnu',
-      artworkUri: artworkPath == null ? null : File(artworkPath).uri.toString(),
-      uri: entry.uri.toString(),
-      metadataRead: true,
-      addedAt: DateTime.now().toUtc(),
+  ) {
+    final files = servers.entries.where((item) => !item.isDirectory).toList();
+    return _playRemoteFiles(
+      context,
+      servers,
+      files,
+      start: entry,
+      startMetadata: metadata,
     );
-    try {
-      await context.read<PlayerProvider>().playRemote(
-            track,
-            headers: servers.remoteService
-                .authorizationHeaders(profile, servers.password),
-          );
-    } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lecture depuis le serveur impossible.')),
-      );
-    }
   }
 
   String _size(int bytes) => bytes >= 1048576
@@ -1349,6 +1352,86 @@ String _downloadStatusLabel(TaskRecord record) => switch (record.status) {
       TaskStatus.waitingToRetry => 'Nouvelle tentative en attente',
       TaskStatus.paused => 'En pause',
     };
+
+/// Streams every audio file below [folder], in path order.
+Future<void> _playRemoteFolder(
+  BuildContext context,
+  ServerProvider servers,
+  Uri folder,
+) async {
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.showSnackBar(const SnackBar(
+    content: Text('Préparation de la lecture…'),
+    duration: Duration(seconds: 30),
+  ));
+  List<RemoteAudioEntry> files;
+  try {
+    files = [...await servers.filesInFolder(folder)]..sort(
+        (a, b) => a.uri.path.toLowerCase().compareTo(b.uri.path.toLowerCase()));
+  } catch (_) {
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(
+          content: Text('Impossible de lire le contenu du dossier.')));
+    return;
+  }
+  messenger.hideCurrentSnackBar();
+  if (!context.mounted) return;
+  if (files.isEmpty) {
+    messenger.showSnackBar(const SnackBar(
+        content: Text('Aucun morceau compatible dans ce dossier.')));
+    return;
+  }
+  await _playRemoteFiles(context, servers, files);
+}
+
+/// Plays [files] as one queue starting at [start]. Files already imported
+/// play from the phone; the others stream with the profile's credentials.
+Future<void> _playRemoteFiles(
+  BuildContext context,
+  ServerProvider servers,
+  List<RemoteAudioEntry> files, {
+  RemoteAudioEntry? start,
+  RemoteAudioMetadata? startMetadata,
+}) async {
+  final profile = servers.selected;
+  if (profile == null || files.isEmpty) return;
+  final library = context.read<LibraryProvider>();
+  final player = context.read<PlayerProvider>();
+  final messenger = ScaffoldMessenger.of(context);
+  final now = DateTime.now().toUtc();
+  MusicTrack trackFor(RemoteAudioEntry file) {
+    final local = library.trackForSourceUri(file.uri.toString());
+    if (local != null) return local;
+    final metadata = file.uri == start?.uri ? startMetadata : null;
+    final artworkPath = metadata?.artworkPath;
+    return MusicTrack(
+      id: 'remote:${file.uri}',
+      title: metadata?.title ?? _titleFromFilename(file.name),
+      artist: metadata?.artist ?? 'Artiste inconnu',
+      album: metadata?.album ?? 'Album inconnu',
+      artworkUri: artworkPath == null ? null : File(artworkPath).uri.toString(),
+      uri: file.uri.toString(),
+      metadataRead: true,
+      addedAt: now,
+    );
+  }
+
+  final startIndex =
+      start == null ? 0 : files.indexWhere((file) => file.uri == start.uri);
+  try {
+    await player.playRemoteQueue(
+      files.map(trackFor).toList(),
+      startIndex: startIndex < 0 ? 0 : startIndex,
+      headers:
+          servers.remoteService.authorizationHeaders(profile, servers.password),
+    );
+  } catch (_) {
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Lecture depuis le serveur impossible.')),
+    );
+  }
+}
 
 String _titleFromFilename(String name) {
   final extension = name.lastIndexOf('.');

@@ -143,14 +143,33 @@ class PlayerProvider extends ChangeNotifier {
   Future<void> playRemote(
     MusicTrack track, {
     Map<String, String> headers = const {},
+  }) =>
+      playRemoteQueue([track], headers: headers);
+
+  /// Streams a server folder as one queue. Tracks already imported may be
+  /// passed as local `file:` tracks; authorization headers are only sent to
+  /// remote sources.
+  Future<void> playRemoteQueue(
+    List<MusicTrack> tracks, {
+    int startIndex = 0,
+    Map<String, String> headers = const {},
   }) async {
-    _queue = [track];
-    _current = track;
-    _resetListeningSession(track, force: true);
+    if (tracks.isEmpty) return;
+    final index = startIndex.clamp(0, tracks.length - 1);
+    _queue = List.of(tracks);
+    _current = _queue[index];
+    _resetListeningSession(_current, force: true);
     _announceTrack();
-    await _player.setAudioSources([
-      _audioSource(track, headers: headers),
-    ]);
+    await _player.setAudioSources(
+      [
+        for (final track in _queue)
+          _audioSource(
+            track,
+            headers: Uri.parse(track.uri).isScheme('file') ? const {} : headers,
+          ),
+      ],
+      initialIndex: index,
+    );
     await _playWithFade();
   }
 
