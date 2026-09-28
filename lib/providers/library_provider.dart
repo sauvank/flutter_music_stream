@@ -19,7 +19,13 @@ class LibraryProvider extends ChangeNotifier {
   String query = '';
   bool favoritesOnly = false;
 
-  List<MusicTrack> get allTracks => List.unmodifiable(_tracks);
+  List<MusicTrack>? _allTracksCache;
+  List<MusicTrack>? _tracksCache;
+  List<MusicTrack>? _historyCache;
+  Map<String, MusicTrack>? _byIdCache;
+
+  List<MusicTrack> get allTracks =>
+      _allTracksCache ??= List.unmodifiable(_tracks);
   int get trackCount => _tracks.length;
   Set<String> get downloadedSourceUris => _downloadedSourceUris;
   List<MusicTrack> get downloadedTracks => List.unmodifiable(
@@ -29,21 +35,40 @@ class LibraryProvider extends ChangeNotifier {
       List.unmodifiable(_tracks.where((track) => track.source == null));
   List<MusicPlaylist> get playlists => List.unmodifiable(_playlists);
 
-  List<MusicTrack> get listeningHistory {
-    final history = tracks.where((track) => track.lastPlayedAt != null).toList()
-      ..sort((a, b) => b.lastPlayedAt!.compareTo(a.lastPlayedAt!));
-    return history;
-  }
+  List<MusicTrack> get listeningHistory => _historyCache ??= List.unmodifiable(
+        tracks.where((track) => track.lastPlayedAt != null).toList()
+          ..sort((a, b) => b.lastPlayedAt!.compareTo(a.lastPlayedAt!)),
+      );
 
   List<MusicTrack> get tracks {
+    final cached = _tracksCache;
+    if (cached != null) return cached;
     final needle = query.trim().toLowerCase();
-    return _tracks.where((track) {
+    return _tracksCache = List.unmodifiable(_tracks.where((track) {
       if (favoritesOnly && !track.favorite) return false;
       return needle.isEmpty ||
           track.title.toLowerCase().contains(needle) ||
           track.artist.toLowerCase().contains(needle) ||
           track.album.toLowerCase().contains(needle);
-    }).toList();
+    }));
+  }
+
+  Map<String, MusicTrack> get _byId =>
+      _byIdCache ??= {for (final track in _tracks) track.id: track};
+
+  /// Every mutation ends with a notification, so derived views are rebuilt
+  /// lazily on the next read instead of on every getter call.
+  void _invalidateViews() {
+    _allTracksCache = null;
+    _tracksCache = null;
+    _historyCache = null;
+    _byIdCache = null;
+  }
+
+  @override
+  void notifyListeners() {
+    _invalidateViews();
+    super.notifyListeners();
   }
 
   Future<void> load() async {
@@ -66,7 +91,7 @@ class LibraryProvider extends ChangeNotifier {
   }
 
   List<MusicTrack> tracksForPlaylist(MusicPlaylist playlist) {
-    final byId = {for (final track in _tracks) track.id: track};
+    final byId = _byId;
     return playlist.trackIds.map((id) => byId[id]).nonNulls.toList();
   }
 
@@ -137,11 +162,11 @@ class LibraryProvider extends ChangeNotifier {
     final removedIds = <String>{};
     try {
       for (final id in ids.toSet()) {
-        final track =
-            _tracks.where((candidate) => candidate.id == id).firstOrNull;
+        final track = _byId[id];
         if (track == null) continue;
         await _service.deleteTrackFiles(track);
         _tracks.removeWhere((candidate) => candidate.id == id);
+        _byIdCache?.remove(id);
         removedIds.add(id);
       }
       return removedIds.length;
@@ -184,11 +209,7 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final incoming = await _service.pickAndImport();
-      for (final track in incoming) {
-        if (_tracks.every((existing) => existing.id != track.id)) {
-          _tracks.add(track);
-        }
-      }
+      _addNewTracks(incoming);
       await _service.save(_tracks);
     } finally {
       isImporting = false;
@@ -201,16 +222,29 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final incoming = await _service.pickDirectoryAndImport();
-      for (final track in incoming) {
-        if (_tracks.every((existing) => existing.id != track.id)) {
-          _tracks.add(track);
-        }
-      }
+      _addNewTracks(incoming);
       await _service.save(_tracks);
     } finally {
       isImporting = false;
       notifyListeners();
     }
+  }
+
+  int _addNewTracks(Iterable<MusicTrack> incoming) {
+    final byId = _byId;
+    var added = 0;
+    for (final track in incoming) {
+      if (byId.containsKey(track.id)) continue;
+      _tracks.add(track);
+      byId[track.id] = track;
+      added++;
+    }
+    if (added > 0) {
+      _allTracksCache = null;
+      _tracksCache = null;
+      _historyCache = null;
+    }
+    return added;
   }
 
   Future<void> toggleFavorite(String id) async {
@@ -235,8 +269,7 @@ class LibraryProvider extends ChangeNotifier {
         uri: uri,
         headers: headers,
       );
-      if (_tracks.any((existing) => existing.id == track.id)) return false;
-      _tracks.add(track);
+      if (_addNewTracks([track]) == 0) return false;
       _refreshDownloadedSourceUris();
       await _service.save(_tracks);
       return true;
@@ -265,10 +298,9 @@ class LibraryProvider extends ChangeNotifier {
             uri: file.uri,
             headers: headers,
           );
-          if (_tracks.any((existing) => existing.id == track.id)) {
+          if (_addNewTracks([track]) == 0) {
             skipped++;
           } else {
-            _tracks.add(track);
             added++;
           }
         } catch (_) {
@@ -295,8 +327,7 @@ class LibraryProvider extends ChangeNotifier {
       originalName: originalName,
       sourceUri: sourceUri,
     );
-    if (_tracks.any((existing) => existing.id == track.id)) return false;
-    _tracks.add(track);
+    if (_addNewTracks([track]) == 0) return false;
     _refreshDownloadedSourceUris();
     await _service.save(_tracks);
     notifyListeners();
@@ -308,7 +339,8 @@ class LibraryProvider extends ChangeNotifier {
     if (index == -1) return;
     _tracks[index] =
         _tracks[index].copyWith(lastPositionMs: position.inMilliseconds);
-    await _service.save(_tracks);
+    _invalidateViews();
+    await _service.savePosition(id, position.inMilliseconds);
   }
 
   Future<void> recordPlayed(String id) async {

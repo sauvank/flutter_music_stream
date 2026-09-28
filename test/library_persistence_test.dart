@@ -29,4 +29,29 @@ void main() {
     expect(loaded, hasLength(121));
     expect(loaded.last.favorite, isTrue);
   });
+
+  test('positions persist separately and fold back on load', () async {
+    SharedPreferences.setMockInitialValues({});
+    final service = LibraryService();
+    final track = MusicTrack(
+      id: 'a',
+      title: 'Track',
+      uri: 'file:///music/a.mp3',
+      addedAt: DateTime.utc(2026),
+      metadataRead: true,
+    );
+    await service.save([track]);
+    await service.savePosition('a', 42000);
+
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getString('music_positions_v1'), isNotNull);
+
+    final reloaded = LibraryService();
+    final loaded = await reloaded.load();
+    expect(loaded.single.lastPositionMs, 42000);
+
+    await reloaded.save(loaded);
+    expect(preferences.getString('music_positions_v1'), isNull);
+    expect((await LibraryService().load()).single.lastPositionMs, 42000);
+  });
 }

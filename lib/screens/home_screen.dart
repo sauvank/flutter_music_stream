@@ -264,9 +264,6 @@ class _MiniPlayer extends StatelessWidget {
     final track = player.current;
     if (track == null) return const SizedBox.shrink();
     final duration = player.duration.inMilliseconds;
-    final progress = duration <= 0
-        ? 0.0
-        : (player.position.inMilliseconds / duration).clamp(0.0, 1.0);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
@@ -336,10 +333,16 @@ class _MiniPlayer extends StatelessWidget {
                   borderRadius: const BorderRadius.vertical(
                     bottom: Radius.circular(24),
                   ),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 3,
-                    backgroundColor: Colors.transparent,
+                  child: ValueListenableBuilder<Duration>(
+                    valueListenable: player.positionListenable,
+                    builder: (context, position, _) => LinearProgressIndicator(
+                      value: duration <= 0
+                          ? 0.0
+                          : (position.inMilliseconds / duration)
+                              .clamp(0.0, 1.0),
+                      minHeight: 3,
+                      backgroundColor: Colors.transparent,
+                    ),
                   ),
                 ),
               ],

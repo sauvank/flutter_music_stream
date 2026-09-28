@@ -113,6 +113,32 @@ void main() {
     player.dispose();
   });
 
+  test('publishes position ticks without notifying provider listeners',
+      () async {
+    final audioPlayer = _FakeAudioPlayer();
+    final player = PlayerProvider(
+      audioPlayer: audioPlayer,
+      fadeDuration: Duration.zero,
+    );
+    final track = _track('1');
+    await player.playTrack(track, [track]);
+    await Future<void>.delayed(Duration.zero);
+
+    var notifications = 0;
+    final positions = <Duration>[];
+    player.addListener(() => notifications++);
+    player.positionListenable
+        .addListener(() => positions.add(player.positionListenable.value));
+
+    audioPlayer.emitPosition(const Duration(seconds: 1));
+    audioPlayer.emitPosition(const Duration(seconds: 2));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(positions, const [Duration(seconds: 1), Duration(seconds: 2)]);
+    expect(notifications, 0);
+    player.dispose();
+  });
+
   test('announces the current track once for automatic enrichment', () async {
     final announced = <String>[];
     final player = PlayerProvider(

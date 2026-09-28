@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
@@ -23,6 +24,7 @@ class LibraryService {
             documentsDirectory ?? getApplicationDocumentsDirectory;
 
   static const _libraryKey = 'music_library_v1';
+  static const _positionsKey = 'music_positions_v1';
   static const supportedExtensions = <String>[
     'mp3',
     'm4a',
@@ -36,6 +38,7 @@ class LibraryService {
   final LyricsService _lyricsService;
   final Future<Directory> Function() _documentsDirectory;
   Future<void> _saveChain = Future.value();
+  final Map<String, int> _positions = {};
 
   Future<void> deleteTrackFiles(MusicTrack track) async {
     final root = await _documentsDirectory();
@@ -67,6 +70,17 @@ class LibraryService {
       final tracks = serialized.length > 50000
           ? await compute(MusicTrack.decodeAll, serialized)
           : MusicTrack.decodeAll(serialized);
+      _positions
+        ..clear()
+        ..addAll(_decodePositions(preferences.getString(_positionsKey)));
+      if (_positions.isNotEmpty) {
+        for (var index = 0; index < tracks.length; index++) {
+          final position = _positions[tracks[index].id];
+          if (position != null) {
+            tracks[index] = tracks[index].copyWith(lastPositionMs: position);
+          }
+        }
+      }
       var changed = false;
       for (var index = 0; index < tracks.length; index++) {
         if (tracks[index].metadataRead) continue;
@@ -87,12 +101,45 @@ class LibraryService {
     return result;
   }
 
+  /// Persists a playback position without re-encoding the whole library.
+  ///
+  /// Positions live in a small side table that is folded back into the index
+  /// on load and cleared by the next full [save], whose snapshot is newer.
+  Future<void> savePosition(String id, int positionMs) {
+    final result = _saveChain.then((_) async {
+      _positions[id] = positionMs;
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setString(_positionsKey, jsonEncode(_positions));
+    });
+    _saveChain = result.then<void>((_) {}, onError: (Object _) {});
+    return result;
+  }
+
   Future<void> _write(List<MusicTrack> tracks) async {
     final preferences = await SharedPreferences.getInstance();
     final serialized = tracks.length > 100
         ? await compute(MusicTrack.encodeAll, tracks)
         : MusicTrack.encodeAll(tracks);
     await preferences.setString(_libraryKey, serialized);
+    if (_positions.isNotEmpty || preferences.containsKey(_positionsKey)) {
+      _positions.clear();
+      await preferences.remove(_positionsKey);
+    }
+  }
+
+  static Map<String, int> _decodePositions(String? value) {
+    if (value == null || value.isEmpty) return const {};
+    try {
+      final decoded = jsonDecode(value);
+      if (decoded is! Map) return const {};
+      return {
+        for (final entry in decoded.entries)
+          if (entry.key is String && entry.value is int)
+            entry.key as String: entry.value as int,
+      };
+    } on FormatException {
+      return const {};
+    }
   }
 
   Future<List<MusicTrack>> pickAndImport() async {

@@ -197,11 +197,10 @@ class _LyricsSheetState extends State<LyricsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final player = context.watch<PlayerProvider>();
+    final isCurrent = context.select<PlayerProvider, bool>(
+      (player) => player.current?.id == widget.track.id,
+    );
     final displayed = _translation ?? _lyrics;
-    final active = player.current?.id == widget.track.id
-        ? displayed?.activeLineAt(player.position) ?? -1
-        : -1;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -275,11 +274,20 @@ class _LyricsSheetState extends State<LyricsSheet> {
                         )
                       : displayed.synchronized
                           ? LayoutBuilder(
-                              builder: (context, constraints) => _timedLyrics(
-                                context,
-                                displayed,
-                                active,
-                                constraints.maxHeight,
+                              builder: (context, constraints) =>
+                                  ValueListenableBuilder<Duration>(
+                                valueListenable: context
+                                    .read<PlayerProvider>()
+                                    .positionListenable,
+                                builder: (context, position, _) =>
+                                    _timedLyrics(
+                                  context,
+                                  displayed,
+                                  isCurrent
+                                      ? displayed.activeLineAt(position)
+                                      : -1,
+                                  constraints.maxHeight,
+                                ),
                               ),
                             )
                           : SingleChildScrollView(

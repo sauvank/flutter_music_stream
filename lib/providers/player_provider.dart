@@ -31,7 +31,7 @@ class PlayerProvider extends ChangeNotifier {
         _lastPersistedAt = now;
         unawaited(onPositionChanged?.call(track.id, position));
       }
-      notifyListeners();
+      _position.value = position;
     }));
     _subscriptions.add(_player.durationStream.listen((_) => notifyListeners()));
     _subscriptions.add(_player.loopModeStream.listen((_) => notifyListeners()));
@@ -46,6 +46,7 @@ class PlayerProvider extends ChangeNotifier {
   }
 
   final AudioPlayer _player;
+  final ValueNotifier<Duration> _position = ValueNotifier(Duration.zero);
   final List<StreamSubscription<Object?>> _subscriptions = [];
   final Future<void> Function(String id, Duration position)? onPositionChanged;
   final Future<void> Function(Duration duration)? onFadeDurationChanged;
@@ -68,6 +69,10 @@ class PlayerProvider extends ChangeNotifier {
   MusicTrack? get current => _current;
   bool get playing => _player.playing;
   Duration get position => _player.position;
+
+  /// Position updates are published separately so that frequent ticks only
+  /// rebuild progress widgets instead of every [PlayerProvider] listener.
+  ValueListenable<Duration> get positionListenable => _position;
   Duration get duration => _player.duration ?? Duration.zero;
   bool get hasNext => _player.hasNext;
   bool get hasPrevious => _player.hasPrevious;
@@ -379,6 +384,7 @@ class PlayerProvider extends ChangeNotifier {
       unawaited(subscription.cancel());
     }
     unawaited(_player.dispose());
+    _position.dispose();
     super.dispose();
   }
 }

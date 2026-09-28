@@ -20,8 +20,6 @@ class NowPlayingScreen extends StatelessWidget {
         .toDouble()
         .clamp(1, double.infinity)
         .toDouble();
-    final value =
-        player.position.inMilliseconds.toDouble().clamp(0, maximum).toDouble();
     final screenHeight = MediaQuery.sizeOf(context).height;
     final compactHeight = screenHeight < 760;
     return AnimatedSwitcher(
@@ -135,31 +133,43 @@ class NowPlayingScreen extends StatelessWidget {
               ],
             ),
             SizedBox(height: compactHeight ? 12 : 22),
-            SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                trackHeight: 6,
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
-                overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
-              ),
-              child: Slider(
-                value: value,
-                max: maximum,
-                onChanged: (next) =>
-                    player.seek(Duration(milliseconds: next.round())),
-                onChangeEnd: (next) => context
-                    .read<LibraryProvider>()
-                    .savePosition(
-                        track.id, Duration(milliseconds: next.round())),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            ValueListenableBuilder<Duration>(
+              valueListenable: player.positionListenable,
+              builder: (context, position, _) => Column(
                 children: [
-                  Text(_time(player.position)),
-                  Text(
-                      '-${_time(_remaining(player.duration, player.position))}'),
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      trackHeight: 6,
+                      thumbShape:
+                          const RoundSliderThumbShape(enabledThumbRadius: 7),
+                      overlayShape:
+                          const RoundSliderOverlayShape(overlayRadius: 18),
+                    ),
+                    child: Slider(
+                      value: position.inMilliseconds
+                          .toDouble()
+                          .clamp(0, maximum)
+                          .toDouble(),
+                      max: maximum,
+                      onChanged: (next) =>
+                          player.seek(Duration(milliseconds: next.round())),
+                      onChangeEnd: (next) => context
+                          .read<LibraryProvider>()
+                          .savePosition(
+                              track.id, Duration(milliseconds: next.round())),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(_time(position)),
+                        Text(
+                            '-${_time(_remaining(player.duration, position))}'),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
