@@ -279,8 +279,7 @@ class _LyricsSheetState extends State<LyricsSheet> {
                                 valueListenable: context
                                     .read<PlayerProvider>()
                                     .positionListenable,
-                                builder: (context, position, _) =>
-                                    _timedLyrics(
+                                builder: (context, position, _) => _timedLyrics(
                                   context,
                                   displayed,
                                   isCurrent

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
@@ -105,6 +106,38 @@ class PlayerProvider extends ChangeNotifier {
       await _player.setLoopMode(LoopMode.off);
     }
     await playTrack(tracks.first, tracks);
+  }
+
+  /// Plays a shuffled copy so the visible queue matches the listening order.
+  Future<void> playShuffled(List<MusicTrack> tracks, {Random? random}) async {
+    if (tracks.isEmpty) return;
+    if (_player.shuffleModeEnabled) {
+      await _player.setShuffleModeEnabled(false);
+    }
+    await playAll(List.of(tracks)..shuffle(random));
+  }
+
+  /// Inserts [tracks] after the current one, preserving their order.
+  Future<void> playNextAll(List<MusicTrack> tracks) async {
+    if (tracks.isEmpty) return;
+    if (_queue.isEmpty || _player.currentIndex == null) {
+      await playAll(tracks);
+      return;
+    }
+    for (final track in tracks.reversed) {
+      await playNext(track);
+    }
+  }
+
+  Future<void> addAllToQueue(List<MusicTrack> tracks) async {
+    if (tracks.isEmpty) return;
+    if (_queue.isEmpty) {
+      await playAll(tracks);
+      return;
+    }
+    for (final track in tracks) {
+      await addToQueue(track);
+    }
   }
 
   Future<void> playRemote(

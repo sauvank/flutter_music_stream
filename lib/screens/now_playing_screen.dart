@@ -14,6 +14,11 @@ class NowPlayingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final player = context.watch<PlayerProvider>();
     final track = player.current;
+    // The queue holds snapshots; the library owns the live favorite state.
+    final favorite = context.select<LibraryProvider, bool>(
+      (library) =>
+          track != null && (library.isFavorite(track.id) ?? track.favorite),
+    );
     if (track == null) return const _NothingPlaying();
 
     final maximum = player.duration.inMilliseconds
@@ -121,12 +126,11 @@ class NowPlayingScreen extends StatelessWidget {
                   ),
                 ),
                 IconButton.filledTonal(
-                  tooltip: track.favorite
-                      ? 'Retirer des favoris'
-                      : 'Ajouter aux favoris',
+                  tooltip:
+                      favorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
                   onPressed: () =>
                       context.read<LibraryProvider>().toggleFavorite(track.id),
-                  icon: Icon(track.favorite
+                  icon: Icon(favorite
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded),
                 ),

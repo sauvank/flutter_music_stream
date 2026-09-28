@@ -13,6 +13,9 @@ import '../models/music_track.dart';
 import 'audio_metadata_service.dart';
 import 'lyrics_service.dart';
 
+typedef ImportProgressCallback = void Function(int completed, int total);
+typedef LocalImportResult = ({List<MusicTrack> tracks, int failed});
+
 class LibraryService {
   LibraryService(
       {AudioMetadataService? metadataService,
@@ -142,13 +145,15 @@ class LibraryService {
     }
   }
 
-  Future<List<MusicTrack>> pickAndImport() async {
+  Future<LocalImportResult?> pickAndImport({
+    ImportProgressCallback? onProgress,
+  }) async {
     final selection = await FilePicker.pickFiles(
       allowMultiple: true,
       type: FileType.custom,
       allowedExtensions: [...supportedExtensions, 'lrc'],
     );
-    if (selection == null) return [];
+    if (selection == null) return null;
     final selected = selection.files.where((picked) => picked.path != null);
     final sidecars = {
       for (final picked in selected)
@@ -156,24 +161,28 @@ class LibraryService {
           p.basenameWithoutExtension(picked.name).toLowerCase():
               File(picked.path!),
     };
-    return _importSources(selected
-        .where((picked) => supportedExtensions.contains(
-            p.extension(picked.name).replaceFirst('.', '').toLowerCase()))
-        .map((picked) => (
-              path: picked.path!,
-              name: picked.name,
-              sidecar: sidecars[
-                  p.basenameWithoutExtension(picked.name).toLowerCase()],
-            )));
+    return _importSources(
+        selected
+            .where((picked) => supportedExtensions.contains(
+                p.extension(picked.name).replaceFirst('.', '').toLowerCase()))
+            .map((picked) => (
+                  path: picked.path!,
+                  name: picked.name,
+                  sidecar: sidecars[
+                      p.basenameWithoutExtension(picked.name).toLowerCase()],
+                )),
+        onProgress: onProgress);
   }
 
-  Future<List<MusicTrack>> pickDirectoryAndImport() async {
+  Future<LocalImportResult?> pickDirectoryAndImport({
+    ImportProgressCallback? onProgress,
+  }) async {
     final selectedPath = await FilePicker.getDirectoryPath(
       dialogTitle: 'Choisir un dossier de musique',
     );
-    if (selectedPath == null) return [];
+    if (selectedPath == null) return null;
     final directory = Directory(selectedPath);
-    if (!await directory.exists()) return [];
+    if (!await directory.exists()) return null;
     final files = <File>[];
     final sidecars = <String, File>{};
     await for (final entity
@@ -195,41 +204,59 @@ class LibraryService {
             ))
         .toList();
     sources.sort((a, b) => a.path.compareTo(b.path));
-    return _importSources(sources);
+    return _importSources(sources, onProgress: onProgress);
   }
 
-  Future<List<MusicTrack>> _importSources(
-    Iterable<({String path, String name, File? sidecar})> sources,
-  ) async {
+  Future<LocalImportResult> _importSources(
+    Iterable<({String path, String name, File? sidecar})> sources, {
+    ImportProgressCallback? onProgress,
+  }) async {
+    final items = sources.toList();
     final root = await getApplicationDocumentsDirectory();
     final musicDirectory = Directory(p.join(root.path, 'music'));
     await musicDirectory.create(recursive: true);
     final imported = <MusicTrack>[];
-    for (final item in sources) {
-      final source = File(item.path);
-      final id = (await sha256.bind(source.openRead()).first).toString();
-      final safeName =
-          '${id.substring(0, 16)}${p.extension(item.name).toLowerCase()}';
-      final destination = File(p.join(musicDirectory.path, safeName));
-      if (!await destination.exists()) await source.copy(destination.path);
-      if (item.sidecar != null) {
-        try {
-          await _lyricsService.importSidecar(id, item.sidecar!);
-        } on FileSystemException {
-          // A missing or unreadable sidecar must not prevent audio import.
-        } on FormatException {
-          // Invalid lyrics do not prevent audio import.
-        }
+    var failed = 0;
+    onProgress?.call(0, items.length);
+    for (var index = 0; index < items.length; index++) {
+      try {
+        imported.add(await _importSource(items[index], musicDirectory));
+      } catch (error) {
+        // One unreadable file must not abort the rest of the selection.
+        failed++;
+        debugPrint('Local import failed: ${error.runtimeType}');
       }
-      imported.add(await _readMetadata(MusicTrack(
-        id: id,
-        title: _titleFromFilename(item.name),
-        uri: destination.uri.toString(),
-        addedAt: DateTime.now().toUtc(),
-        source: MusicSource.localImport,
-      )));
+      onProgress?.call(index + 1, items.length);
     }
-    return imported;
+    return (tracks: imported, failed: failed);
+  }
+
+  Future<MusicTrack> _importSource(
+    ({String path, String name, File? sidecar}) item,
+    Directory musicDirectory,
+  ) async {
+    final source = File(item.path);
+    final id = (await sha256.bind(source.openRead()).first).toString();
+    final safeName =
+        '${id.substring(0, 16)}${p.extension(item.name).toLowerCase()}';
+    final destination = File(p.join(musicDirectory.path, safeName));
+    if (!await destination.exists()) await source.copy(destination.path);
+    if (item.sidecar != null) {
+      try {
+        await _lyricsService.importSidecar(id, item.sidecar!);
+      } on FileSystemException {
+        // A missing or unreadable sidecar must not prevent audio import.
+      } on FormatException {
+        // Invalid lyrics do not prevent audio import.
+      }
+    }
+    return _readMetadata(MusicTrack(
+      id: id,
+      title: _titleFromFilename(item.name),
+      uri: destination.uri.toString(),
+      addedAt: DateTime.now().toUtc(),
+      source: MusicSource.localImport,
+    ));
   }
 
   Future<MusicTrack> importRemote({

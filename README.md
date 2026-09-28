@@ -4,13 +4,13 @@ MusicStream est un lecteur de musique personnel construit avec Flutter. Il trans
 
 ## État actuel
 
-- import multiple de fichiers ou de dossiers entiers en MP3, M4A, AAC, FLAC, OGG, OPUS et WAV ;
+- import multiple de fichiers ou de dossiers entiers en MP3, M4A, AAC, FLAC, OGG, OPUS et WAV, avec progression et bilan (ajoutés, déjà présents, échecs) ;
 - copie dans le stockage privé de l’application et déduplication SHA-256 ;
-- bibliothèque persistante avec recherche et favoris ;
+- bibliothèque persistante avec recherche et favoris ; appui long pour sélectionner plusieurs morceaux et les lire ensuite, les ajouter à la file ou à une playlist, ou les supprimer ;
 - grands catalogues : index traité hors de l’interface, rafraîchissement regroupé des téléchargements et pochettes adaptées à leur taille d’affichage ;
 - lecture des tags audio, pochettes intégrées et durée à l’import ;
 - navigation par morceaux, artistes, albums et genres ;
-- création et modification de playlists locales ;
+- création et modification de playlists locales ; lecture aléatoire des morceaux, favoris, collections et playlists ;
 - lecture, pause, file visible et réorganisable, « lire ensuite », reprise, aléatoire, répétition, volume persistant et fondus configurables ;
 - historique local des morceaux réellement écoutés, classé par écoute récente ;
 - paroles `.lrc` synchronisées importées avec les fichiers locaux ou manuellement depuis Lecture ; recherche LRCLIB automatique après accord, conservée hors connexion, et traduction à la demande ;

@@ -48,11 +48,48 @@ void main() {
     expect(provider.playlists, isEmpty);
     expect(playlistService.saved, isEmpty);
   });
+
+  test('adds several tracks to a playlist once and in order', () async {
+    final playlistService = _MemoryPlaylistService();
+    final provider = LibraryProvider(
+      _MemoryLibraryService([
+        for (final id in ['a', 'b', 'c'])
+          MusicTrack(
+            id: id,
+            title: id,
+            uri: 'file:///media/music/$id.mp3',
+            addedAt: DateTime.utc(2026),
+            metadataRead: true,
+          ),
+      ]),
+      playlistService,
+    );
+    await provider.load();
+    final playlist = await provider.createPlaylist('Mix');
+    await provider.addTrackToPlaylist(playlist!.id, 'b');
+
+    final added =
+        await provider.addTracksToPlaylist(playlist.id, ['c', 'b', 'a', 'c']);
+
+    expect(added, 2);
+    expect(provider.playlists.single.trackIds, ['b', 'c', 'a']);
+    expect(playlistService.saved.single.trackIds, ['b', 'c', 'a']);
+    expect(provider.tracksByIds(['c', 'missing', 'a']).map((t) => t.id),
+        ['c', 'a']);
+  });
 }
 
 class _MemoryLibraryService extends LibraryService {
+  _MemoryLibraryService([this.tracks]);
+  final List<MusicTrack>? tracks;
+
   @override
-  Future<List<MusicTrack>> load() async => [
+  Future<void> save(List<MusicTrack> tracks) async {}
+
+  @override
+  Future<List<MusicTrack>> load() async =>
+      tracks ??
+      [
         MusicTrack(
           id: 'track-id',
           title: 'Night Drive',

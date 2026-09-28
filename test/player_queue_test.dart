@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:just_audio/just_audio.dart';
@@ -110,6 +111,29 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(listened, ['1']);
+    player.dispose();
+  });
+
+  test('plays a shuffled queue and inserts several tracks in order', () async {
+    final audioPlayer = _FakeAudioPlayer()..shuffleEnabled = true;
+    final player = PlayerProvider(
+      audioPlayer: audioPlayer,
+      fadeDuration: Duration.zero,
+    );
+    final tracks = [for (var i = 1; i <= 5; i++) _track('$i')];
+
+    await player.playShuffled(tracks, random: Random(1));
+    expect(audioPlayer.shuffleEnabled, isFalse);
+    expect(player.queue.map((track) => track.id).toSet(),
+        {'1', '2', '3', '4', '5'});
+    expect(player.current?.id, player.queue.first.id);
+
+    final first = player.queue.first.id;
+    await player.playNextAll([_track('a'), _track('b')]);
+    expect(player.queue.take(3).map((track) => track.id), [first, 'a', 'b']);
+
+    await player.addAllToQueue([_track('c'), _track('d')]);
+    expect(player.queue.skip(7).map((track) => track.id), ['c', 'd']);
     player.dispose();
   });
 

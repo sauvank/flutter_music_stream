@@ -67,7 +67,7 @@ class ServersScreen extends StatelessWidget {
                   onOpen: () => servers.connect(profile),
                   onScan: () => _scanForNewAlbums(context, profile),
                   scanning: servers.scanningProfileIds.contains(profile.id),
-                  onDelete: () => servers.deleteProfile(profile),
+                  onDelete: () => _confirmDeleteProfile(context, profile),
                 );
               },
             ),
@@ -75,6 +75,35 @@ class ServersScreen extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  Future<void> _confirmDeleteProfile(
+    BuildContext context,
+    ServerProfile profile,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Supprimer ce serveur ?'),
+        content: Text(
+          '« ${profile.name} », son mot de passe enregistré et sa référence '
+          'de nouveaux albums seront supprimés. Les morceaux déjà téléchargés '
+          'restent dans la bibliothèque.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    await context.read<ServerProvider>().deleteProfile(profile);
   }
 
   Future<void> _showAddProfile(BuildContext context) async {

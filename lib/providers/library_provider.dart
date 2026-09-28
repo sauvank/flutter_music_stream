@@ -7,6 +7,8 @@ import '../models/remote_audio_entry.dart';
 import '../services/library_service.dart';
 import '../services/playlist_service.dart';
 
+typedef LocalImportSummary = ({int added, int skipped, int failed});
+
 class LibraryProvider extends ChangeNotifier {
   LibraryProvider(this._service, this._playlistService);
   final LibraryService _service;
@@ -90,6 +92,14 @@ class LibraryProvider extends ChangeNotifier {
         .nonNulls);
   }
 
+  bool? isFavorite(String id) => _byId[id]?.favorite;
+
+  /// Resolves ids in the given order, skipping tracks that no longer exist.
+  List<MusicTrack> tracksByIds(Iterable<String> ids) {
+    final byId = _byId;
+    return ids.map((id) => byId[id]).nonNulls.toList();
+  }
+
   List<MusicTrack> tracksForPlaylist(MusicPlaylist playlist) {
     final byId = _byId;
     return playlist.trackIds.map((id) => byId[id]).nonNulls.toList();
@@ -136,6 +146,25 @@ class LibraryProvider extends ChangeNotifier {
     );
     await _playlistService.save(_playlists);
     notifyListeners();
+  }
+
+  /// Adds every track missing from the playlist in one save, keeping order.
+  Future<int> addTracksToPlaylist(
+    String playlistId,
+    Iterable<String> trackIds,
+  ) async {
+    final index =
+        _playlists.indexWhere((playlist) => playlist.id == playlistId);
+    if (index == -1) return 0;
+    final existing = _playlists[index].trackIds.toSet();
+    final missing = trackIds.where(existing.add).toList();
+    if (missing.isEmpty) return 0;
+    _playlists[index] = _playlists[index].copyWith(
+      trackIds: [..._playlists[index].trackIds, ...missing],
+    );
+    await _playlistService.save(_playlists);
+    notifyListeners();
+    return missing.length;
   }
 
   Future<void> removeTrackFromPlaylist(
@@ -204,28 +233,38 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> importFiles() async {
-    isImporting = true;
-    notifyListeners();
-    try {
-      final incoming = await _service.pickAndImport();
-      _addNewTracks(incoming);
-      await _service.save(_tracks);
-    } finally {
-      isImporting = false;
-      notifyListeners();
-    }
-  }
+  /// Progress of the running local import, or `null` when none is running.
+  ({int completed, int total})? importProgress;
 
-  Future<void> importDirectory() async {
+  Future<LocalImportSummary?> importFiles() =>
+      _importLocal(_service.pickAndImport);
+
+  Future<LocalImportSummary?> importDirectory() =>
+      _importLocal(_service.pickDirectoryAndImport);
+
+  Future<LocalImportSummary?> _importLocal(
+    Future<LocalImportResult?> Function({ImportProgressCallback? onProgress})
+        pick,
+  ) async {
+    if (isImporting || isDeleting) return null;
     isImporting = true;
     notifyListeners();
     try {
-      final incoming = await _service.pickDirectoryAndImport();
-      _addNewTracks(incoming);
-      await _service.save(_tracks);
+      final result = await pick(onProgress: (completed, total) {
+        importProgress = (completed: completed, total: total);
+        notifyListeners();
+      });
+      if (result == null) return null;
+      final added = _addNewTracks(result.tracks);
+      if (added > 0) await _service.save(_tracks);
+      return (
+        added: added,
+        skipped: result.tracks.length - added,
+        failed: result.failed,
+      );
     } finally {
       isImporting = false;
+      importProgress = null;
       notifyListeners();
     }
   }

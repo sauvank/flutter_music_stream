@@ -50,12 +50,30 @@ Future<void> showMusicImportSheet(BuildContext context) async {
       ),
     ),
   );
-  switch (source) {
-    case _ImportSource.files:
-      await library.importFiles();
-    case _ImportSource.directory:
-      await library.importDirectory();
-    case null:
-      return;
+  if (source == null || !context.mounted) return;
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    final summary = switch (source) {
+      _ImportSource.files => await library.importFiles(),
+      _ImportSource.directory => await library.importDirectory(),
+    };
+    if (summary == null) return;
+    messenger.showSnackBar(SnackBar(content: Text(importSummaryText(summary))));
+  } catch (_) {
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Import impossible. Réessayez.')),
+    );
   }
+}
+
+String importSummaryText(LocalImportSummary summary) {
+  String plural(int count, String singular, String plural) =>
+      '$count ${count > 1 ? plural : singular}';
+  final parts = [
+    plural(summary.added, 'morceau ajouté', 'morceaux ajoutés'),
+    if (summary.skipped > 0)
+      plural(summary.skipped, 'déjà présent', 'déjà présents'),
+    if (summary.failed > 0) plural(summary.failed, 'échec', 'échecs'),
+  ];
+  return parts.join(' · ');
 }
