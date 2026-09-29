@@ -802,17 +802,26 @@ class _PlaylistCard extends StatelessWidget {
   }
 }
 
-class _PlaylistScreen extends StatelessWidget {
+class _PlaylistScreen extends StatefulWidget {
   const _PlaylistScreen({required this.playlistId});
   final String playlistId;
 
   @override
+  State<_PlaylistScreen> createState() => _PlaylistScreenState();
+}
+
+class _PlaylistScreenState extends State<_PlaylistScreen> {
+  var _reordering = false;
+
+  @override
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
-    final index = library.playlists.indexWhere((item) => item.id == playlistId);
+    final index =
+        library.playlists.indexWhere((item) => item.id == widget.playlistId);
     if (index == -1) return const SizedBox.shrink();
     final playlist = library.playlists[index];
     final tracks = library.tracksForPlaylist(playlist);
+    final reordering = _reordering && tracks.length > 1;
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -820,38 +829,94 @@ class _PlaylistScreen extends StatelessWidget {
             pinned: true,
             title: Text(playlist.name),
             actions: [
-              IconButton(
-                tooltip: 'Ajouter des morceaux',
-                onPressed: () => _selectTracks(context, playlist),
-                icon: const Icon(Icons.playlist_add_rounded),
-              ),
-              PopupMenuButton<String>(
-                onSelected: (action) async {
-                  if (action == 'rename') {
-                    await _renamePlaylist(context, playlist);
-                  } else if (action == 'delete' &&
-                      await _confirmDelete(context, playlist.name)) {
-                    if (!context.mounted) return;
-                    await context
-                        .read<LibraryProvider>()
-                        .deletePlaylist(playlist.id);
-                    if (context.mounted) Navigator.of(context).pop();
-                  }
-                },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'rename', child: Text('Renommer')),
-                  PopupMenuItem(value: 'delete', child: Text('Supprimer')),
-                ],
-              ),
+              if (reordering)
+                IconButton(
+                  tooltip: 'Terminer',
+                  onPressed: () => setState(() => _reordering = false),
+                  icon: const Icon(Icons.check_rounded),
+                )
+              else ...[
+                IconButton(
+                  tooltip: 'Ajouter des morceaux',
+                  onPressed: () => _selectTracks(context, playlist),
+                  icon: const Icon(Icons.playlist_add_rounded),
+                ),
+                PopupMenuButton<String>(
+                  onSelected: (action) async {
+                    if (action == 'edit') {
+                      await _editPlaylist(context, playlist);
+                    } else if (action == 'reorder') {
+                      setState(() => _reordering = true);
+                    } else if (action == 'delete' &&
+                        await _confirmDelete(context, playlist.name)) {
+                      if (!context.mounted) return;
+                      await context
+                          .read<LibraryProvider>()
+                          .deletePlaylist(playlist.id);
+                      if (context.mounted) Navigator.of(context).pop();
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(value: 'edit', child: Text('Modifier')),
+                    if (tracks.length > 1)
+                      const PopupMenuItem(
+                        value: 'reorder',
+                        child: Text("Réorganiser l'ordre"),
+                      ),
+                    const PopupMenuItem(
+                        value: 'delete', child: Text('Supprimer')),
+                  ],
+                ),
+              ],
             ],
           ),
+          if (playlist.description.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: Text(
+                  playlist.description,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                ),
+              ),
+            ),
           if (tracks.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
               child:
                   _EmptyPlaylist(onAdd: () => _selectTracks(context, playlist)),
             )
-          else ...[
+          else if (reordering) ...[
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
+              sliver: SliverToBoxAdapter(
+                child: Text(
+                  'Faites glisser les poignées pour changer l’ordre.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 32),
+              sliver: SliverReorderableList(
+                itemCount: tracks.length,
+                onReorder: (oldIndex, newIndex) {
+                  if (newIndex > oldIndex) newIndex--;
+                  context
+                      .read<LibraryProvider>()
+                      .movePlaylistTrack(playlist.id, oldIndex, newIndex);
+                },
+                itemBuilder: (context, index) => _ReorderableTrackTile(
+                  key: ValueKey(tracks[index].id),
+                  track: tracks[index],
+                  index: index,
+                ),
+              ),
+            ),
+          ] else ...[
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
               sliver: SliverToBoxAdapter(
@@ -891,6 +956,64 @@ class _PlaylistScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ReorderableTrackTile extends StatelessWidget {
+  const _ReorderableTrackTile({
+    super.key,
+    required this.track,
+    required this.index,
+  });
+  final MusicTrack track;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Material(
+          color: Theme.of(context)
+              .colorScheme
+              .surfaceContainer
+              .withValues(alpha: .48),
+          borderRadius: BorderRadius.circular(22),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Row(
+              children: [
+                TrackArtwork(
+                  track: track,
+                  size: 48,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(track.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 3),
+                      Text(track.artist,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall),
+                    ],
+                  ),
+                ),
+                ReorderableDragStartListener(
+                  index: index,
+                  child: const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Icon(Icons.drag_handle_rounded),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
 }
 
 class _EmptyLibrary extends StatelessWidget {
@@ -1498,17 +1621,85 @@ Future<void> _createPlaylist(BuildContext context) async {
   await context.read<LibraryProvider>().createPlaylist(name);
 }
 
-Future<void> _renamePlaylist(
+Future<void> _editPlaylist(
   BuildContext context,
   MusicPlaylist playlist,
 ) async {
-  final name = await _askForName(
-    context,
-    title: 'Renommer la playlist',
-    initialValue: playlist.name,
+  final details = await showDialog<({String name, String description})>(
+    context: context,
+    builder: (_) => _PlaylistDetailsDialog(playlist: playlist),
   );
-  if (name == null || !context.mounted) return;
-  await context.read<LibraryProvider>().renamePlaylist(playlist.id, name);
+  if (details == null || !context.mounted) return;
+  await context.read<LibraryProvider>().updatePlaylistDetails(
+        playlist.id,
+        name: details.name,
+        description: details.description,
+      );
+}
+
+class _PlaylistDetailsDialog extends StatefulWidget {
+  const _PlaylistDetailsDialog({required this.playlist});
+  final MusicPlaylist playlist;
+
+  @override
+  State<_PlaylistDetailsDialog> createState() => _PlaylistDetailsDialogState();
+}
+
+class _PlaylistDetailsDialogState extends State<_PlaylistDetailsDialog> {
+  late final _name = TextEditingController(text: widget.playlist.name);
+  late final _description =
+      TextEditingController(text: widget.playlist.description);
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _description.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final name = _name.text.trim();
+    if (name.isEmpty) return;
+    Navigator.pop(
+      context,
+      (name: name, description: _description.text.trim()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('Modifier la playlist'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _name,
+              autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(labelText: 'Nom'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _description,
+              minLines: 2,
+              maxLines: 4,
+              maxLength: 300,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(labelText: 'Description'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: _submit,
+            child: const Text('Enregistrer'),
+          ),
+        ],
+      );
 }
 
 Future<String?> _askForName(

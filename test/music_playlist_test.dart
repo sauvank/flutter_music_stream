@@ -81,6 +81,60 @@ void main() {
         ['c', 'a']);
   });
 
+  test('reads playlists saved before descriptions existed', () {
+    final decoded = MusicPlaylist.decodeAll(
+      '[{"id":"p","name":"Old","trackIds":[],'
+      '"createdAt":"2026-01-01T00:00:00.000Z",'
+      '"updatedAt":"2026-01-01T00:00:00.000Z"}]',
+    );
+
+    expect(decoded.single.description, isEmpty);
+    expect(decoded.single.toJson().containsKey('description'), isFalse);
+  });
+
+  test('edits playlist details and reorders its tracks', () async {
+    final playlistService = _MemoryPlaylistService();
+    final provider = LibraryProvider(
+      _MemoryLibraryService([
+        for (final id in ['a', 'b', 'c'])
+          MusicTrack(
+            id: id,
+            title: id,
+            uri: 'file:///media/music/$id.mp3',
+            addedAt: DateTime.utc(2026),
+            metadataRead: true,
+          ),
+      ]),
+      playlistService,
+    );
+    await provider.load();
+    final playlist = await provider.createPlaylist('Mix');
+    await provider
+        .addTracksToPlaylist(playlist!.id, ['a', 'missing', 'b', 'c']);
+
+    await provider.updatePlaylistDetails(
+      playlist.id,
+      name: '  Soirée ',
+      description: '  Pour les longues routes.  ',
+    );
+    expect(provider.playlists.single.name, 'Soirée');
+    expect(provider.playlists.single.description, 'Pour les longues routes.');
+
+    await provider.updatePlaylistDetails(playlist.id,
+        name: '   ', description: 'Ignored');
+    expect(provider.playlists.single.description, 'Pour les longues routes.');
+
+    await provider.movePlaylistTrack(playlist.id, 2, 0);
+    expect(provider.playlists.single.trackIds, ['c', 'a', 'b']);
+    await provider.movePlaylistTrack(playlist.id, 0, 5);
+    expect(provider.playlists.single.trackIds, ['c', 'a', 'b']);
+
+    final reloaded =
+        MusicPlaylist.decodeAll(MusicPlaylist.encodeAll(playlistService.saved));
+    expect(reloaded.single.trackIds, ['c', 'a', 'b']);
+    expect(reloaded.single.description, 'Pour les longues routes.');
+  });
+
   test('sorts tracks without accent bias and remembers the choice', () async {
     MusicTrack track(String id, String title, String artist,
             {String album = 'Album', int? number}) =>

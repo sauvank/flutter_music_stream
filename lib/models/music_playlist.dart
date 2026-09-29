@@ -7,18 +7,25 @@ class MusicPlaylist {
     required this.trackIds,
     required this.createdAt,
     required this.updatedAt,
+    this.description = '',
   });
 
   final String id;
   final String name;
+  final String description;
   final List<String> trackIds;
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  MusicPlaylist copyWith({String? name, List<String>? trackIds}) =>
+  MusicPlaylist copyWith({
+    String? name,
+    String? description,
+    List<String>? trackIds,
+  }) =>
       MusicPlaylist(
         id: id,
         name: name ?? this.name,
+        description: description ?? this.description,
         trackIds: trackIds ?? this.trackIds,
         createdAt: createdAt,
         updatedAt: DateTime.now().toUtc(),
@@ -27,6 +34,7 @@ class MusicPlaylist {
   Map<String, Object?> toJson() => {
         'id': id,
         'name': name,
+        if (description.isNotEmpty) 'description': description,
         'trackIds': trackIds,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
@@ -35,6 +43,7 @@ class MusicPlaylist {
   factory MusicPlaylist.fromJson(Map<String, Object?> json) => MusicPlaylist(
         id: json['id']! as String,
         name: json['name']! as String,
+        description: json['description'] as String? ?? '',
         trackIds: (json['trackIds']! as List<Object?>).cast<String>(),
         createdAt: DateTime.parse(json['createdAt']! as String),
         updatedAt: DateTime.parse(json['updatedAt']! as String),

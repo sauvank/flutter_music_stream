@@ -215,6 +215,47 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updatePlaylistDetails(
+    String id, {
+    required String name,
+    required String description,
+  }) async {
+    final normalized = name.trim();
+    final index = _playlists.indexWhere((playlist) => playlist.id == id);
+    if (index == -1 || normalized.isEmpty) return;
+    _playlists[index] = _playlists[index].copyWith(
+      name: normalized,
+      description: description.trim(),
+    );
+    await _playlistService.save(_playlists);
+    notifyListeners();
+  }
+
+  /// Moves a track using indexes of [tracksForPlaylist]; references to
+  /// tracks that no longer exist are dropped at the same time.
+  Future<void> movePlaylistTrack(
+    String playlistId,
+    int oldIndex,
+    int newIndex,
+  ) async {
+    final index =
+        _playlists.indexWhere((playlist) => playlist.id == playlistId);
+    if (index == -1) return;
+    final ids =
+        tracksForPlaylist(_playlists[index]).map((track) => track.id).toList();
+    if (oldIndex < 0 ||
+        oldIndex >= ids.length ||
+        newIndex < 0 ||
+        newIndex >= ids.length ||
+        oldIndex == newIndex) {
+      return;
+    }
+    ids.insert(newIndex, ids.removeAt(oldIndex));
+    _playlists[index] = _playlists[index].copyWith(trackIds: ids);
+    notifyListeners();
+    await _playlistService.save(_playlists);
+  }
+
   Future<void> deletePlaylist(String id) async {
     _playlists.removeWhere((playlist) => playlist.id == id);
     await _playlistService.save(_playlists);

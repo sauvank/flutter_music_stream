@@ -20,14 +20,14 @@
 - [x] Paroles `.lrc` locales et LRCLIB, synchronisées avec la lecture, recherche automatique après accord et traduction à la demande avec cache privé.
 - [x] Premier passage de performance pour les grandes bibliothèques et les files de téléchargement volumineuses.
 - [x] Badge de disponibilité locale des morceaux dans le navigateur serveur.
+- [x] Description et réorganisation manuelle des playlists.
 
 ## En cours
 
-- [ ] Description et réorganisation manuelle des playlists.
+- [ ] Mesurer les temps de démarrage, de défilement et d'import sur appareil avec une grande bibliothèque; traiter les points chauds restants.
 
 ## À venir
 
-- [ ] Mesurer les temps de démarrage, de défilement et d'import sur appareil avec une grande bibliothèque; traiter les points chauds restants.
 - [ ] Choix explicite du thème et localisation multilingue.
 - [ ] Scan de la médiathèque de l’appareil et widget d’accueil Android.
 - [ ] Synchronisation chiffrée des métadonnées entre appareils.
