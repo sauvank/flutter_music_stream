@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/appearance_provider.dart';
 import '../providers/player_provider.dart';
 import '../services/playback_settings_service.dart';
 import '../services/lyrics_service.dart';
@@ -65,6 +66,10 @@ class SettingsScreen extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 28),
+          const _SectionLabel('APPARENCE'),
+          const SizedBox(height: 8),
+          const _ThemeModeTile(),
+          const SizedBox(height: 22),
           const _SectionLabel('LECTURE'),
           const SizedBox(height: 8),
           const _FadeSettingsTile(),
@@ -108,6 +113,46 @@ class SettingsScreen extends StatelessWidget {
           ),
         ],
       );
+}
+
+class _ThemeModeTile extends StatelessWidget {
+  const _ThemeModeTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final appearance = context.watch<AppearanceProvider>();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(Icons.palette_outlined),
+          title: Text('Thème'),
+          subtitle: Text('Suivre l’appareil ou imposer un mode'),
+        ),
+        SegmentedButton<ThemeMode>(
+          showSelectedIcon: false,
+          segments: const [
+            ButtonSegment(
+              value: ThemeMode.system,
+              label: Text('Système'),
+            ),
+            ButtonSegment(
+              value: ThemeMode.light,
+              label: Text('Clair'),
+            ),
+            ButtonSegment(
+              value: ThemeMode.dark,
+              label: Text('Sombre'),
+            ),
+          ],
+          selected: {appearance.themeMode},
+          onSelectionChanged: (selection) =>
+              appearance.setThemeMode(selection.single),
+        ),
+      ],
+    );
+  }
 }
 
 class _AutomaticLyricsTile extends StatefulWidget {

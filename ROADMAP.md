@@ -21,6 +21,7 @@
 - [x] Premier passage de performance pour les grandes bibliothèques et les files de téléchargement volumineuses.
 - [x] Badge de disponibilité locale des morceaux dans le navigateur serveur.
 - [x] Description et réorganisation manuelle des playlists.
+- [x] Choix explicite du thème (système, clair, sombre) persisté.
 
 ## En cours
 
@@ -28,7 +29,7 @@
 
 ## À venir
 
-- [ ] Choix explicite du thème et localisation multilingue.
+- [ ] Localisation multilingue.
 - [ ] Scan de la médiathèque de l’appareil et widget d’accueil Android.
 - [ ] Synchronisation chiffrée des métadonnées entre appareils.
 

@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:provider/provider.dart';
 
+import 'providers/appearance_provider.dart';
 import 'providers/library_provider.dart';
 import 'providers/download_queue_provider.dart';
 import 'providers/player_provider.dart';
 import 'providers/server_provider.dart';
 import 'screens/home_screen.dart';
+import 'services/appearance_settings_service.dart';
 import 'services/library_service.dart';
 import 'services/lyrics_service.dart';
 import 'services/playlist_service.dart';
@@ -32,6 +34,11 @@ Future<void> main() async {
   final playbackSettings = PlaybackSettingsService();
   final fadeDuration = await playbackSettings.loadFadeDuration();
   final volume = await playbackSettings.loadVolume();
+  final appearanceSettings = AppearanceSettingsService();
+  final appearance = AppearanceProvider(
+    appearanceSettings,
+    themeMode: await appearanceSettings.loadThemeMode(),
+  );
   await library.load();
   // The native downloader takes up to a second to start; keep it off the
   // first frame.
@@ -43,6 +50,7 @@ Future<void> main() async {
     library: library,
     downloads: downloads,
     servers: servers,
+    appearance: appearance,
     playbackSettings: playbackSettings,
     fadeDuration: fadeDuration,
     volume: volume,
@@ -55,6 +63,7 @@ class MusicStreamApp extends StatelessWidget {
     required this.library,
     required this.downloads,
     required this.servers,
+    required this.appearance,
     required this.playbackSettings,
     required this.fadeDuration,
     required this.volume,
@@ -62,6 +71,7 @@ class MusicStreamApp extends StatelessWidget {
   final LibraryProvider library;
   final DownloadQueueProvider downloads;
   final ServerProvider servers;
+  final AppearanceProvider appearance;
   final PlaybackSettingsService playbackSettings;
   final Duration fadeDuration;
   final double volume;
@@ -72,6 +82,7 @@ class MusicStreamApp extends StatelessWidget {
           ChangeNotifierProvider.value(value: library),
           ChangeNotifierProvider.value(value: downloads),
           ChangeNotifierProvider.value(value: servers),
+          ChangeNotifierProvider.value(value: appearance),
           ChangeNotifierProvider(
             create: (_) => PlayerProvider(
               onPositionChanged: library.savePosition,
@@ -93,13 +104,17 @@ class MusicStreamApp extends StatelessWidget {
             ),
           ),
         ],
-        child: MaterialApp(
-          title: 'MusicStream',
-          debugShowCheckedModeBanner: false,
-          themeMode: ThemeMode.system,
-          theme: _theme(Brightness.light),
-          darkTheme: _theme(Brightness.dark),
-          home: const HomeScreen(),
+        child: Builder(
+          builder: (context) => MaterialApp(
+            title: 'MusicStream',
+            debugShowCheckedModeBanner: false,
+            themeMode: context.select<AppearanceProvider, ThemeMode>(
+              (appearance) => appearance.themeMode,
+            ),
+            theme: _theme(Brightness.light),
+            darkTheme: _theme(Brightness.dark),
+            home: const HomeScreen(),
+          ),
         ),
       );
 
