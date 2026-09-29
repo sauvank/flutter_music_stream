@@ -84,6 +84,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get audioChannelName => 'Audio playback';
 
   @override
+  String get audioPermissionDenied => 'MusicStream needs access to your audio files to import a folder.';
+
+  @override
   String get automaticLyrics => 'Automatic lyrics';
 
   @override
@@ -718,6 +721,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onPhone => 'On this phone';
+
+  @override
+  String get openSettings => 'Settings';
 
   @override
   String get original => 'Original';

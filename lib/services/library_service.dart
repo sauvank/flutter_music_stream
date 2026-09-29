@@ -66,6 +66,50 @@ class LibraryService {
     await _lyricsService.delete(track.id);
   }
 
+  /// Deletes private copies that no track references, such as files copied
+  /// by an import or download interrupted before the index was saved.
+  ///
+  /// Files are matched by name, which derives from the content hash, so a
+  /// different documents path prefix cannot make the whole library look
+  /// orphaned. Nothing is deleted without tracks, or when orphans outnumber
+  /// them, because that points to an unreadable index rather than leftovers.
+  Future<int> removeOrphanFiles(List<MusicTrack> tracks) async {
+    if (tracks.isEmpty) return 0;
+    String? fileName(String? value) {
+      final uri = Uri.tryParse(value ?? '');
+      return uri?.scheme == 'file' ? p.basename(uri!.toFilePath()) : null;
+    }
+
+    final referenced = {
+      for (final track in tracks) ...[
+        fileName(track.uri),
+        fileName(track.artworkUri),
+      ],
+    }.nonNulls.toSet();
+    final root = await _documentsDirectory();
+    final orphans = <File>[];
+    for (final name in const ['music', 'artwork']) {
+      final directory = Directory(p.join(root.path, name));
+      if (!await directory.exists()) continue;
+      await for (final entity in directory.list(followLinks: false)) {
+        if (entity is File && !referenced.contains(p.basename(entity.path))) {
+          orphans.add(entity);
+        }
+      }
+    }
+    if (orphans.length > tracks.length) return 0;
+    var removed = 0;
+    for (final file in orphans) {
+      try {
+        await file.delete();
+        removed++;
+      } on FileSystemException {
+        // Retried on the next launch.
+      }
+    }
+    return removed;
+  }
+
   Future<List<MusicTrack>> load() async {
     final preferences = await SharedPreferences.getInstance();
     final serialized = preferences.getString(_libraryKey);

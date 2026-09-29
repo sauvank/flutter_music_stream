@@ -52,8 +52,12 @@ Future<void> main() async {
   final volume = await playbackSettings.loadVolume();
   await library.load();
   // The native downloader takes up to a second to start; keep it off the
-  // first frame.
-  unawaited(downloads.initialize(localizations()).catchError((Object error) {
+  // first frame. Orphan cleanup runs first so resumed downloads cannot race
+  // with it.
+  unawaited(library
+      .removeOrphanFiles()
+      .then((_) => downloads.initialize(localizations()))
+      .catchError((Object error) {
     debugPrint('Download queue initialization failed: $error');
   }));
   appearance.addListener(

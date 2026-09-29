@@ -64,6 +64,7 @@
     }
   },
   "audioChannelName": "Lecture audio",
+  "audioPermissionDenied": "MusicStream a besoin d’accéder à vos fichiers audio pour importer un dossier.",
   "automaticLyrics": "Paroles automatiques",
   "automaticLyricsHint": "Pendant la lecture, envoie les métadonnées du morceau à LRCLIB si ses paroles ne sont pas déjà enregistrées.",
   "availableOffline": "Disponible hors connexion",
@@ -448,6 +449,7 @@
     }
   },
   "onPhone": "Sur le téléphone",
+  "openSettings": "Réglages",
   "original": "Original",
   "partlyOnPhone": "{available}/{total} sur le téléphone",
   "@partlyOnPhone": {

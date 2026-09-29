@@ -92,6 +92,51 @@ void main() {
     expect(await external.exists(), isTrue);
   });
 
+  test('removes private copies no track references, keeping the library',
+      () async {
+    final music = await Directory('${root.path}/music').create();
+    final artwork = await Directory('${root.path}/artwork').create();
+    final kept = File('${music.path}/kept.mp3')..writeAsStringSync('kept');
+    final cover = File('${artwork.path}/kept.jpg')..writeAsStringSync('cover');
+    final orphan = File('${music.path}/orphan.flac')..writeAsStringSync('x');
+    final orphanCover = File('${artwork.path}/orphan.jpg')
+      ..writeAsStringSync('x');
+    final service = LibraryService(documentsDirectory: () async => root);
+    // A different path prefix for the same file must still count as kept.
+    final moved = _track(
+      'kept',
+      File('/data/user/0/app/music/kept.mp3'),
+      artwork: cover,
+    );
+    final other = _track('other', File('${music.path}/missing.mp3'));
+
+    expect(await service.removeOrphanFiles([moved, other]), 2);
+    expect(await kept.exists(), isTrue);
+    expect(await cover.exists(), isTrue);
+    expect(await orphan.exists(), isFalse);
+    expect(await orphanCover.exists(), isFalse);
+  });
+
+  test('never cleans up without tracks or when most files look orphaned',
+      () async {
+    final music = await Directory('${root.path}/music').create();
+    final files = [
+      for (final name in ['a', 'b', 'c'])
+        File('${music.path}/$name.mp3')..writeAsStringSync(name),
+    ];
+    final service = LibraryService(documentsDirectory: () async => root);
+
+    expect(await service.removeOrphanFiles([]), 0);
+    expect(
+      await service.removeOrphanFiles(
+          [_track('unrelated', File('${music.path}/z.mp3'))]),
+      0,
+    );
+    for (final file in files) {
+      expect(await file.exists(), isTrue);
+    }
+  });
+
   test('legacy tracks with unknown origin are excluded from bulk downloads',
       () async {
     final file = File('${root.path}/legacy.mp3')..writeAsStringSync('legacy');

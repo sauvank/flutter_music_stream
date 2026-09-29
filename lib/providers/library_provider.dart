@@ -155,6 +155,20 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Runs before downloads resume so no import is moving files meanwhile.
+  Future<void> removeOrphanFiles() async {
+    if (isImporting || isDeleting) return;
+    isDeleting = true;
+    try {
+      final removed = await _service.removeOrphanFiles(_tracks);
+      if (removed > 0) debugPrint('Removed $removed orphan library files');
+    } catch (error) {
+      debugPrint('Orphan cleanup failed: ${error.runtimeType}');
+    } finally {
+      isDeleting = false;
+    }
+  }
+
   void _refreshDownloadedSourceUris() {
     _downloadedSourceUris = Set.unmodifiable(_tracks
         .where((track) => track.source == MusicSource.serverDownload)

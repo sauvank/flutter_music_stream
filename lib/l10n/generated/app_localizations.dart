@@ -209,6 +209,12 @@ abstract class AppLocalizations {
   /// **'Lecture audio'**
   String get audioChannelName;
 
+  /// No description provided for @audioPermissionDenied.
+  ///
+  /// In fr, this message translates to:
+  /// **'MusicStream a besoin d’accéder à vos fichiers audio pour importer un dossier.'**
+  String get audioPermissionDenied;
+
   /// No description provided for @automaticLyrics.
   ///
   /// In fr, this message translates to:
@@ -1180,6 +1186,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Sur le téléphone'**
   String get onPhone;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglages'**
+  String get openSettings;
 
   /// No description provided for @original.
   ///

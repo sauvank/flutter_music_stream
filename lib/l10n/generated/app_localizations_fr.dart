@@ -96,6 +96,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get audioChannelName => 'Lecture audio';
 
   @override
+  String get audioPermissionDenied => 'MusicStream a besoin d’accéder à vos fichiers audio pour importer un dossier.';
+
+  @override
   String get automaticLyrics => 'Paroles automatiques';
 
   @override
@@ -730,6 +733,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get onPhone => 'Sur le téléphone';
+
+  @override
+  String get openSettings => 'Réglages';
 
   @override
   String get original => 'Original';
