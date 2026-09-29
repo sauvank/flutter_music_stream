@@ -479,6 +479,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get headline => 'What would you like\nto hear?';
 
   @override
+  String get homeWidget => 'Home screen widget';
+
+  @override
+  String get homeWidgetAdd => 'Add';
+
+  @override
+  String get homeWidgetHint =>
+      'Current track and playback controls on your home screen.';
+
+  @override
+  String get homeWidgetUnsupported =>
+      'Your launcher cannot add it directly: add the MusicStream widget from the widget list.';
+
+  @override
   String get httpAddress => 'HTTPS or HTTP address';
 
   @override
@@ -1167,6 +1181,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String volumePercent(int percent) {
     return '$percent%';
   }
+
+  @override
+  String get widgetIdle => 'Nothing playing';
 
   @override
   String get yourFavorites => 'Your favorites';

@@ -494,6 +494,20 @@ class AppLocalizationsFr extends AppLocalizations {
   String get headline => 'Qu’avez-vous envie\nd’écouter ?';
 
   @override
+  String get homeWidget => 'Widget d’accueil';
+
+  @override
+  String get homeWidgetAdd => 'Ajouter';
+
+  @override
+  String get homeWidgetHint =>
+      'Morceau en cours et commandes de lecture sur l’écran d’accueil.';
+
+  @override
+  String get homeWidgetUnsupported =>
+      'Votre écran d’accueil ne permet pas l’ajout direct : ajoutez le widget MusicStream depuis la liste des widgets.';
+
+  @override
   String get httpAddress => 'Adresse HTTPS ou HTTP';
 
   @override
@@ -1194,6 +1208,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String volumePercent(int percent) {
     return '$percent %';
   }
+
+  @override
+  String get widgetIdle => 'Aucun morceau en lecture';
 
   @override
   String get yourFavorites => 'Vos favoris';

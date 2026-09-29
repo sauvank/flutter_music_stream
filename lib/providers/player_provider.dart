@@ -15,6 +15,7 @@ class PlayerProvider extends ChangeNotifier {
     this.onTrackListened,
     this.onCurrentTrackChanged,
     this.displayMetadata,
+    this.onNowPlayingChanged,
     Duration fadeDuration = const Duration(milliseconds: 500),
     double volume = 1,
     AudioPlayer? audioPlayer,
@@ -58,6 +59,23 @@ class PlayerProvider extends ChangeNotifier {
 
   /// Translates stored tag placeholders for the system media notification.
   final String Function(String value)? displayMetadata;
+
+  /// Called when the current track or the play/pause state changes, for
+  /// surfaces outside the app such as the home screen widget.
+  final void Function(MusicTrack? track, bool playing)? onNowPlayingChanged;
+  String? _nowPlayingKey;
+
+  @override
+  void notifyListeners() {
+    super.notifyListeners();
+    final callback = onNowPlayingChanged;
+    if (callback == null) return;
+    final key = '${_current?.id}|${_player.playing}';
+    if (key == _nowPlayingKey) return;
+    _nowPlayingKey = key;
+    callback(_current, _player.playing);
+  }
+
   List<MusicTrack> _queue = [];
   MusicTrack? _current;
   Duration _fadeDuration;

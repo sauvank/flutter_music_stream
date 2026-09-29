@@ -13,6 +13,7 @@ import 'providers/server_provider.dart';
 import 'screens/home_screen.dart';
 import 'services/appearance_settings_service.dart';
 import 'services/audio_access.dart';
+import 'services/home_widget_service.dart';
 import 'services/library_service.dart';
 import 'services/lyrics_service.dart';
 import 'services/playlist_service.dart';
@@ -125,6 +126,16 @@ class MusicStreamApp extends StatelessWidget {
                 }
               },
               displayMetadata: (value) => localizations().metadata(value),
+              onNowPlayingChanged: (track, playing) {
+                final l10n = localizations();
+                const HomeWidgetService().update(
+                  title: track?.title,
+                  artist: track == null ? null : l10n.metadata(track.artist),
+                  artworkUri: track?.artworkUri,
+                  playing: playing,
+                  idleTitle: l10n.widgetIdle,
+                );
+              },
               fadeDuration: fadeDuration,
               volume: volume,
               onFadeDurationChanged: playbackSettings.saveFadeDuration,

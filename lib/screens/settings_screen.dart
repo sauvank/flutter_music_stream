@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/appearance_provider.dart';
 import '../providers/library_provider.dart';
 import '../services/audio_access.dart';
+import '../services/home_widget_service.dart';
 import '../providers/player_provider.dart';
 import '../services/playback_settings_service.dart';
 import '../services/lyrics_service.dart';
@@ -91,6 +94,27 @@ class SettingsScreen extends StatelessWidget {
           _SectionLabel(context.l10n.sectionPlayback),
           const SizedBox(height: 8),
           const _FadeSettingsTile(),
+          if (Platform.isAndroid) ...[
+            const SizedBox(height: 8),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.widgets_outlined),
+              title: Text(context.l10n.homeWidget),
+              subtitle: Text(context.l10n.homeWidgetHint),
+              trailing: FilledButton.tonal(
+                onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  final unsupported = context.l10n.homeWidgetUnsupported;
+                  if (!await const HomeWidgetService().requestPin()) {
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(unsupported)),
+                    );
+                  }
+                },
+                child: Text(context.l10n.homeWidgetAdd),
+              ),
+            ),
+          ],
           const SizedBox(height: 26),
           _SectionLabel(context.l10n.sectionConnections),
           const SizedBox(height: 8),

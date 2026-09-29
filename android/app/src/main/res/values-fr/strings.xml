@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_description">Lecture en cours, avec les commandes de lecture</string>
+    <string name="widget_idle">Aucun morceau en lecture</string>
+    <string name="widget_play">Lire</string>
+    <string name="widget_pause">Pause</string>
+    <string name="widget_next">Suivant</string>
+    <string name="widget_previous">Précédent</string>
+</resources>

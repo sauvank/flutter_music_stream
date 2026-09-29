@@ -776,6 +776,30 @@ abstract class AppLocalizations {
   /// **'Qu’avez-vous envie\nd’écouter ?'**
   String get headline;
 
+  /// No description provided for @homeWidget.
+  ///
+  /// In fr, this message translates to:
+  /// **'Widget d’accueil'**
+  String get homeWidget;
+
+  /// No description provided for @homeWidgetAdd.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter'**
+  String get homeWidgetAdd;
+
+  /// No description provided for @homeWidgetHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Morceau en cours et commandes de lecture sur l’écran d’accueil.'**
+  String get homeWidgetHint;
+
+  /// No description provided for @homeWidgetUnsupported.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre écran d’accueil ne permet pas l’ajout direct : ajoutez le widget MusicStream depuis la liste des widgets.'**
+  String get homeWidgetUnsupported;
+
   /// No description provided for @httpAddress.
   ///
   /// In fr, this message translates to:
@@ -1879,6 +1903,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'{percent} %'**
   String volumePercent(int percent);
+
+  /// No description provided for @widgetIdle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun morceau en lecture'**
+  String get widgetIdle;
 
   /// No description provided for @yourFavorites.
   ///

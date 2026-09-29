@@ -300,6 +300,10 @@
   "goodEvening": "Bonsoir",
   "goodMorning": "Bonjour",
   "headline": "Qu’avez-vous envie\nd’écouter ?",
+  "homeWidget": "Widget d’accueil",
+  "homeWidgetAdd": "Ajouter",
+  "homeWidgetHint": "Morceau en cours et commandes de lecture sur l’écran d’accueil.",
+  "homeWidgetUnsupported": "Votre écran d’accueil ne permet pas l’ajout direct : ajoutez le widget MusicStream depuis la liste des widgets.",
   "httpAddress": "Adresse HTTPS ou HTTP",
   "identifiedDownloads": "Téléchargements identifiés",
   "importAction": "Importer",
@@ -699,6 +703,7 @@
       }
     }
   },
+  "widgetIdle": "Aucun morceau en lecture",
   "yourFavorites": "Vos favoris",
   "yourLibrary": "VOTRE BIBLIOTHÈQUE",
   "yourPlaylists": "Vos playlists",

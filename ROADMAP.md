@@ -26,13 +26,13 @@
 - [x] Mesures sur Galaxy S24 : démarrage corrigé (0,7–0,95 s), défilement sans point chaud, import de 40 fichiers (146 Mo) en 2,6 s sans image figée.
 - [x] Permission audio demandée avant l’import de dossier et nettoyage des copies orphelines au démarrage.
 - [x] Médiathèque de l’appareil comme source distincte, sans copie : 720 morceaux indexés en 17 s sur Galaxy S24.
+- [x] Widget d’accueil Android (morceau, pochette, précédent/lecture/suivant), ajoutable depuis Réglages.
 
 ## En cours
 
 
 ## À venir
 
-- [ ] Widget d’accueil Android.
 - [ ] Synchronisation chiffrée des métadonnées entre appareils.
 
 ## Différé
