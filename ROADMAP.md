@@ -22,6 +22,7 @@
 - [x] Badge de disponibilité locale des morceaux dans le navigateur serveur.
 - [x] Description et réorganisation manuelle des playlists.
 - [x] Choix explicite du thème (système, clair, sombre) persisté.
+- [x] Localisation français/anglais avec choix de langue persisté.
 
 ## En cours
 
@@ -29,7 +30,6 @@
 
 ## À venir
 
-- [ ] Localisation multilingue.
 - [ ] Scan de la médiathèque de l’appareil et widget d’accueil Android.
 - [ ] Synchronisation chiffrée des métadonnées entre appareils.
 

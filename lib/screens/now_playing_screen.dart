@@ -6,6 +6,7 @@ import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
 import '../widgets/track_artwork.dart';
 import 'lyrics_sheet.dart';
+import '../l10n/l10n.dart';
 
 class NowPlayingScreen extends StatelessWidget {
   const NowPlayingScreen({super.key});
@@ -51,7 +52,7 @@ class NowPlayingScreen extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  'EN COURS DE LECTURE',
+                  context.l10n.nowPlayingLabel,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         letterSpacing: 1.6,
                         fontWeight: FontWeight.w800,
@@ -112,7 +113,8 @@ class NowPlayingScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        '${track.artist}  •  ${track.album}',
+                        '${context.l10n.metadata(track.artist)}  •  '
+                        '${context.l10n.metadata(track.album)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style:
@@ -126,8 +128,9 @@ class NowPlayingScreen extends StatelessWidget {
                   ),
                 ),
                 IconButton.filledTonal(
-                  tooltip:
-                      favorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
+                  tooltip: favorite
+                      ? context.l10n.removeFavorite
+                      : context.l10n.addFavorite,
                   onPressed: () =>
                       context.read<LibraryProvider>().toggleFavorite(track.id),
                   icon: Icon(favorite
@@ -183,8 +186,8 @@ class NowPlayingScreen extends StatelessWidget {
               children: [
                 IconButton(
                   tooltip: player.shuffleEnabled
-                      ? 'Désactiver la lecture aléatoire'
-                      : 'Activer la lecture aléatoire',
+                      ? context.l10n.shuffleDisable
+                      : context.l10n.shuffleEnable,
                   color: player.shuffleEnabled
                       ? Theme.of(context).colorScheme.primary
                       : null,
@@ -193,7 +196,7 @@ class NowPlayingScreen extends StatelessWidget {
                 ),
                 IconButton(
                   iconSize: 38,
-                  tooltip: 'Précédent',
+                  tooltip: context.l10n.actionPrevious,
                   onPressed: player.hasPrevious ? player.previous : null,
                   icon: const Icon(Icons.skip_previous_rounded),
                 ),
@@ -226,7 +229,9 @@ class NowPlayingScreen extends StatelessWidget {
                   child: IconButton(
                     iconSize: 40,
                     color: Colors.white,
-                    tooltip: player.playing ? 'Pause' : 'Lire',
+                    tooltip: player.playing
+                        ? context.l10n.actionPause
+                        : context.l10n.actionPlay,
                     onPressed: player.toggle,
                     icon: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 180),
@@ -244,15 +249,15 @@ class NowPlayingScreen extends StatelessWidget {
                 const SizedBox(width: 8),
                 IconButton(
                   iconSize: 38,
-                  tooltip: 'Suivant',
+                  tooltip: context.l10n.actionNext,
                   onPressed: player.hasNext ? player.next : null,
                   icon: const Icon(Icons.skip_next_rounded),
                 ),
                 IconButton(
                   tooltip: switch (player.loopMode) {
-                    LoopMode.off => 'Répéter la file',
-                    LoopMode.all => 'Répéter ce morceau',
-                    LoopMode.one => 'Désactiver la répétition',
+                    LoopMode.off => context.l10n.repeatQueue,
+                    LoopMode.all => context.l10n.repeatTrack,
+                    LoopMode.one => context.l10n.repeatOff,
                   },
                   color: player.loopMode == LoopMode.off
                       ? null
@@ -283,7 +288,7 @@ class NowPlayingScreen extends StatelessWidget {
                 SizedBox(
                   width: 44,
                   child: Text(
-                    '${(player.volume * 100).round()} %',
+                    context.l10n.volumePercent((player.volume * 100).round()),
                     textAlign: TextAlign.end,
                     style: Theme.of(context).textTheme.labelMedium,
                   ),
@@ -295,7 +300,7 @@ class NowPlayingScreen extends StatelessWidget {
               onPressed: () => _showQueue(context),
               icon: const Icon(Icons.queue_music_rounded),
               label: Text(
-                'File de lecture (${player.queue.length})',
+                context.l10n.queueButton(player.queue.length),
               ),
             ),
             const SizedBox(height: 10),
@@ -308,7 +313,7 @@ class NowPlayingScreen extends StatelessWidget {
                   builder: (context, currentPlayer, _) => FractionallySizedBox(
                     heightFactor: .78,
                     child: currentPlayer.current == null
-                        ? const Center(child: Text('Aucun morceau en lecture.'))
+                        ? Center(child: Text(context.l10n.nothingPlaying))
                         : LyricsSheet(
                             key: ValueKey(currentPlayer.current!.id),
                             track: currentPlayer.current!,
@@ -317,7 +322,7 @@ class NowPlayingScreen extends StatelessWidget {
                 ),
               ),
               icon: const Icon(Icons.lyrics_rounded),
-              label: const Text('Paroles'),
+              label: Text(context.l10n.lyrics),
             ),
             const SizedBox(height: 18),
             Wrap(
@@ -325,9 +330,12 @@ class NowPlayingScreen extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _MetadataPill(icon: Icons.album_rounded, label: track.album),
                 _MetadataPill(
-                    icon: Icons.auto_awesome_rounded, label: track.genre),
+                    icon: Icons.album_rounded,
+                    label: context.l10n.metadata(track.album)),
+                _MetadataPill(
+                    icon: Icons.auto_awesome_rounded,
+                    label: context.l10n.metadata(track.genre)),
                 if (track.durationMs != null)
                   _MetadataPill(
                     icon: Icons.schedule_rounded,
@@ -381,14 +389,13 @@ class _QueueSheet extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        'À suivre',
+                        context.l10n.upNext,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w900,
                             ),
                       ),
                     ),
-                    Text(
-                        '${queue.length} morceau${queue.length > 1 ? 'x' : ''}'),
+                    Text(context.l10n.trackCount(queue.length)),
                   ],
                 ),
               ),
@@ -426,12 +433,12 @@ class _QueueSheet extends StatelessWidget {
                         ),
                       ),
                       subtitle: Text(
-                        track.artist,
+                        context.l10n.metadata(track.artist),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       trailing: IconButton(
-                        tooltip: 'Retirer de la file',
+                        tooltip: context.l10n.removeFromQueue,
                         onPressed: () => player.removeFromQueue(index),
                         icon: const Icon(Icons.close_rounded),
                       ),
@@ -503,13 +510,13 @@ class _NothingPlaying extends StatelessWidget {
                     size: 68, color: Colors.white),
               ),
               const SizedBox(height: 28),
-              Text('Prêt à vibrer ?',
+              Text(context.l10n.emptyPlayerTitle,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.w900,
                       )),
               const SizedBox(height: 8),
-              const Text(
-                'Choisissez un morceau dans votre bibliothèque pour commencer.',
+              Text(
+                context.l10n.emptyPlayerHint,
                 textAlign: TextAlign.center,
               ),
             ],

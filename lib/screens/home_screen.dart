@@ -10,6 +10,7 @@ import 'library_screen.dart';
 import 'now_playing_screen.dart';
 import 'servers_screen.dart';
 import 'settings_screen.dart';
+import '../l10n/l10n.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -133,28 +134,29 @@ class _HomeScreenState extends State<HomeScreen> {
                         NavigationDestinationLabelBehavior.onlyShowSelected,
                     selectedIndex: _index,
                     onDestinationSelected: _select,
-                    destinations: const [
+                    destinations: [
                       NavigationDestination(
-                        icon: Icon(Icons.headphones_outlined),
-                        selectedIcon: Icon(Icons.headphones_rounded),
-                        label: 'Bibliothèque',
+                        icon: const Icon(Icons.headphones_outlined),
+                        selectedIcon: const Icon(Icons.headphones_rounded),
+                        label: context.l10n.navLibrary,
                       ),
                       NavigationDestination(
-                        icon:
-                            _DownloadsBadge(child: Icon(Icons.cloud_outlined)),
+                        icon: const _DownloadsBadge(
+                            child: Icon(Icons.cloud_outlined)),
+                        selectedIcon: const _DownloadsBadge(
+                            child: Icon(Icons.cloud_rounded)),
+                        label: context.l10n.navServers,
+                      ),
+                      NavigationDestination(
+                        icon: const Icon(Icons.play_circle_outline_rounded),
                         selectedIcon:
-                            _DownloadsBadge(child: Icon(Icons.cloud_rounded)),
-                        label: 'Serveurs',
+                            const Icon(Icons.play_circle_fill_rounded),
+                        label: context.l10n.navPlayer,
                       ),
                       NavigationDestination(
-                        icon: Icon(Icons.play_circle_outline_rounded),
-                        selectedIcon: Icon(Icons.play_circle_fill_rounded),
-                        label: 'Lecture',
-                      ),
-                      NavigationDestination(
-                        icon: Icon(Icons.tune_rounded),
-                        selectedIcon: Icon(Icons.tune_rounded),
-                        label: 'Réglages',
+                        icon: const Icon(Icons.tune_rounded),
+                        selectedIcon: const Icon(Icons.tune_rounded),
+                        label: context.l10n.navSettings,
                       ),
                     ],
                   ),
@@ -199,28 +201,29 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Icon(Icons.graphic_eq_rounded),
                         ),
                       ),
-                      destinations: const [
+                      destinations: [
                         NavigationRailDestination(
-                          icon: Icon(Icons.headphones_outlined),
-                          selectedIcon: Icon(Icons.headphones_rounded),
-                          label: Text('Bibliothèque'),
+                          icon: const Icon(Icons.headphones_outlined),
+                          selectedIcon: const Icon(Icons.headphones_rounded),
+                          label: Text(context.l10n.navLibrary),
                         ),
                         NavigationRailDestination(
-                          icon: _DownloadsBadge(
+                          icon: const _DownloadsBadge(
                               child: Icon(Icons.cloud_outlined)),
+                          selectedIcon: const _DownloadsBadge(
+                              child: Icon(Icons.cloud_rounded)),
+                          label: Text(context.l10n.navServers),
+                        ),
+                        NavigationRailDestination(
+                          icon: const Icon(Icons.play_circle_outline_rounded),
                           selectedIcon:
-                              _DownloadsBadge(child: Icon(Icons.cloud_rounded)),
-                          label: Text('Serveurs'),
+                              const Icon(Icons.play_circle_fill_rounded),
+                          label: Text(context.l10n.navPlayer),
                         ),
                         NavigationRailDestination(
-                          icon: Icon(Icons.play_circle_outline_rounded),
-                          selectedIcon: Icon(Icons.play_circle_fill_rounded),
-                          label: Text('Lecture'),
-                        ),
-                        NavigationRailDestination(
-                          icon: Icon(Icons.tune_rounded),
-                          selectedIcon: Icon(Icons.tune_rounded),
-                          label: Text('Réglages'),
+                          icon: const Icon(Icons.tune_rounded),
+                          selectedIcon: const Icon(Icons.tune_rounded),
+                          label: Text(context.l10n.navSettings),
                         ),
                       ],
                     ),
@@ -355,7 +358,7 @@ class _MiniPlayer extends StatelessWidget {
                                     fontWeight: FontWeight.w700),
                               ),
                               Text(
-                                track.artist,
+                                context.l10n.metadata(track.artist),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.bodySmall,
@@ -364,14 +367,16 @@ class _MiniPlayer extends StatelessWidget {
                           ),
                         ),
                         IconButton(
-                          tooltip: player.playing ? 'Pause' : 'Lire',
+                          tooltip: player.playing
+                              ? context.l10n.actionPause
+                              : context.l10n.actionPlay,
                           onPressed: player.toggle,
                           icon: Icon(player.playing
                               ? Icons.pause_rounded
                               : Icons.play_arrow_rounded),
                         ),
                         IconButton(
-                          tooltip: 'Suivant',
+                          tooltip: context.l10n.actionNext,
                           onPressed: player.hasNext ? player.next : null,
                           icon: const Icon(Icons.skip_next_rounded),
                         ),

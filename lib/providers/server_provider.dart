@@ -10,6 +10,7 @@ import '../services/remote_audio_metadata_service.dart';
 import '../services/remote_server_service.dart';
 import '../services/server_profile_service.dart';
 import '../services/server_scan_service.dart';
+import '../models/music_track.dart';
 
 class ServerProvider extends ChangeNotifier {
   ServerProvider(
@@ -73,7 +74,7 @@ class ServerProvider extends ChangeNotifier {
     if (profile.type == ServerType.ftp) {
       return Future.value(RemoteAudioMetadata(
         title: _titleFromFilename(entry.name),
-        artist: 'Artiste inconnu',
+        artist: MusicTrack.unknownArtist,
       ));
     }
     return _metadataService.load(

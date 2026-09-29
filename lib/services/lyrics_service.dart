@@ -84,7 +84,8 @@ class LyricsService {
   }
 
   Future<LyricsDocument?> searchOnline(MusicTrack track) async {
-    if (track.artist == 'Artiste inconnu' || track.title.trim().isEmpty) {
+    if (track.artist == MusicTrack.unknownArtist ||
+        track.title.trim().isEmpty) {
       throw const FormatException(
         'Le titre et l’artiste sont nécessaires pour chercher des paroles.',
       );
@@ -120,7 +121,7 @@ class LyricsService {
     final parameters = <String, dynamic>{
       'track_name': track.title,
       'artist_name': track.artist,
-      if (track.album != 'Album inconnu') 'album_name': track.album,
+      if (track.album != MusicTrack.unknownAlbum) 'album_name': track.album,
       if (track.durationMs != null &&
           track.durationMs! >= 1000 &&
           track.durationMs! <= 3600000)

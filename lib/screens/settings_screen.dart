@@ -6,6 +6,7 @@ import '../providers/player_provider.dart';
 import '../services/playback_settings_service.dart';
 import '../services/lyrics_service.dart';
 import '../widgets/import_music_sheet.dart';
+import '../l10n/l10n.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -41,7 +42,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                   ),
                   Text(
-                    'Réglages',
+                    context.l10n.settingsTitle,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
@@ -52,7 +53,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 30),
           Text(
-            'À votre rythme.',
+            context.l10n.settingsHeadline,
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   fontWeight: FontWeight.w900,
                   letterSpacing: -1.6,
@@ -60,56 +61,57 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Une bibliothèque privée, locale et prête à vous suivre.',
+            context.l10n.settingsTagline,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
           const SizedBox(height: 28),
-          const _SectionLabel('APPARENCE'),
+          _SectionLabel(context.l10n.sectionAppearance),
           const SizedBox(height: 8),
           const _ThemeModeTile(),
+          const SizedBox(height: 12),
+          const _LanguageTile(),
           const SizedBox(height: 22),
-          const _SectionLabel('LECTURE'),
+          _SectionLabel(context.l10n.sectionPlayback),
           const SizedBox(height: 8),
           const _FadeSettingsTile(),
           const SizedBox(height: 22),
           _ActionCard(
             icon: Icons.library_add_rounded,
             colors: const [Color(0xFF7C4DFF), Color(0xFFEC407A)],
-            title: 'Enrichir la bibliothèque',
-            subtitle: 'MP3, M4A, AAC, FLAC, OGG, OPUS et WAV',
-            actionLabel: 'Importer',
+            title: context.l10n.enrichLibrary,
+            subtitle: context.l10n.supportedFormats,
+            actionLabel: context.l10n.importAction,
             onTap: () => showMusicImportSheet(context),
           ),
           const SizedBox(height: 26),
-          const _SectionLabel('CONNEXIONS'),
+          _SectionLabel(context.l10n.sectionConnections),
           const SizedBox(height: 8),
-          const _InfoTile(
+          _InfoTile(
             icon: Icons.cloud_outlined,
-            title: 'Serveurs personnels',
-            subtitle:
-                'WebDAV et HTTP, avec identifiants dans le coffre système',
+            title: context.l10n.personalServers,
+            subtitle: context.l10n.personalServersHint,
           ),
-          const _InfoTile(
+          _InfoTile(
             icon: Icons.sync_lock_outlined,
-            title: 'Synchronisation chiffrée',
-            subtitle: 'Métadonnées uniquement, jamais vos fichiers audio',
-            badge: 'Bientôt',
+            title: context.l10n.encryptedSync,
+            subtitle: context.l10n.encryptedSyncHint,
+            badge: context.l10n.comingSoon,
           ),
           const SizedBox(height: 22),
-          const _SectionLabel('CONFIDENTIALITÉ'),
+          _SectionLabel(context.l10n.sectionPrivacy),
           const SizedBox(height: 8),
           const _AutomaticLyricsTile(),
-          const _InfoTile(
+          _InfoTile(
             icon: Icons.shield_outlined,
-            title: 'Local par défaut',
-            subtitle: 'Aucun fichier, chemin local ou secret envoyé',
+            title: context.l10n.localByDefault,
+            subtitle: context.l10n.localByDefaultHint,
           ),
-          const _InfoTile(
+          _InfoTile(
             icon: Icons.offline_pin_rounded,
-            title: 'Disponible hors connexion',
-            subtitle: 'Vos morceaux restent dans le stockage privé de l’app',
+            title: context.l10n.availableOffline,
+            subtitle: context.l10n.availableOfflineHint,
           ),
         ],
       );
@@ -124,31 +126,64 @@ class _ThemeModeTile extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const ListTile(
+        ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: Icon(Icons.palette_outlined),
-          title: Text('Thème'),
-          subtitle: Text('Suivre l’appareil ou imposer un mode'),
+          leading: const Icon(Icons.palette_outlined),
+          title: Text(context.l10n.theme),
+          subtitle: Text(context.l10n.themeHint),
         ),
         SegmentedButton<ThemeMode>(
           showSelectedIcon: false,
-          segments: const [
+          segments: [
             ButtonSegment(
               value: ThemeMode.system,
-              label: Text('Système'),
+              label: Text(context.l10n.themeSystem),
             ),
             ButtonSegment(
               value: ThemeMode.light,
-              label: Text('Clair'),
+              label: Text(context.l10n.themeLight),
             ),
             ButtonSegment(
               value: ThemeMode.dark,
-              label: Text('Sombre'),
+              label: Text(context.l10n.themeDark),
             ),
           ],
           selected: {appearance.themeMode},
           onSelectionChanged: (selection) =>
               appearance.setThemeMode(selection.single),
+        ),
+      ],
+    );
+  }
+}
+
+class _LanguageTile extends StatelessWidget {
+  const _LanguageTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final appearance = context.watch<AppearanceProvider>();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.translate_rounded),
+          title: Text(context.l10n.language),
+          subtitle: Text(context.l10n.languageHint),
+        ),
+        SegmentedButton<String>(
+          showSelectedIcon: false,
+          segments: [
+            ButtonSegment(value: '', label: Text(context.l10n.themeSystem)),
+            // Language names stay in their own language.
+            const ButtonSegment(value: 'fr', label: Text('Français')),
+            const ButtonSegment(value: 'en', label: Text('English')),
+          ],
+          selected: {appearance.locale?.languageCode ?? ''},
+          onSelectionChanged: (selection) => appearance.setLocale(
+            selection.single.isEmpty ? null : Locale(selection.single),
+          ),
         ),
       ],
     );
@@ -175,9 +210,8 @@ class _AutomaticLyricsTileState extends State<_AutomaticLyricsTile> {
 
   @override
   Widget build(BuildContext context) => SwitchListTile(
-        title: const Text('Paroles automatiques'),
-        subtitle: const Text(
-            'Pendant la lecture, envoie les métadonnées du morceau à LRCLIB si ses paroles ne sont pas déjà enregistrées.'),
+        title: Text(context.l10n.automaticLyrics),
+        subtitle: Text(context.l10n.automaticLyricsHint),
         value: _enabled ?? false,
         onChanged: _enabled == null
             ? null
@@ -211,13 +245,13 @@ class _FadeSettingsTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Fondus de lecture',
+                Text(
+                  context.l10n.fades,
                   style: TextStyle(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Adoucit lecture, pause et changements de morceau',
+                  context.l10n.fadesHint,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -235,7 +269,7 @@ class _FadeSettingsTile extends StatelessWidget {
                   .map(
                     (duration) => DropdownMenuItem(
                       value: duration,
-                      child: Text(_fadeLabel(duration)),
+                      child: Text(_fadeLabel(context, duration)),
                     ),
                   )
                   .toList(),
@@ -246,10 +280,11 @@ class _FadeSettingsTile extends StatelessWidget {
     );
   }
 
-  String _fadeLabel(Duration duration) => switch (duration.inMilliseconds) {
-        0 => 'Non',
-        1000 => '1 s',
-        final milliseconds => '$milliseconds ms',
+  String _fadeLabel(BuildContext context, Duration duration) =>
+      switch (duration.inMilliseconds) {
+        0 => context.l10n.fadeOff,
+        1000 => context.l10n.fadeSecond,
+        final milliseconds => context.l10n.fadeMilliseconds(milliseconds),
       };
 }
 

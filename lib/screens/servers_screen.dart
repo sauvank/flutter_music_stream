@@ -19,6 +19,8 @@ import '../providers/download_queue_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
 import '../providers/server_provider.dart';
+import '../l10n/l10n.dart';
+import '../services/server_scan_service.dart';
 
 class ServersScreen extends StatelessWidget {
   const ServersScreen({super.key});
@@ -49,7 +51,7 @@ class ServersScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
             sliver: SliverToBoxAdapter(
               child: Text(
-                '${servers.profiles.length} source${servers.profiles.length > 1 ? 's' : ''}',
+                context.l10n.sourceCount(servers.profiles.length),
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
@@ -84,20 +86,16 @@ class ServersScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Supprimer ce serveur ?'),
-        content: Text(
-          '« ${profile.name} », son mot de passe enregistré et sa référence '
-          'de nouveaux albums seront supprimés. Les morceaux déjà téléchargés '
-          'restent dans la bibliothèque.',
-        ),
+        title: Text(context.l10n.deleteServerTitle),
+        content: Text(context.l10n.deleteServerBody(profile.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Annuler'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Supprimer'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -116,14 +114,14 @@ class ServersScreen extends StatelessWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Ajouter un serveur'),
+          title: Text(context.l10n.addServer),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                     controller: name,
-                    decoration: const InputDecoration(labelText: 'Nom')),
+                    decoration: InputDecoration(labelText: context.l10n.name)),
                 const SizedBox(height: 12),
                 SegmentedButton<ServerType>(
                   segments: const [
@@ -146,15 +144,15 @@ class ServersScreen extends StatelessWidget {
                   keyboardType: TextInputType.url,
                   decoration: InputDecoration(
                     labelText: type == ServerType.ftp
-                        ? 'Adresse FTP'
-                        : 'Adresse HTTPS ou HTTP',
+                        ? context.l10n.ftpAddress
+                        : context.l10n.httpAddress,
                   ),
                 ),
                 if (type == ServerType.ftp)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      'FTP transmet les identifiants et les fichiers sans chiffrement.',
+                      context.l10n.ftpUnencrypted,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).colorScheme.error,
                           ),
@@ -162,20 +160,20 @@ class ServersScreen extends StatelessWidget {
                   ),
                 TextField(
                     controller: username,
-                    decoration: const InputDecoration(
-                        labelText: 'Utilisateur (facultatif)')),
+                    decoration: InputDecoration(
+                        labelText: context.l10n.usernameOptional)),
                 TextField(
                     controller: password,
                     obscureText: true,
                     decoration:
-                        const InputDecoration(labelText: 'Mot de passe')),
+                        InputDecoration(labelText: context.l10n.password)),
               ],
             ),
           ),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Annuler')),
+                child: Text(context.l10n.cancel)),
             FilledButton(
               onPressed: () {
                 final uri = Uri.tryParse(url.text.trim());
@@ -203,7 +201,7 @@ class ServersScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: const Text('Enregistrer'),
+              child: Text(context.l10n.save),
             ),
           ],
         ),
@@ -230,17 +228,17 @@ class ServersScreen extends StatelessWidget {
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: Text(result.baselineCreated
-              ? 'Référence créée'
+              ? context.l10n.baselineCreated
               : result.newAlbums.isEmpty
-                  ? 'Bibliothèque à jour'
-                  : 'Nouveaux albums'),
+                  ? context.l10n.libraryUpToDate
+                  : context.l10n.newAlbums),
           content: result.baselineCreated
               ? Text(
-                  '${result.totalTracks} morceau${result.totalTracks > 1 ? 'x' : ''} mémorisé${result.totalTracks > 1 ? 's' : ''}. Les prochains scans signaleront uniquement les nouveautés.',
+                  context.l10n.baselineBody(result.totalTracks),
                 )
               : result.newAlbums.isEmpty
                   ? Text(
-                      'Aucun nouveau morceau parmi les ${result.totalTracks} éléments analysés.',
+                      context.l10n.noNewTracks(result.totalTracks),
                     )
                   : SingleChildScrollView(
                       child: Column(
@@ -248,7 +246,7 @@ class ServersScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${result.newTrackCount} nouveau${result.newTrackCount > 1 ? 'x' : ''} morceau${result.newTrackCount > 1 ? 'x' : ''} :',
+                            context.l10n.newTracksCount(result.newTrackCount),
                           ),
                           const SizedBox(height: 12),
                           ...result.newAlbums.map(
@@ -256,7 +254,10 @@ class ServersScreen extends StatelessWidget {
                               dense: true,
                               contentPadding: EdgeInsets.zero,
                               leading: const Icon(Icons.album_outlined),
-                              title: Text(album.name),
+                              title: Text(
+                                  album.name == ServerScanService.rootAlbumName
+                                      ? context.l10n.serverRoot
+                                      : album.name),
                               trailing: Text('${album.trackCount}'),
                             ),
                           ),
@@ -266,7 +267,7 @@ class ServersScreen extends StatelessWidget {
           actions: [
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Fermer'),
+              child: Text(context.l10n.close),
             ),
           ],
         ),
@@ -274,9 +275,7 @@ class ServersScreen extends StatelessWidget {
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Impossible d’analyser ce serveur pour le moment.'),
-        ),
+        SnackBar(content: Text(context.l10n.scanFailed)),
       );
     }
   }
@@ -291,12 +290,12 @@ class ServersScreen extends StatelessWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.folder_open_rounded),
-              title: const Text('Choisir un fichier JSON'),
+              title: Text(context.l10n.chooseJsonFile),
               onTap: () => Navigator.pop(sheetContext, 'file'),
             ),
             ListTile(
               leading: const Icon(Icons.content_paste_rounded),
-              title: const Text('Coller le contenu JSON'),
+              title: Text(context.l10n.pasteJson),
               onTap: () => Navigator.pop(sheetContext, 'paste'),
             ),
             const SizedBox(height: 12),
@@ -326,7 +325,7 @@ class ServersScreen extends StatelessWidget {
     } on FileSystemException {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Impossible de lire ce fichier.')),
+        SnackBar(content: Text(context.l10n.fileReadFailed)),
       );
     }
   }
@@ -336,7 +335,7 @@ class ServersScreen extends StatelessWidget {
     final value = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Coller une configuration'),
+        title: Text(context.l10n.pasteConfiguration),
         content: SizedBox(
           width: 560,
           child: TextFormField(
@@ -346,7 +345,7 @@ class ServersScreen extends StatelessWidget {
             keyboardType: TextInputType.multiline,
             style: const TextStyle(fontFamily: 'monospace'),
             decoration: const InputDecoration(
-              hintText: '[{"name": "Mon serveur", ...}]',
+              hintText: '[{"name": "NAS", ...}]',
               border: OutlineInputBorder(),
             ),
             onChanged: (value) => content = value,
@@ -355,7 +354,7 @@ class ServersScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Annuler'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () {
@@ -363,7 +362,7 @@ class ServersScreen extends StatelessWidget {
                 Navigator.pop(dialogContext, content);
               }
             },
-            child: const Text('Importer'),
+            child: Text(context.l10n.importAction),
           ),
         ],
       ),
@@ -379,13 +378,13 @@ class ServersScreen extends StatelessWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(count == 0
-            ? 'Ce serveur est déjà configuré.'
-            : '$count serveur${count > 1 ? 's' : ''} importé${count > 1 ? 's' : ''}.'),
+            ? context.l10n.serverAlreadyConfigured
+            : context.l10n.serversImported(count)),
       ));
     } on FormatException {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Le contenu JSON est invalide.')),
+        SnackBar(content: Text(context.l10n.invalidJson)),
       );
     }
   }
@@ -421,7 +420,7 @@ class _ServerHeader extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'VOS SOURCES',
+                        context.l10n.yourSources,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               letterSpacing: 1.8,
                               fontWeight: FontWeight.w800,
@@ -429,7 +428,7 @@ class _ServerHeader extends StatelessWidget {
                             ),
                       ),
                       Text(
-                        'Serveurs personnels',
+                        context.l10n.personalServers,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w800,
                             ),
@@ -446,7 +445,7 @@ class _ServerHeader extends StatelessWidget {
                             isLabelVisible: downloads.activeCount > 0,
                             label: Text('${downloads.activeCount}'),
                             child: IconButton.filledTonal(
-                              tooltip: 'Téléchargements',
+                              tooltip: context.l10n.downloads,
                               onPressed: () => _showDownloadQueue(context),
                               icon: const Icon(Icons.download_rounded),
                             ),
@@ -454,13 +453,13 @@ class _ServerHeader extends StatelessWidget {
                         ),
                 ),
                 IconButton.filledTonal(
-                  tooltip: 'Importer un fichier JSON',
+                  tooltip: context.l10n.importJsonFile,
                   onPressed: onImport,
                   icon: const Icon(Icons.file_download_outlined),
                 ),
                 const SizedBox(width: 8),
                 IconButton.filled(
-                  tooltip: 'Ajouter un serveur',
+                  tooltip: context.l10n.addServer,
                   onPressed: onAdd,
                   icon: const Icon(Icons.add_rounded),
                 ),
@@ -468,7 +467,7 @@ class _ServerHeader extends StatelessWidget {
             ),
             const SizedBox(height: 28),
             Text(
-              'Votre musique,\noù qu’elle vive.',
+              context.l10n.serversHeadline,
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.w900,
                     height: 1.04,
@@ -516,7 +515,7 @@ class _EmptyServers extends StatelessWidget {
                     size: 52, color: Colors.white),
                 const SizedBox(height: 54),
                 Text(
-                  'Connectez votre\ncollection',
+                  context.l10n.connectCollectionTitle,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
@@ -525,7 +524,7 @@ class _EmptyServers extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Parcourez un serveur WebDAV, HTTP ou FTP, puis gardez vos morceaux préférés hors connexion.',
+                  context.l10n.connectCollectionBody,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.white.withValues(alpha: .82),
                         height: 1.45,
@@ -541,14 +540,14 @@ class _EmptyServers extends StatelessWidget {
                   ),
                   onPressed: onAdd,
                   icon: const Icon(Icons.add_rounded),
-                  label: const Text('Ajouter un serveur'),
+                  label: Text(context.l10n.addServer),
                 ),
                 const SizedBox(height: 10),
                 TextButton.icon(
                   style: TextButton.styleFrom(foregroundColor: Colors.white),
                   onPressed: onImport,
                   icon: const Icon(Icons.file_download_outlined),
-                  label: const Text('Importer un fichier JSON'),
+                  label: Text(context.l10n.importJsonFile),
                 ),
               ],
             ),
@@ -602,7 +601,7 @@ class _ServerCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  tooltip: 'Rechercher de nouveaux albums',
+                  tooltip: context.l10n.scanNewAlbums,
                   onPressed: scanning ? null : onScan,
                   icon: scanning
                       ? const SizedBox.square(
@@ -612,7 +611,7 @@ class _ServerCard extends StatelessWidget {
                       : const Icon(Icons.new_releases_outlined),
                 ),
                 IconButton(
-                  tooltip: 'Supprimer',
+                  tooltip: context.l10n.delete,
                   onPressed: onDelete,
                   icon: const Icon(Icons.delete_outline_rounded),
                 ),
@@ -684,7 +683,7 @@ class _BrowserState extends State<_Browser> {
                   provider.error == null &&
                   provider.entries.isNotEmpty)
                 IconButton(
-                  tooltip: 'Lire ce dossier',
+                  tooltip: context.l10n.playThisFolder,
                   onPressed: () => _playRemoteFolder(
                       context, provider, provider.currentUri!),
                   icon: const Icon(Icons.play_circle_outline_rounded),
@@ -695,14 +694,14 @@ class _BrowserState extends State<_Browser> {
                   label: Text('${downloads.activeCount}'),
                   child: IconButton(
                     onPressed: () => _showDownloadQueue(context),
-                    tooltip: 'Téléchargements',
+                    tooltip: context.l10n.downloads,
                     icon: const Icon(Icons.download_rounded),
                   ),
                 ),
               ),
               IconButton(
                 onPressed: provider.disconnect,
-                tooltip: 'Déconnecter',
+                tooltip: context.l10n.disconnect,
                 icon: const Icon(Icons.close_rounded),
               ),
             ],
@@ -720,11 +719,11 @@ class _BrowserState extends State<_Browser> {
               decoration: InputDecoration(
                 isDense: true,
                 prefixIcon: const Icon(Icons.filter_list_rounded),
-                hintText: 'Filtrer ce dossier',
+                hintText: context.l10n.filterFolder,
                 suffixIcon: _filter.text.isEmpty
                     ? null
                     : IconButton(
-                        tooltip: 'Effacer le filtre',
+                        tooltip: context.l10n.clearFilter,
                         onPressed: () => setState(_filter.clear),
                         icon: const Icon(Icons.clear_rounded),
                       ),
@@ -741,15 +740,15 @@ class _BrowserState extends State<_Browser> {
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.all(24),
-                        child:
-                            Text(provider.error!, textAlign: TextAlign.center),
+                        child: Text(context.l10n.serverConnectionFailed,
+                            textAlign: TextAlign.center),
                       ),
                     )
                   : entries.isEmpty
                       ? Center(
                           child: Text(provider.entries.isEmpty
-                              ? 'Aucun morceau compatible dans ce dossier.'
-                              : 'Aucun élément ne correspond au filtre.'),
+                              ? context.l10n.noCompatibleTracks
+                              : context.l10n.noFilterMatch),
                         )
                       : ListView.builder(
                           padding: const EdgeInsets.fromLTRB(12, 8, 12, 190),
@@ -849,13 +848,13 @@ class _RemoteTile extends StatelessWidget {
             children: [
               if (servers.selected!.type != ServerType.ftp)
                 IconButton(
-                  tooltip: 'Lire le dossier',
+                  tooltip: context.l10n.playFolder,
                   onPressed: () =>
                       _playRemoteFolder(context, servers, entry.uri),
                   icon: const Icon(Icons.play_circle_outline_rounded),
                 ),
               IconButton(
-                tooltip: 'Télécharger tout le dossier',
+                tooltip: context.l10n.downloadFolder,
                 onPressed: () => _downloadFolder(context, servers),
                 icon: const Icon(Icons.download_for_offline_outlined),
               ),
@@ -900,7 +899,7 @@ class _RemoteTile extends StatelessWidget {
                   [
                     if (details != null) details.artist,
                     if (details?.album != null) details!.album!,
-                    if (entry.size != null) _size(entry.size!),
+                    if (entry.size != null) _size(context.l10n, entry.size!),
                   ].join(' • '),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -919,8 +918,8 @@ class _RemoteTile extends StatelessWidget {
                       if (servers.selected!.type != ServerType.ftp)
                         IconButton.filledTonal(
                           tooltip: preview.selected && preview.playing
-                              ? 'Mettre en pause'
-                              : 'Écouter depuis le serveur',
+                              ? context.l10n.pause
+                              : context.l10n.streamFromServer,
                           onPressed: preview.selected
                               ? context.read<PlayerProvider>().toggle
                               : () => _preview(context, servers, details),
@@ -930,7 +929,7 @@ class _RemoteTile extends StatelessWidget {
                         ),
                       if (!downloaded)
                         IconButton(
-                          tooltip: 'Télécharger',
+                          tooltip: context.l10n.download,
                           onPressed: () => _download(context, servers),
                           icon: const Icon(Icons.download_rounded),
                         ),
@@ -979,13 +978,13 @@ class _RemoteTile extends StatelessWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(added > 0
-            ? '${entry.name} ajouté aux téléchargements en arrière-plan.'
-            : '${entry.name} est déjà en cours de téléchargement.'),
+            ? context.l10n.queuedForDownload(entry.name)
+            : context.l10n.alreadyDownloading(entry.name)),
       ));
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Téléchargement impossible.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(context.l10n.downloadFailed)));
     }
   }
 
@@ -1004,9 +1003,9 @@ class _RemoteTile extends StatelessWidget {
     );
   }
 
-  String _size(int bytes) => bytes >= 1048576
-      ? '${(bytes / 1048576).toStringAsFixed(1)} Mo'
-      : '${(bytes / 1024).toStringAsFixed(0)} Ko';
+  String _size(AppLocalizations l10n, int bytes) => bytes >= 1048576
+      ? l10n.sizeMegabytes((bytes / 1048576).toStringAsFixed(1))
+      : l10n.sizeKilobytes((bytes / 1024).toStringAsFixed(0));
 }
 
 class _DownloadedBadge extends StatelessWidget {
@@ -1029,7 +1028,7 @@ class _DownloadedBadge extends StatelessWidget {
           Icon(Icons.check_circle_rounded, size: 14, color: foreground),
           const SizedBox(width: 5),
           Text(
-            'Sur le téléphone',
+            context.l10n.onPhone,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: foreground,
                   fontWeight: FontWeight.w700,
@@ -1078,21 +1077,21 @@ class _FolderAvailabilityState extends State<_FolderAvailability> {
       future: _files,
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.hasError) {
-          return const Text('Dossier');
+          return Text(context.l10n.folder);
         }
         final files = snapshot.data!;
         final available = files
             .where((file) => downloaded.contains(file.uri.toString()))
             .length;
-        if (available == 0) return const Text('Dossier');
+        if (available == 0) return Text(context.l10n.folder);
         final complete = available == files.length;
         final dark = Theme.of(context).brightness == Brightness.dark;
         final color = complete
             ? (dark ? Colors.green.shade300 : Colors.green.shade700)
             : (dark ? Colors.orange.shade300 : Colors.orange.shade700);
         final label = complete
-            ? 'Tout sur le téléphone'
-            : '$available/${files.length} sur le téléphone';
+            ? context.l10n.allOnPhone
+            : context.l10n.partlyOnPhone(available, files.length);
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1167,22 +1166,28 @@ class _FolderDownloadDialog extends StatefulWidget {
 }
 
 class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
-  String _status = 'Analyse du dossier…';
+  String Function(AppLocalizations) _status = (l10n) => l10n.scanningFolder;
   double? _progress;
   int? _queued;
   Object? _error;
-  String _stage = 'inventaire';
+  _FolderStage _stage = _FolderStage.inventory;
 
-  String get _errorMessage {
+  String _errorMessage(AppLocalizations l10n) {
     final error = _error;
+    final stage = switch (_stage) {
+      _FolderStage.inventory => l10n.stageInventory,
+      _FolderStage.ftp => l10n.stageFtp,
+      _FolderStage.queue => l10n.stageQueue,
+    };
     if (error is DioException) {
       final status = error.response?.statusCode;
       return status == null
-          ? 'Connexion interrompue pendant $_stage du dossier.'
-          : 'Le serveur a renvoyé une erreur HTTP $status pendant $_stage du dossier.';
+          ? l10n.folderConnectionLost(stage)
+          : l10n.folderHttpError(status, stage);
     }
-    if (error is StateError) return error.message.toString();
-    return 'Impossible de terminer $_stage du dossier.';
+    // The only StateError while listing is the folder size guard.
+    if (error is StateError) return l10n.folderTooLarge;
+    return l10n.folderFailed(stage);
   }
 
   @override
@@ -1204,7 +1209,7 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
       if (!mounted) return;
       if (files.isEmpty) {
         setState(() {
-          _status = 'Aucun morceau compatible dans ce dossier.';
+          _status = (l10n) => l10n.noCompatibleTracks;
           _queued = 0;
           _progress = 1;
         });
@@ -1212,15 +1217,15 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
       }
       setState(() {
         _status = profile.type == ServerType.ftp
-            ? 'Téléchargement de ${files.length} morceau${files.length > 1 ? 'x' : ''}…'
-            : 'Ajout de ${files.length} morceaux à la file…';
+            ? (l10n) => l10n.downloadingTracks(files.length)
+            : (l10n) => l10n.queueingTracks(files.length);
       });
       if (profile.type == ServerType.ftp) {
-        _stage = 'transfert FTP';
+        _stage = _FolderStage.ftp;
         await _downloadFtp(profile, files);
         return;
       }
-      _stage = 'mise en file';
+      _stage = _FolderStage.queue;
       final queued = await widget.downloads.enqueueAll(
         files,
         headers: widget.servers.remoteService.authorizationHeaders(
@@ -1235,7 +1240,7 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
       });
     } catch (error) {
       final status = error is DioException ? error.response?.statusCode : null;
-      debugPrint('Folder download failed: stage=$_stage, '
+      debugPrint('Folder download failed: stage=${_stage.name}, '
           'type=${error.runtimeType}, httpStatus=$status');
       if (!mounted) return;
       setState(() => _error = error);
@@ -1272,7 +1277,8 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
             if (!mounted) return;
             final fileProgress = total > 0 ? received / total : 0.0;
             setState(() {
-              _status = 'Téléchargement ${index + 1} / ${files.length}';
+              _status =
+                  (l10n) => l10n.downloadProgress(index + 1, files.length);
               _progress = (index + fileProgress) / files.length;
             });
           },
@@ -1292,32 +1298,32 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
     if (!mounted) return;
     setState(() {
       _queued = added;
-      _status = [
-        '$added ajouté${added > 1 ? 's' : ''}',
-        if (skipped > 0) '$skipped déjà présent${skipped > 1 ? 's' : ''}',
-        if (failed > 0) '$failed échec${failed > 1 ? 's' : ''}',
-      ].join(' • ');
+      _status = (l10n) => [
+            l10n.addedCount(added),
+            if (skipped > 0) l10n.importSkipped(skipped),
+            if (failed > 0) l10n.importFailures(failed),
+          ].join(' • ');
       _progress = 1;
     });
   }
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: Text('Télécharger « ${widget.entry.name} »'),
+        title: Text(context.l10n.downloadTitle(widget.entry.name)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (_error != null)
-              Text(_errorMessage)
+              Text(_errorMessage(context.l10n))
             else ...[
               Text(widget.servers.selected?.type == ServerType.ftp
-                  ? _status
+                  ? _status(context.l10n)
                   : _queued == null
-                      ? _status
+                      ? _status(context.l10n)
                       : _queued == 0
-                          ? 'Aucun nouveau téléchargement à ajouter.'
-                          : '$_queued morceau${_queued! > 1 ? 'x' : ''} ajouté${_queued! > 1 ? 's' : ''}. Vous pouvez fermer cette fenêtre : le téléchargement continue en arrière-plan.'),
+                          ? context.l10n.nothingNewToDownload
+                          : context.l10n.folderQueued(_queued!)),
               const SizedBox(height: 16),
               LinearProgressIndicator(value: _progress),
             ],
@@ -1329,12 +1335,14 @@ class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
               onPressed: () => Navigator.pop(context),
               child: Text(_error != null ||
                       widget.servers.selected?.type == ServerType.ftp
-                  ? 'Fermer'
-                  : 'Continuer en arrière-plan'),
+                  ? context.l10n.close
+                  : context.l10n.continueInBackground),
             ),
         ],
       );
 }
+
+enum _FolderStage { inventory, ftp, queue }
 
 Future<void> _showDownloadQueue(BuildContext context) =>
     showModalBottomSheet<void>(
@@ -1359,7 +1367,7 @@ class _DownloadQueueSheet extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
               child: Text(
-                'Téléchargements',
+                context.l10n.downloads,
                 style: Theme.of(context)
                     .textTheme
                     .headlineSmall
@@ -1374,19 +1382,19 @@ class _DownloadQueueSheet extends StatelessWidget {
                   if (downloads.hasFailed)
                     ActionChip(
                       avatar: const Icon(Icons.refresh_rounded, size: 18),
-                      label: const Text('Réessayer les échecs'),
+                      label: Text(context.l10n.retryFailed),
                       onPressed: downloads.retryFailed,
                     ),
                   if (downloads.hasClearable)
                     ActionChip(
                       avatar: const Icon(Icons.clear_all_rounded, size: 18),
-                      label: const Text('Effacer les terminés'),
+                      label: Text(context.l10n.clearFinished),
                       onPressed: downloads.clearFinished,
                     ),
                   if (downloads.activeCount > 0)
                     ActionChip(
                       avatar: const Icon(Icons.cancel_outlined, size: 18),
-                      label: const Text('Tout annuler'),
+                      label: Text(context.l10n.cancelAll),
                       onPressed: () => _confirmCancelAll(context, downloads),
                     ),
                 ],
@@ -1394,7 +1402,7 @@ class _DownloadQueueSheet extends StatelessWidget {
             ),
             Expanded(
               child: downloads.records.isEmpty
-                  ? const Center(child: Text('Aucun téléchargement.'))
+                  ? Center(child: Text(context.l10n.noDownloads))
                   : ListView.builder(
                       padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
                       itemCount: downloads.records.length,
@@ -1411,7 +1419,8 @@ class _DownloadQueueSheet extends StatelessWidget {
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(_downloadStatusLabel(record)),
+                                Text(
+                                    _downloadStatusLabel(context.l10n, record)),
                                 if (record.status == TaskStatus.running ||
                                     record.status == TaskStatus.enqueued)
                                   Padding(
@@ -1445,17 +1454,16 @@ Future<void> _confirmCancelAll(
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      title: const Text('Tout annuler ?'),
-      content: Text(
-          '$count téléchargement${count > 1 ? 's' : ''} en cours ou en attente ${count > 1 ? 'seront annulés' : 'sera annulé'}. Les morceaux déjà importés sont conservés.'),
+      title: Text(context.l10n.cancelAllTitle),
+      content: Text(context.l10n.cancelAllBody(count)),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(dialogContext, false),
-          child: const Text('Continuer'),
+          child: Text(context.l10n.continueAction),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(dialogContext, true),
-          child: const Text('Tout annuler'),
+          child: Text(context.l10n.cancelAll),
         ),
       ],
     ),
@@ -1472,7 +1480,7 @@ class _DownloadActions extends StatelessWidget {
     final downloads = context.read<DownloadQueueProvider>();
     if (record.status == TaskStatus.paused) {
       return IconButton(
-        tooltip: 'Reprendre',
+        tooltip: context.l10n.resume,
         onPressed: () => downloads.resume(record.taskId),
         icon: const Icon(Icons.play_arrow_rounded),
       );
@@ -1482,12 +1490,12 @@ class _DownloadActions extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            tooltip: 'Mettre en pause',
+            tooltip: context.l10n.pause,
             onPressed: () => downloads.pause(record.taskId),
             icon: const Icon(Icons.pause_rounded),
           ),
           IconButton(
-            tooltip: 'Annuler',
+            tooltip: context.l10n.cancel,
             onPressed: () => downloads.cancel(record.taskId),
             icon: const Icon(Icons.close_rounded),
           ),
@@ -1497,7 +1505,7 @@ class _DownloadActions extends StatelessWidget {
     if (record.status == TaskStatus.enqueued ||
         record.status == TaskStatus.waitingToRetry) {
       return IconButton(
-        tooltip: 'Annuler',
+        tooltip: context.l10n.cancel,
         onPressed: () => downloads.cancel(record.taskId),
         icon: const Icon(Icons.close_rounded),
       );
@@ -1505,7 +1513,7 @@ class _DownloadActions extends StatelessWidget {
     if (record.status == TaskStatus.failed ||
         record.status == TaskStatus.notFound) {
       return IconButton(
-        tooltip: 'Réessayer',
+        tooltip: context.l10n.retry,
         onPressed: () => downloads.retry(record.taskId),
         icon: const Icon(Icons.refresh_rounded),
       );
@@ -1525,17 +1533,18 @@ Widget _downloadStatusIcon(TaskStatus status) => switch (status) {
       _ => const Icon(Icons.download_rounded),
     };
 
-String _downloadStatusLabel(TaskRecord record) => switch (record.status) {
-      TaskStatus.enqueued => 'En attente',
-      TaskStatus.running => 'Téléchargement en cours',
-      TaskStatus.complete => 'Disponible hors ligne',
-      TaskStatus.notFound => 'Fichier introuvable',
+String _downloadStatusLabel(AppLocalizations l10n, TaskRecord record) =>
+    switch (record.status) {
+      TaskStatus.enqueued => l10n.statusEnqueued,
+      TaskStatus.running => l10n.statusRunning,
+      TaskStatus.complete => l10n.statusComplete,
+      TaskStatus.notFound => l10n.statusNotFound,
       TaskStatus.failed => record.exception?.description.isNotEmpty == true
-          ? 'Échec : ${record.exception!.description}'
-          : 'Échec du téléchargement',
-      TaskStatus.canceled => 'Annulé',
-      TaskStatus.waitingToRetry => 'Nouvelle tentative en attente',
-      TaskStatus.paused => 'En pause',
+          ? l10n.statusFailedWithReason(record.exception!.description)
+          : l10n.statusFailed,
+      TaskStatus.canceled => l10n.statusCanceled,
+      TaskStatus.waitingToRetry => l10n.statusWaitingToRetry,
+      TaskStatus.paused => l10n.statusPaused,
     };
 
 /// Streams every audio file below [folder], in path order.
@@ -1545,9 +1554,10 @@ Future<void> _playRemoteFolder(
   Uri folder,
 ) async {
   final messenger = ScaffoldMessenger.of(context);
-  messenger.showSnackBar(const SnackBar(
-    content: Text('Préparation de la lecture…'),
-    duration: Duration(seconds: 30),
+  final l10n = context.l10n;
+  messenger.showSnackBar(SnackBar(
+    content: Text(l10n.preparingPlayback),
+    duration: const Duration(seconds: 30),
   ));
   List<RemoteAudioEntry> files;
   try {
@@ -1556,15 +1566,13 @@ Future<void> _playRemoteFolder(
   } catch (_) {
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(
-          content: Text('Impossible de lire le contenu du dossier.')));
+      ..showSnackBar(SnackBar(content: Text(l10n.folderReadFailed)));
     return;
   }
   messenger.hideCurrentSnackBar();
   if (!context.mounted) return;
   if (files.isEmpty) {
-    messenger.showSnackBar(const SnackBar(
-        content: Text('Aucun morceau compatible dans ce dossier.')));
+    messenger.showSnackBar(SnackBar(content: Text(l10n.noCompatibleTracks)));
     return;
   }
   await _playRemoteFiles(context, servers, files);
@@ -1584,6 +1592,7 @@ Future<void> _playRemoteFiles(
   final library = context.read<LibraryProvider>();
   final player = context.read<PlayerProvider>();
   final messenger = ScaffoldMessenger.of(context);
+  final l10n = context.l10n;
   final now = DateTime.now().toUtc();
   MusicTrack trackFor(RemoteAudioEntry file) {
     final local = library.trackForSourceUri(file.uri.toString());
@@ -1593,8 +1602,8 @@ Future<void> _playRemoteFiles(
     return MusicTrack(
       id: 'remote:${file.uri}',
       title: metadata?.title ?? _titleFromFilename(file.name),
-      artist: metadata?.artist ?? 'Artiste inconnu',
-      album: metadata?.album ?? 'Album inconnu',
+      artist: metadata?.artist ?? MusicTrack.unknownArtist,
+      album: metadata?.album ?? MusicTrack.unknownAlbum,
       artworkUri: artworkPath == null ? null : File(artworkPath).uri.toString(),
       uri: file.uri.toString(),
       metadataRead: true,
@@ -1613,7 +1622,7 @@ Future<void> _playRemoteFiles(
     );
   } catch (_) {
     messenger.showSnackBar(
-      const SnackBar(content: Text('Lecture depuis le serveur impossible.')),
+      SnackBar(content: Text(l10n.streamFailed)),
     );
   }
 }

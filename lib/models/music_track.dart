@@ -3,14 +3,20 @@ import 'dart:convert';
 enum MusicSource { localImport, serverDownload }
 
 class MusicTrack {
+  // Stored placeholders for missing tags; translated only when displayed.
+  static const unknownArtist = 'Artiste inconnu';
+  static const unknownAlbum = 'Album inconnu';
+  static const unknownGenre = 'Genre inconnu';
+  static const untitled = 'Piste sans titre';
+
   const MusicTrack({
     required this.id,
     required this.title,
     required this.uri,
     required this.addedAt,
-    this.artist = 'Artiste inconnu',
-    this.album = 'Album inconnu',
-    this.genre = 'Genre inconnu',
+    this.artist = unknownArtist,
+    this.album = unknownAlbum,
+    this.genre = unknownGenre,
     this.artworkUri,
     this.trackNumber,
     this.discNumber,
@@ -94,9 +100,9 @@ class MusicTrack {
   factory MusicTrack.fromJson(Map<String, Object?> json) => MusicTrack(
         id: json['id']! as String,
         title: json['title']! as String,
-        artist: json['artist'] as String? ?? 'Artiste inconnu',
-        album: json['album'] as String? ?? 'Album inconnu',
-        genre: json['genre'] as String? ?? 'Genre inconnu',
+        artist: json['artist'] as String? ?? unknownArtist,
+        album: json['album'] as String? ?? unknownAlbum,
+        genre: json['genre'] as String? ?? unknownGenre,
         artworkUri: json['artworkUri'] as String?,
         trackNumber: json['trackNumber'] as int?,
         discNumber: json['discNumber'] as int?,

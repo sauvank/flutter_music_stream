@@ -7,6 +7,7 @@ import '../models/music_track.dart';
 import '../providers/player_provider.dart';
 import '../services/lyrics_service.dart';
 import '../services/lyrics_translation_service.dart';
+import '../l10n/l10n.dart';
 
 class LyricsSheet extends StatefulWidget {
   const LyricsSheet({super.key, required this.track, this.service});
@@ -59,21 +60,16 @@ class _LyricsSheetState extends State<LyricsSheet> {
         final accepted = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Trouver les paroles automatiquement ?'),
-            content: const Text(
-              'Pour les morceaux sans paroles enregistrées, '
-              'MusicStream enverra son titre, son artiste, son album et sa '
-              'durée à LRCLIB dès leur lecture. Ce choix reste modifiable '
-              'dans Réglages.',
-            ),
+            title: Text(context.l10n.lyricsAutoTitle),
+            content: Text(context.l10n.lyricsAutoBody),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Pas maintenant'),
+                child: Text(context.l10n.notNow),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('Activer'),
+                child: Text(context.l10n.enable),
               ),
             ],
           ),
@@ -85,7 +81,7 @@ class _LyricsSheetState extends State<LyricsSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _message = 'Impossible de lire les paroles enregistrées.';
+        _message = context.l10n.lyricsReadFailed;
         _busy = false;
       });
     }
@@ -105,10 +101,10 @@ class _LyricsSheetState extends State<LyricsSheet> {
         _translationLanguage = null;
         _lastActive = -2;
       }
-    } on FormatException catch (error) {
-      _message = error.message;
+    } on FormatException {
+      if (mounted) _message = context.l10n.lyricsImportEmpty;
     } catch (_) {
-      _message = 'Impossible d’importer ce fichier .lrc.';
+      if (mounted) _message = context.l10n.lyricsImportFailed;
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -123,7 +119,7 @@ class _LyricsSheetState extends State<LyricsSheet> {
       final lyrics = await _service.searchOnline(widget.track);
       if (!mounted) return;
       if (lyrics == null) {
-        _message = 'Aucune parole trouvée sur LRCLIB.';
+        _message = context.l10n.lyricsNotFoundOnline;
       } else {
         _lyrics = lyrics;
         _translation = null;
@@ -131,14 +127,23 @@ class _LyricsSheetState extends State<LyricsSheet> {
         _lastActive = -2;
       }
     } on LyricsRateLimitException catch (error) {
-      _message = error.toString();
-    } on FormatException catch (error) {
-      _message = error.message;
+      if (mounted) _message = _rateLimitMessage(error);
+    } on FormatException {
+      if (mounted) _message = context.l10n.lyricsMissingMetadata;
     } catch (_) {
-      _message = 'Recherche impossible. Vérifiez la connexion et réessayez.';
+      if (mounted) _message = context.l10n.lyricsSearchFailed;
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  String _rateLimitMessage(LyricsRateLimitException error) {
+    final l10n = context.l10n;
+    final seconds = int.tryParse(error.retryAfter ?? '');
+    if (seconds != null) return l10n.lyricsRateLimitSeconds(seconds);
+    return error.retryAfter == null
+        ? l10n.lyricsRateLimitLater
+        : l10n.lyricsRateLimitAfter(error.retryAfter!);
   }
 
   Future<void> _chooseTranslation() async {
@@ -148,10 +153,9 @@ class _LyricsSheetState extends State<LyricsSheet> {
       builder: (context) => SafeArea(
         child: ListView(
           children: [
-            const ListTile(
-              title: Text('Traduire les paroles'),
-              subtitle: Text('Les paroles seront envoyées à MyMemory. '
-                  'La traduction sera gardée sur cet appareil.'),
+            ListTile(
+              title: Text(context.l10n.translateLyricsTitle),
+              subtitle: Text(context.l10n.translateLyricsHint),
             ),
             for (final entry in LyricsTranslationService.languages.entries)
               ListTile(
@@ -177,18 +181,19 @@ class _LyricsSheetState extends State<LyricsSheet> {
         _translationLanguage = language.key;
         _lastActive = -2;
       });
-    } on FormatException catch (error) {
-      if (mounted) setState(() => _message = error.message);
+    } on FormatException {
+      if (mounted) {
+        setState(() => _message = context.l10n.translationLineTooLong);
+      }
     } on DioException catch (error) {
       if (mounted) {
         setState(() => _message = error.response?.statusCode == 429
-            ? 'MyMemory limite temporairement les traductions. Réessayez plus tard.'
-            : 'Traduction impossible (réseau ou service indisponible).');
+            ? context.l10n.translationRateLimited
+            : context.l10n.translationUnavailable);
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _message =
-            'Traduction impossible. Vérifiez la connexion et réessayez.');
+        setState(() => _message = context.l10n.translationFailed);
       }
     } finally {
       if (mounted) setState(() => _translating = false);
@@ -207,7 +212,7 @@ class _LyricsSheetState extends State<LyricsSheet> {
         child: Column(
           children: [
             Text(
-              'Paroles de ${widget.track.title}',
+              context.l10n.lyricsOf(widget.track.title),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
@@ -224,19 +229,19 @@ class _LyricsSheetState extends State<LyricsSheet> {
                 OutlinedButton.icon(
                   onPressed: _busy || _translating ? null : _import,
                   icon: const Icon(Icons.upload_file_rounded),
-                  label: const Text('Importer .lrc'),
+                  label: Text(context.l10n.importLrc),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: _busy || _translating ? null : _search,
                   icon: const Icon(Icons.travel_explore_rounded),
-                  label: const Text('Relancer la recherche'),
+                  label: Text(context.l10n.searchAgain),
                 ),
                 if (_lyrics != null)
                   OutlinedButton.icon(
                     onPressed:
                         _busy || _translating ? null : _chooseTranslation,
                     icon: const Icon(Icons.translate_rounded),
-                    label: const Text('Traduire'),
+                    label: Text(context.l10n.translate),
                   ),
                 if (_translation != null)
                   TextButton(
@@ -244,15 +249,15 @@ class _LyricsSheetState extends State<LyricsSheet> {
                       _translation = null;
                       _translationLanguage = null;
                     }),
-                    child: const Text('Original'),
+                    child: Text(context.l10n.original),
                   ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
               _translationLanguage == null
-                  ? 'La recherche envoie le titre, l’artiste, l’album et la durée à LRCLIB.'
-                  : 'Traduction : $_translationLanguage',
+                  ? context.l10n.lyricsPrivacyHint
+                  : context.l10n.translationLanguage(_translationLanguage!),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -266,9 +271,9 @@ class _LyricsSheetState extends State<LyricsSheet> {
               child: _busy || _translating
                   ? const Center(child: CircularProgressIndicator())
                   : displayed == null
-                      ? const Center(
+                      ? Center(
                           child: Text(
-                            'Aucune parole trouvée. Importez un fichier .lrc ou relancez la recherche.',
+                            context.l10n.lyricsEmpty,
                             textAlign: TextAlign.center,
                           ),
                         )
@@ -308,8 +313,8 @@ class _LyricsSheetState extends State<LyricsSheet> {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   _lyrics!.synchronized
-                      ? 'Synchronisées avec la lecture • touchez une ligne pour avancer'
-                      : 'Paroles non synchronisées',
+                      ? context.l10n.lyricsSynchronized
+                      : context.l10n.lyricsUnsynchronized,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),

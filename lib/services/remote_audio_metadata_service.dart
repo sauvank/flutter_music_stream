@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import '../models/remote_audio_entry.dart';
 import '../models/remote_audio_metadata.dart';
 import 'audio_metadata_service.dart';
+import '../models/music_track.dart';
 
 class RemoteAudioMetadataService {
   RemoteAudioMetadataService({
@@ -193,6 +194,6 @@ class RemoteAudioMetadataService {
         artist: value.substring(0, separator).trim(),
       );
     }
-    return RemoteAudioMetadata(title: value, artist: 'Artiste inconnu');
+    return RemoteAudioMetadata(title: value, artist: MusicTrack.unknownArtist);
   }
 }

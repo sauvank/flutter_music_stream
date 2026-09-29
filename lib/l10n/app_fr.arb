@@ -1,0 +1,678 @@
+{
+  "@@locale": "fr",
+  "actionNext": "Suivant",
+  "actionPause": "Pause",
+  "actionPlay": "Lire",
+  "actionPrevious": "Précédent",
+  "addFavorite": "Ajouter aux favoris",
+  "addMyMusic": "Ajouter ma musique",
+  "addServer": "Ajouter un serveur",
+  "addToPlaylist": "Ajouter à une playlist",
+  "addToQueue": "Ajouter à la file",
+  "addTrackTitle": "Ajouter « {title} »",
+  "@addTrackTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "addTracks": "Ajouter des morceaux",
+  "addTracksTitle": "Ajouter {tracks}",
+  "@addTracksTitle": {
+    "placeholders": {
+      "tracks": {
+        "type": "String"
+      }
+    }
+  },
+  "addedCount": "{count, plural, one{{count} ajouté} other{{count} ajoutés}}",
+  "@addedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addedToPlaylist": "{count, plural, one{{count} morceau ajouté à « {playlist} ».} other{{count} morceaux ajoutés à « {playlist} ».}}",
+  "@addedToPlaylist": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "playlist": {
+        "type": "String"
+      }
+    }
+  },
+  "addedToQueue": "{count, plural, one{Ajouté à la file.} other{Ajoutés à la file.}}",
+  "@addedToQueue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "allOnPhone": "Tout sur le téléphone",
+  "allTracks": "Tous les morceaux",
+  "alreadyDownloading": "{name} est déjà en cours de téléchargement.",
+  "@alreadyDownloading": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "audioChannelName": "Lecture audio",
+  "automaticLyrics": "Paroles automatiques",
+  "automaticLyricsHint": "Pendant la lecture, envoie les métadonnées du morceau à LRCLIB si ses paroles ne sont pas déjà enregistrées.",
+  "availableOffline": "Disponible hors connexion",
+  "availableOfflineHint": "Vos morceaux restent dans le stockage privé de l’app",
+  "baselineBody": "{count, plural, one{{count} morceau mémorisé.} other{{count} morceaux mémorisés.}} Les prochains scans signaleront uniquement les nouveautés.",
+  "@baselineBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "baselineCreated": "Référence créée",
+  "cancel": "Annuler",
+  "cancelAll": "Tout annuler",
+  "cancelAllBody": "{count, plural, one{{count} téléchargement en cours ou en attente sera annulé.} other{{count} téléchargements en cours ou en attente seront annulés.}} Les morceaux déjà importés sont conservés.",
+  "@cancelAllBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cancelAllTitle": "Tout annuler ?",
+  "chooseJsonFile": "Choisir un fichier JSON",
+  "clearFilter": "Effacer le filtre",
+  "clearFinished": "Effacer les terminés",
+  "clearSelection": "Annuler la sélection",
+  "close": "Fermer",
+  "collectionCount": "{count, plural, one{{count} collection} other{{count} collections}}",
+  "@collectionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "comingSoon": "Bientôt",
+  "connectCollectionBody": "Parcourez un serveur WebDAV, HTTP ou FTP, puis gardez vos morceaux préférés hors connexion.",
+  "connectCollectionTitle": "Connectez votre\ncollection",
+  "continueAction": "Continuer",
+  "continueInBackground": "Continuer en arrière-plan",
+  "create": "Créer",
+  "createPlaylist": "Créer une playlist",
+  "delete": "Supprimer",
+  "deleteDownloadsBody": "{count, plural, one{Le morceau sélectionné sera supprimé de MusicStream sur ce téléphone.} other{Les {count} morceaux sélectionnés seront supprimés de MusicStream sur ce téléphone.}}",
+  "@deleteDownloadsBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteDownloadsTitle": "Supprimer les téléchargements ?",
+  "deleteDownloadsTooltip": "Supprimer les téléchargements du téléphone",
+  "deleteFailed": "Suppression impossible. Réessayez.",
+  "deleteFromPhone": "Supprimer du téléphone",
+  "deleteIncludesLegacy": "Cela inclut les anciens morceaux que vous avez choisis.",
+  "deleteKeepsLocal": "Les imports locaux sont conservés.",
+  "deletePlaylistBody": "« {name} » sera supprimée. Vos morceaux seront conservés.",
+  "@deletePlaylistBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deletePlaylistTitle": "Supprimer la playlist ?",
+  "deleteServerBody": "« {name} », son mot de passe enregistré et sa référence de nouveaux albums seront supprimés. Les morceaux déjà téléchargés restent dans la bibliothèque.",
+  "@deleteServerBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteServerTitle": "Supprimer ce serveur ?",
+  "deleteTracksBody": "{count, plural, one{Le morceau et ses fichiers associés seront supprimés de MusicStream sur ce téléphone. Le fichier d’origine est conservé.} other{Les morceaux et leurs fichiers associés seront supprimés de MusicStream sur ce téléphone. Les fichiers d’origine sont conservés.}}",
+  "@deleteTracksBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteTracksTitle": "{count, plural, one{Supprimer ce morceau ?} other{Supprimer ces {count} morceaux ?}}",
+  "@deleteTracksTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deletedCount": "{count, plural, one{{count} morceau supprimé du téléphone.} other{{count} morceaux supprimés du téléphone.}}",
+  "@deletedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "description": "Description",
+  "disconnect": "Déconnecter",
+  "done": "Terminer",
+  "download": "Télécharger",
+  "downloadFailed": "Téléchargement impossible.",
+  "downloadFolder": "Télécharger tout le dossier",
+  "downloadProgress": "Téléchargement {current} / {total}",
+  "@downloadProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadTitle": "Télécharger « {name} »",
+  "@downloadTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadingTracks": "{count, plural, one{Téléchargement de {count} morceau…} other{Téléchargement de {count} morceaux…}}",
+  "@downloadingTracks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "downloads": "Téléchargements",
+  "edit": "Modifier",
+  "editPlaylist": "Modifier la playlist",
+  "emptyHeadline": "Votre musique mérite\nun bel écrin.",
+  "emptyHistoryBody": "Les morceaux suffisamment écoutés apparaîtront ici.",
+  "emptyHistoryTitle": "Votre historique est encore vide",
+  "emptyLibraryBody": "Ajoutez vos morceaux : ils restent privés, disponibles hors connexion et classés automatiquement.",
+  "emptyLibraryTitle": "Donnez vie à\nvotre bibliothèque",
+  "emptyPlayerHint": "Choisissez un morceau dans votre bibliothèque pour commencer.",
+  "emptyPlayerTitle": "Prêt à vibrer ?",
+  "emptyPlaylist": "Cette playlist est vide",
+  "emptyPlaylistsBody": "Regroupez vos morceaux pour les retrouver et les lire dans l’ordre.",
+  "emptyPlaylistsTitle": "Créez votre première playlist",
+  "enable": "Activer",
+  "encryptedSync": "Synchronisation chiffrée",
+  "encryptedSyncHint": "Métadonnées uniquement, jamais vos fichiers audio",
+  "enrichLibrary": "Enrichir la bibliothèque",
+  "fadeMilliseconds": "{milliseconds} ms",
+  "@fadeMilliseconds": {
+    "placeholders": {
+      "milliseconds": {
+        "type": "int"
+      }
+    }
+  },
+  "fadeOff": "Non",
+  "fadeSecond": "1 s",
+  "fades": "Fondus de lecture",
+  "fadesHint": "Adoucit lecture, pause et changements de morceau",
+  "favorites": "Favoris",
+  "fileReadFailed": "Impossible de lire ce fichier.",
+  "filterFolder": "Filtrer ce dossier",
+  "folder": "Dossier",
+  "folderConnectionLost": "Connexion interrompue pendant {stage} du dossier.",
+  "@folderConnectionLost": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "folderFailed": "Impossible de terminer {stage} du dossier.",
+  "@folderFailed": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "folderHttpError": "Le serveur a renvoyé une erreur HTTP {status} pendant {stage} du dossier.",
+  "@folderHttpError": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      },
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "folderQueued": "{count, plural, one{{count} morceau ajouté.} other{{count} morceaux ajoutés.}} Vous pouvez fermer cette fenêtre : le téléchargement continue en arrière-plan.",
+  "@folderQueued": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "folderReadFailed": "Impossible de lire le contenu du dossier.",
+  "folderTooLarge": "Le dossier contient trop de morceaux.",
+  "ftpAddress": "Adresse FTP",
+  "ftpUnencrypted": "FTP transmet les identifiants et les fichiers sans chiffrement.",
+  "goodAfternoon": "Bon après-midi",
+  "goodEvening": "Bonsoir",
+  "goodMorning": "Bonjour",
+  "headline": "Qu’avez-vous envie\nd’écouter ?",
+  "httpAddress": "Adresse HTTPS ou HTTP",
+  "identifiedDownloads": "Téléchargements identifiés",
+  "importAction": "Importer",
+  "importAdded": "{count, plural, one{{count} morceau ajouté} other{{count} morceaux ajoutés}}",
+  "@importAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importChooseFiles": "Choisir des fichiers",
+  "importChooseFilesHint": "Sélectionner un ou plusieurs morceaux",
+  "importChooseFolder": "Choisir un dossier",
+  "importChooseFolderHint": "Importer récursivement tous les morceaux du dossier",
+  "importFailed": "Import impossible. Réessayez.",
+  "importFailures": "{count, plural, one{{count} échec} other{{count} échecs}}",
+  "@importFailures": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importJsonFile": "Importer un fichier JSON",
+  "importLrc": "Importer .lrc",
+  "importProgress": "Import {completed} / {total}…",
+  "@importProgress": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "importSheetTitle": "Ajouter de la musique",
+  "importSkipped": "{count, plural, one{{count} déjà présent} other{{count} déjà présents}}",
+  "@importSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importTracks": "Importer des morceaux",
+  "importTracksFirst": "Importez d’abord des morceaux dans la bibliothèque.",
+  "importing": "Import en cours…",
+  "includeLegacy": "Inclure les anciens",
+  "invalidJson": "Le contenu JSON est invalide.",
+  "language": "Langue",
+  "languageHint": "Suivre l’appareil ou choisir une langue",
+  "legacyTracksBody": "{count, plural, one{{count} morceau ajouté avant cette version n’indique pas son origine.} other{{count} morceaux ajoutés avant cette version n’indiquent pas leur origine.}} Ne les incluez que si vous savez qu’ils viennent tous du serveur : un ancien import local serait aussi supprimé.",
+  "@legacyTracksBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "legacyTracksTitle": "Anciens morceaux",
+  "libraryUpToDate": "Bibliothèque à jour",
+  "localByDefault": "Local par défaut",
+  "localByDefaultHint": "Aucun fichier, chemin local ou secret envoyé",
+  "lyrics": "Paroles",
+  "lyricsAutoBody": "Pour les morceaux sans paroles enregistrées, MusicStream enverra son titre, son artiste, son album et sa durée à LRCLIB dès leur lecture. Ce choix reste modifiable dans Réglages.",
+  "lyricsAutoTitle": "Trouver les paroles automatiquement ?",
+  "lyricsEmpty": "Aucune parole trouvée. Importez un fichier .lrc ou relancez la recherche.",
+  "lyricsImportEmpty": "Le fichier de paroles est vide.",
+  "lyricsImportFailed": "Impossible d’importer ce fichier .lrc.",
+  "lyricsMissingMetadata": "Le titre et l’artiste sont nécessaires pour chercher des paroles.",
+  "lyricsNotFoundOnline": "Aucune parole trouvée sur LRCLIB.",
+  "lyricsOf": "Paroles de {title}",
+  "@lyricsOf": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "lyricsPrivacyHint": "La recherche envoie le titre, l’artiste, l’album et la durée à LRCLIB.",
+  "lyricsRateLimitAfter": "LRCLIB limite les demandes. Réessayez après {time}.",
+  "@lyricsRateLimitAfter": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "lyricsRateLimitLater": "LRCLIB limite temporairement les demandes. Réessayez plus tard.",
+  "lyricsRateLimitSeconds": "LRCLIB limite les demandes. Réessayez dans {seconds} secondes.",
+  "@lyricsRateLimitSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "lyricsReadFailed": "Impossible de lire les paroles enregistrées.",
+  "lyricsSearchFailed": "Recherche impossible. Vérifiez la connexion et réessayez.",
+  "lyricsSynchronized": "Synchronisées avec la lecture • touchez une ligne pour avancer",
+  "lyricsUnsynchronized": "Paroles non synchronisées",
+  "modeAlbums": "Albums",
+  "modeArtists": "Artistes",
+  "modeGenres": "Genres",
+  "modeHistory": "Historique",
+  "modePlaylists": "Playlists",
+  "modeTracks": "Morceaux",
+  "moreActions": "Plus d’actions",
+  "name": "Nom",
+  "navLibrary": "Bibliothèque",
+  "navPlayer": "Lecture",
+  "navServers": "Serveurs",
+  "navSettings": "Réglages",
+  "newAlbums": "Nouveaux albums",
+  "newPlaylist": "Nouvelle playlist",
+  "newTracksCount": "{count, plural, one{{count} nouveau morceau :} other{{count} nouveaux morceaux :}}",
+  "@newTracksCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noCompatibleTracks": "Aucun morceau compatible dans ce dossier.",
+  "noDownloads": "Aucun téléchargement.",
+  "noFilterMatch": "Aucun élément ne correspond au filtre.",
+  "noNewTracks": "Aucun nouveau morceau parmi les {count} éléments analysés.",
+  "@noNewTracks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noResults": "Aucun résultat",
+  "noResultsHint": "Essayez un autre titre, artiste, album ou genre.",
+  "notNow": "Pas maintenant",
+  "nothingNewToDownload": "Aucun nouveau téléchargement à ajouter.",
+  "nothingPlaying": "Aucun morceau en lecture.",
+  "notificationCompleteBody": "{finished} morceau(x) disponible(s) hors ligne",
+  "@notificationCompleteBody": {
+    "placeholders": {
+      "finished": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationCompleteTitle": "Téléchargement terminé",
+  "notificationErrorBody": "{failed} échec(s) sur {total}",
+  "@notificationErrorBody": {
+    "placeholders": {
+      "failed": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationErrorTitle": "Téléchargement incomplet",
+  "notificationPausedTitle": "Téléchargement en pause",
+  "notificationRunningTitle": "Téléchargement de musique",
+  "nowPlayingLabel": "EN COURS DE LECTURE",
+  "offlineCount": "{count, plural, one{{count} morceau disponible hors connexion} other{{count} morceaux disponibles hors connexion}}",
+  "@offlineCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onPhone": "Sur le téléphone",
+  "original": "Original",
+  "partlyOnPhone": "{available}/{total} sur le téléphone",
+  "@partlyOnPhone": {
+    "placeholders": {
+      "available": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "password": "Mot de passe",
+  "pasteConfiguration": "Coller une configuration",
+  "pasteJson": "Coller le contenu JSON",
+  "pause": "Mettre en pause",
+  "personalServers": "Serveurs personnels",
+  "personalServersHint": "WebDAV et HTTP, avec identifiants dans le coffre système",
+  "pickMusicFolder": "Choisir un dossier de musique",
+  "playAll": "Tout lire",
+  "playCollection": "Lire la collection",
+  "playFolder": "Lire le dossier",
+  "playNext": "Lire ensuite",
+  "playThisFolder": "Lire ce dossier",
+  "playingNext": "Lecture suivante.",
+  "playlistCount": "{count, plural, one{{count} playlist} other{{count} playlists}}",
+  "@playlistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playlistTracks": "Morceaux de la playlist",
+  "preparingPlayback": "Préparation de la lecture…",
+  "queueButton": "File de lecture ({count})",
+  "@queueButton": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "queuedForDownload": "{name} ajouté aux téléchargements en arrière-plan.",
+  "@queuedForDownload": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "queueingTracks": "{count, plural, one{Ajout de {count} morceau à la file…} other{Ajout de {count} morceaux à la file…}}",
+  "@queueingTracks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recentlyAdded": "Ajoutés récemment",
+  "recentlyPlayed": "Écoutés récemment",
+  "removeFavorite": "Retirer des favoris",
+  "removeFromPlaylist": "Retirer de la playlist",
+  "removeFromQueue": "Retirer de la file",
+  "reorder": "Réorganiser l’ordre",
+  "reorderHint": "Faites glisser les poignées pour changer l’ordre.",
+  "repeatOff": "Désactiver la répétition",
+  "repeatQueue": "Répéter la file",
+  "repeatTrack": "Répéter ce morceau",
+  "resume": "Reprendre",
+  "retry": "Réessayer",
+  "retryFailed": "Réessayer les échecs",
+  "save": "Enregistrer",
+  "scanFailed": "Impossible d’analyser ce serveur pour le moment.",
+  "scanNewAlbums": "Rechercher de nouveaux albums",
+  "scanningFolder": "Analyse du dossier…",
+  "searchAgain": "Relancer la recherche",
+  "searchHint": "Rechercher dans votre musique",
+  "sectionAppearance": "APPARENCE",
+  "sectionConnections": "CONNEXIONS",
+  "sectionPlayback": "LECTURE",
+  "sectionPrivacy": "CONFIDENTIALITÉ",
+  "selectAll": "Tout sélectionner",
+  "selectedCount": "{count, plural, one{{count} sélectionné} other{{count} sélectionnés}}",
+  "@selectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serverAlreadyConfigured": "Ce serveur est déjà configuré.",
+  "serverConnectionFailed": "Connexion impossible. Vérifiez l’adresse et les identifiants.",
+  "serverRoot": "Racine du serveur",
+  "serversHeadline": "Votre musique,\noù qu’elle vive.",
+  "serversImported": "{count, plural, one{{count} serveur importé.} other{{count} serveurs importés.}}",
+  "@serversImported": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsHeadline": "À votre rythme.",
+  "settingsTagline": "Une bibliothèque privée, locale et prête à vous suivre.",
+  "settingsTitle": "Réglages",
+  "showAll": "Afficher tout",
+  "shuffle": "Aléatoire",
+  "shuffleDisable": "Désactiver la lecture aléatoire",
+  "shuffleEnable": "Activer la lecture aléatoire",
+  "shufflePlay": "Lecture aléatoire",
+  "sizeKilobytes": "{size} Ko",
+  "@sizeKilobytes": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "sizeMegabytes": "{size} Mo",
+  "@sizeMegabytes": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "sortAlbum": "Album",
+  "sortArtist": "Artiste",
+  "sortBy": "Trier par {sort}",
+  "@sortBy": {
+    "placeholders": {
+      "sort": {
+        "type": "String"
+      }
+    }
+  },
+  "sortRecent": "Ajout récent",
+  "sortTitle": "Titre",
+  "sourceCount": "{count, plural, one{{count} source} other{{count} sources}}",
+  "@sourceCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stageFtp": "le transfert FTP",
+  "stageInventory": "l’inventaire",
+  "stageQueue": "la mise en file",
+  "statusCanceled": "Annulé",
+  "statusComplete": "Disponible hors ligne",
+  "statusEnqueued": "En attente",
+  "statusFailed": "Échec du téléchargement",
+  "statusFailedWithReason": "Échec : {reason}",
+  "@statusFailedWithReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "statusNotFound": "Fichier introuvable",
+  "statusPaused": "En pause",
+  "statusRunning": "Téléchargement en cours",
+  "statusWaitingToRetry": "Nouvelle tentative en attente",
+  "streamFailed": "Lecture depuis le serveur impossible.",
+  "streamFromServer": "Écouter depuis le serveur",
+  "supportedFormats": "MP3, M4A, AAC, FLAC, OGG, OPUS et WAV",
+  "theme": "Thème",
+  "themeDark": "Sombre",
+  "themeHint": "Suivre l’appareil ou imposer un mode",
+  "themeLight": "Clair",
+  "themeSystem": "Système",
+  "trackCount": "{count, plural, one{{count} morceau} other{{count} morceaux}}",
+  "@trackCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "trackOptions": "Options du morceau",
+  "tracksSortedBy": "{tracks} · {sort}",
+  "@tracksSortedBy": {
+    "placeholders": {
+      "tracks": {
+        "type": "String"
+      },
+      "sort": {
+        "type": "String"
+      }
+    }
+  },
+  "translate": "Traduire",
+  "translateLyricsHint": "Les paroles seront envoyées à MyMemory. La traduction sera gardée sur cet appareil.",
+  "translateLyricsTitle": "Traduire les paroles",
+  "translationFailed": "Traduction impossible. Vérifiez la connexion et réessayez.",
+  "translationLanguage": "Traduction : {language}",
+  "@translationLanguage": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "translationLineTooLong": "Une ligne est trop longue à traduire.",
+  "translationRateLimited": "MyMemory limite temporairement les traductions. Réessayez plus tard.",
+  "translationUnavailable": "Traduction impossible (réseau ou service indisponible).",
+  "unknownAlbum": "Album inconnu",
+  "unknownArtist": "Artiste inconnu",
+  "unknownGenre": "Genre inconnu",
+  "untitledTrack": "Piste sans titre",
+  "upNext": "À suivre",
+  "usernameOptional": "Utilisateur (facultatif)",
+  "volumePercent": "{percent} %",
+  "@volumePercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "yourFavorites": "Vos favoris",
+  "yourLibrary": "VOTRE BIBLIOTHÈQUE",
+  "yourPlaylists": "Vos playlists",
+  "yourSources": "VOS SOURCES"
+}

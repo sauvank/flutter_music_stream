@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:music_reader_app/l10n/l10n.dart';
 import 'package:music_reader_app/models/music_playlist.dart';
 import 'package:music_reader_app/models/music_track.dart';
 import 'package:music_reader_app/providers/library_provider.dart';
@@ -22,7 +23,12 @@ void main() {
     await library.load();
     await tester.pumpWidget(ChangeNotifierProvider.value(
       value: library,
-      child: const MaterialApp(home: Scaffold(body: LibraryScreen())),
+      child: const MaterialApp(
+        locale: Locale('fr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: LibraryScreen()),
+      ),
     ));
     await tester.pumpAndSettle();
 

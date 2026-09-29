@@ -32,6 +32,9 @@ class ServerScanResult {
 class ServerScanService {
   static const _keyPrefix = 'server_scan_snapshot_v1_';
 
+  /// Stored name for files at the server root; translated when displayed.
+  static const rootAlbumName = 'Racine du serveur';
+
   Future<ServerScanResult> compareAndSave(
     String profileId,
     List<RemoteAudioEntry> files,
@@ -92,6 +95,6 @@ class ServerScanService {
   String _albumName(Uri uri) {
     final segments = uri.pathSegments.where((segment) => segment.isNotEmpty);
     final values = segments.toList();
-    return values.length >= 2 ? values[values.length - 2] : 'Racine du serveur';
+    return values.length >= 2 ? values[values.length - 2] : rootAlbumName;
   }
 }

@@ -2,6 +2,7 @@
 
 ## Modifications récentes
 
+- Localisation de l’interface en français et en anglais (fichiers ARB, `gen-l10n`), avec choix Système/Français/English dans Réglages; notifications de téléchargement et canal audio traduits. Vérifié sur Galaxy S24.
 - Ajout d’un choix de thème Système/Clair/Sombre dans Réglages, persisté et vérifié sur Galaxy S24 après redémarrage.
 - Mesure du défilement de la bibliothèque sur Galaxy S24 (332 morceaux) : construction médiane 2,5 ms, rendu médian 4 ms, aucune saccade durable; pas d'optimisation nécessaire.
 - Démarrage à froid accéléré : l’initialisation du gestionnaire natif de téléchargements (0,7 à 1,4 s mesurées sur Galaxy S24) ne bloque plus le premier affichage; démarrage mesuré de 1,2–1,7 s à 0,71–0,95 s avec environ 300 morceaux.

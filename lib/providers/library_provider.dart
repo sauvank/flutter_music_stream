@@ -9,15 +9,7 @@ import '../services/playlist_service.dart';
 
 typedef LocalImportSummary = ({int added, int skipped, int failed});
 
-enum TrackSort {
-  title('Titre'),
-  artist('Artiste'),
-  album('Album'),
-  recent('Ajout récent');
-
-  const TrackSort(this.label);
-  final String label;
-}
+enum TrackSort { title, artist, album, recent }
 
 class LibraryProvider extends ChangeNotifier {
   LibraryProvider(this._service, this._playlistService);
@@ -364,8 +356,11 @@ class LibraryProvider extends ChangeNotifier {
   Future<LocalImportSummary?> importFiles() =>
       _importLocal(_service.pickAndImport);
 
-  Future<LocalImportSummary?> importDirectory() =>
-      _importLocal(_service.pickDirectoryAndImport);
+  Future<LocalImportSummary?> importDirectory({String? dialogTitle}) =>
+      _importLocal(({onProgress}) => _service.pickDirectoryAndImport(
+            onProgress: onProgress,
+            dialogTitle: dialogTitle,
+          ));
 
   Future<LocalImportSummary?> _importLocal(
     Future<LocalImportResult?> Function({ImportProgressCallback? onProgress})

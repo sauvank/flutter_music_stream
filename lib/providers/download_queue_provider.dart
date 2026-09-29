@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 
 import '../models/remote_audio_entry.dart';
 import 'library_provider.dart';
+import '../l10n/generated/app_localizations.dart';
 
 class DownloadQueueProvider extends ChangeNotifier {
   DownloadQueueProvider(this._library);
@@ -30,13 +31,13 @@ class DownloadQueueProvider extends ChangeNotifier {
 
   /// Runs off the startup path: enqueues wait for it through [_enqueueChain],
   /// and the queue notifies listeners once its records are loaded.
-  Future<void> initialize() {
-    final ready = _initialize();
+  Future<void> initialize(AppLocalizations l10n) {
+    final ready = _initialize(l10n);
     _enqueueChain = ready.catchError((Object _) {});
     return ready;
   }
 
-  Future<void> _initialize() async {
+  Future<void> _initialize(AppLocalizations l10n) async {
     await _downloader.configure(globalConfig: [
       (Config.holdingQueue, (3, 2, 3)),
     ]);
@@ -50,27 +51,7 @@ class DownloadQueueProvider extends ChangeNotifier {
         });
       },
     );
-    _downloader.configureNotificationForGroup(
-      group,
-      running: const TaskNotification(
-        'Téléchargement de musique',
-        '{numFinished} / {numTotal} · {progress}',
-      ),
-      complete: const TaskNotification(
-        'Téléchargement terminé',
-        '{numFinished} morceau(x) disponible(s) hors ligne',
-      ),
-      error: const TaskNotification(
-        'Téléchargement incomplet',
-        '{numFailed} échec(s) sur {numTotal}',
-      ),
-      paused: const TaskNotification(
-        'Téléchargement en pause',
-        '{numFinished} / {numTotal}',
-      ),
-      progressBar: true,
-      groupNotificationId: group,
-    );
+    configureNotifications(l10n);
     await _downloader.start();
     await _reload();
     for (final record in _records) {
@@ -79,6 +60,32 @@ class DownloadQueueProvider extends ChangeNotifier {
         _scheduleImport(record.task);
       }
     }
+  }
+
+  /// Uses the downloader's own `{numFinished}`-style tokens as arguments so
+  /// the translations keep them in place.
+  void configureNotifications(AppLocalizations l10n) {
+    _downloader.configureNotificationForGroup(
+      group,
+      running: TaskNotification(
+        l10n.notificationRunningTitle,
+        '{numFinished} / {numTotal} · {progress}',
+      ),
+      complete: TaskNotification(
+        l10n.notificationCompleteTitle,
+        l10n.notificationCompleteBody('{numFinished}'),
+      ),
+      error: TaskNotification(
+        l10n.notificationErrorTitle,
+        l10n.notificationErrorBody('{numFailed}', '{numTotal}'),
+      ),
+      paused: TaskNotification(
+        l10n.notificationPausedTitle,
+        '{numFinished} / {numTotal}',
+      ),
+      progressBar: true,
+      groupNotificationId: group,
+    );
   }
 
   Future<int> enqueueAll(

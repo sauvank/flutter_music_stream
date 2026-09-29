@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:provider/provider.dart';
 
@@ -17,12 +18,27 @@ import 'services/playlist_service.dart';
 import 'services/playback_settings_service.dart';
 import 'services/remote_server_service.dart';
 import 'services/server_profile_service.dart';
+import 'l10n/l10n.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final appearanceSettings = AppearanceSettingsService();
+  final appearance = AppearanceProvider(
+    appearanceSettings,
+    themeMode: await appearanceSettings.loadThemeMode(),
+    locale: await appearanceSettings.loadLocale(),
+  );
+  // Native notifications are configured outside the widget tree.
+  AppLocalizations localizations() => lookupAppLocalizations(
+        appearance.locale ??
+            basicLocaleListResolution(
+              WidgetsBinding.instance.platformDispatcher.locales,
+              AppLocalizations.supportedLocales,
+            ),
+      );
   await JustAudioBackground.init(
     androidNotificationChannelId: 'com.sauvank.musicstream.audio',
-    androidNotificationChannelName: 'Lecture audio',
+    androidNotificationChannelName: localizations().audioChannelName,
     androidNotificationOngoing: true,
   );
   final library = LibraryProvider(LibraryService(), PlaylistService());
@@ -34,17 +50,15 @@ Future<void> main() async {
   final playbackSettings = PlaybackSettingsService();
   final fadeDuration = await playbackSettings.loadFadeDuration();
   final volume = await playbackSettings.loadVolume();
-  final appearanceSettings = AppearanceSettingsService();
-  final appearance = AppearanceProvider(
-    appearanceSettings,
-    themeMode: await appearanceSettings.loadThemeMode(),
-  );
   await library.load();
   // The native downloader takes up to a second to start; keep it off the
   // first frame.
-  unawaited(downloads.initialize().catchError((Object error) {
+  unawaited(downloads.initialize(localizations()).catchError((Object error) {
     debugPrint('Download queue initialization failed: $error');
   }));
+  appearance.addListener(
+    () => downloads.configureNotifications(localizations()),
+  );
   await servers.load();
   runApp(MusicStreamApp(
     library: library,
@@ -111,6 +125,16 @@ class MusicStreamApp extends StatelessWidget {
             themeMode: context.select<AppearanceProvider, ThemeMode>(
               (appearance) => appearance.themeMode,
             ),
+            locale: context.select<AppearanceProvider, Locale?>(
+              (appearance) => appearance.locale,
+            ),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
             theme: _theme(Brightness.light),
             darkTheme: _theme(Brightness.dark),
             home: const HomeScreen(),

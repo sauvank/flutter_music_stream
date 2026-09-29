@@ -183,9 +183,10 @@ class LibraryService {
 
   Future<LocalImportResult?> pickDirectoryAndImport({
     ImportProgressCallback? onProgress,
+    String? dialogTitle,
   }) async {
     final selectedPath = await FilePicker.getDirectoryPath(
-      dialogTitle: 'Choisir un dossier de musique',
+      dialogTitle: dialogTitle,
     );
     if (selectedPath == null) return null;
     final directory = Directory(selectedPath);
@@ -347,7 +348,7 @@ class LibraryService {
 
   String _titleFromFilename(String name) {
     final base = p.basenameWithoutExtension(name).replaceAll('_', ' ');
-    return base.trim().isEmpty ? 'Piste sans titre' : base.trim();
+    return base.trim().isEmpty ? MusicTrack.untitled : base.trim();
   }
 
   Future<MusicTrack> _readMetadata(MusicTrack track) async {

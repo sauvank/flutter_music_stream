@@ -9,17 +9,18 @@ import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
 import '../widgets/track_artwork.dart';
 import '../widgets/import_music_sheet.dart';
+import '../l10n/l10n.dart';
 
 enum _LibraryMode { tracks, history, artists, albums, genres, playlists }
 
 extension on _LibraryMode {
-  String get label => switch (this) {
-        _LibraryMode.tracks => 'Morceaux',
-        _LibraryMode.history => 'Historique',
-        _LibraryMode.artists => 'Artistes',
-        _LibraryMode.albums => 'Albums',
-        _LibraryMode.genres => 'Genres',
-        _LibraryMode.playlists => 'Playlists',
+  String label(AppLocalizations l10n) => switch (this) {
+        _LibraryMode.tracks => l10n.modeTracks,
+        _LibraryMode.history => l10n.modeHistory,
+        _LibraryMode.artists => l10n.modeArtists,
+        _LibraryMode.albums => l10n.modeAlbums,
+        _LibraryMode.genres => l10n.modeGenres,
+        _LibraryMode.playlists => l10n.modePlaylists,
       };
 
   IconData get icon => switch (this) {
@@ -133,7 +134,7 @@ class LibraryScreenState extends State<LibraryScreen> {
               padding: const WidgetStatePropertyAll(
                 EdgeInsets.symmetric(horizontal: 18),
               ),
-              hintText: 'Rechercher dans votre musique',
+              hintText: context.l10n.searchHint,
               leading: const Icon(Icons.search_rounded),
               onChanged: library.setQuery,
             ),
@@ -153,7 +154,7 @@ class LibraryScreenState extends State<LibraryScreen> {
                   selected: _mode == mode,
                   showCheckmark: false,
                   avatar: Icon(mode.icon, size: 18),
-                  label: Text(mode.label),
+                  label: Text(mode.label(context.l10n)),
                   onSelected: (_) {
                     _selection.clear();
                     setState(() => _mode = mode);
@@ -168,13 +169,12 @@ class LibraryScreenState extends State<LibraryScreen> {
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 14),
             sliver: SliverToBoxAdapter(
               child: _SectionTitle(
-                title: 'Vos playlists',
-                detail:
-                    '${library.playlists.length} playlist${library.playlists.length > 1 ? 's' : ''}',
+                title: context.l10n.yourPlaylists,
+                detail: context.l10n.playlistCount(library.playlists.length),
                 action: FilledButton.tonalIcon(
                   onPressed: () => _createPlaylist(context),
                   icon: const Icon(Icons.add_rounded),
-                  label: const Text('Créer'),
+                  label: Text(context.l10n.create),
                 ),
               ),
             ),
@@ -202,15 +202,15 @@ class LibraryScreenState extends State<LibraryScreen> {
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
             sliver: SliverToBoxAdapter(
               child: _SectionTitle(
-                title: 'Écoutés récemment',
-                detail: _trackCount(history.length),
+                title: context.l10n.recentlyPlayed,
+                detail: context.l10n.trackCount(history.length),
                 action: history.isEmpty
                     ? null
                     : TextButton.icon(
                         onPressed: () =>
                             context.read<PlayerProvider>().playAll(history),
                         icon: const Icon(Icons.play_arrow_rounded),
-                        label: const Text('Tout lire'),
+                        label: Text(context.l10n.playAll),
                       ),
               ),
             ),
@@ -237,15 +237,20 @@ class LibraryScreenState extends State<LibraryScreen> {
             padding: const EdgeInsets.fromLTRB(20, 26, 20, 10),
             sliver: SliverToBoxAdapter(
               child: _SectionTitle(
-                title:
-                    library.favoritesOnly ? 'Vos favoris' : 'Tous les morceaux',
-                detail:
-                    '${_trackCount(tracks.length)} · ${library.sort.label.toLowerCase()}',
+                title: library.favoritesOnly
+                    ? context.l10n.yourFavorites
+                    : context.l10n.allTracks,
+                detail: context.l10n.tracksSortedBy(
+                  context.l10n.trackCount(tracks.length),
+                  _sortLabel(context.l10n, library.sort).toLowerCase(),
+                ),
                 action: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     PopupMenuButton<TrackSort>(
-                      tooltip: 'Trier par ${library.sort.label.toLowerCase()}',
+                      tooltip: context.l10n.sortBy(
+                        _sortLabel(context.l10n, library.sort).toLowerCase(),
+                      ),
                       icon: const Icon(Icons.sort_rounded),
                       initialValue: library.sort,
                       onSelected: library.setSort,
@@ -254,7 +259,7 @@ class LibraryScreenState extends State<LibraryScreen> {
                           CheckedPopupMenuItem(
                             value: value,
                             checked: value == library.sort,
-                            child: Text(value.label),
+                            child: Text(_sortLabel(context.l10n, value)),
                           ),
                       ],
                     ),
@@ -262,7 +267,7 @@ class LibraryScreenState extends State<LibraryScreen> {
                       onPressed: () =>
                           context.read<PlayerProvider>().playShuffled(tracks),
                       icon: const Icon(Icons.shuffle_rounded),
-                      label: const Text('Aléatoire'),
+                      label: Text(context.l10n.shuffle),
                     ),
                   ],
                 ),
@@ -284,9 +289,8 @@ class LibraryScreenState extends State<LibraryScreen> {
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 14),
             sliver: SliverToBoxAdapter(
               child: _SectionTitle(
-                title: _mode.label,
-                detail:
-                    '${groups.length} collection${groups.length > 1 ? 's' : ''}',
+                title: _mode.label(context.l10n),
+                detail: context.l10n.collectionCount(groups.length),
               ),
             ),
           ),
@@ -373,7 +377,7 @@ class _LibraryHeader extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'VOTRE BIBLIOTHÈQUE',
+                        context.l10n.yourLibrary,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               letterSpacing: 1.8,
                               fontWeight: FontWeight.w800,
@@ -381,7 +385,7 @@ class _LibraryHeader extends StatelessWidget {
                             ),
                       ),
                       Text(
-                        count == 0 ? 'MusicStream' : _greeting(),
+                        count == 0 ? 'MusicStream' : _greeting(context.l10n),
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w800,
                             ),
@@ -390,7 +394,9 @@ class _LibraryHeader extends StatelessWidget {
                   ),
                 ),
                 IconButton.filledTonal(
-                  tooltip: favoritesOnly ? 'Afficher tout' : 'Favoris',
+                  tooltip: favoritesOnly
+                      ? context.l10n.showAll
+                      : context.l10n.favorites,
                   onPressed: onFavorites,
                   icon: Icon(favoritesOnly
                       ? Icons.favorite_rounded
@@ -398,12 +404,12 @@ class _LibraryHeader extends StatelessWidget {
                 ),
                 if (count > 0)
                   IconButton(
-                    tooltip: 'Supprimer les téléchargements du téléphone',
+                    tooltip: context.l10n.deleteDownloadsTooltip,
                     onPressed: onDeleteAll,
                     icon: const Icon(Icons.delete_sweep_outlined),
                   ),
                 IconButton.filled(
-                  tooltip: 'Importer des morceaux',
+                  tooltip: context.l10n.importTracks,
                   onPressed: importing ? null : onImport,
                   icon: importing
                       ? const SizedBox.square(
@@ -416,9 +422,7 @@ class _LibraryHeader extends StatelessWidget {
             ),
             const SizedBox(height: 28),
             Text(
-              count == 0
-                  ? 'Votre musique mérite\nun bel écrin.'
-                  : 'Qu’avez-vous envie\nd’écouter ?',
+              count == 0 ? context.l10n.emptyHeadline : context.l10n.headline,
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.w900,
                     height: 1.04,
@@ -428,7 +432,7 @@ class _LibraryHeader extends StatelessWidget {
             if (count > 0) ...[
               const SizedBox(height: 10),
               Text(
-                '$count morceau${count > 1 ? 'x' : ''} disponible${count > 1 ? 's' : ''} hors connexion',
+                context.l10n.offlineCount(count),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -438,7 +442,7 @@ class _LibraryHeader extends StatelessWidget {
                 when progress.total > 0) ...[
               const SizedBox(height: 14),
               Text(
-                'Import ${progress.completed} / ${progress.total}…',
+                context.l10n.importProgress(progress.completed, progress.total),
                 style: Theme.of(context).textTheme.labelMedium,
               ),
               const SizedBox(height: 6),
@@ -454,11 +458,11 @@ class _LibraryHeader extends StatelessWidget {
         ),
       );
 
-  String _greeting() {
+  String _greeting(AppLocalizations l10n) {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Bonjour';
-    if (hour < 18) return 'Bon après-midi';
-    return 'Bonsoir';
+    if (hour < 12) return l10n.goodMorning;
+    if (hour < 18) return l10n.goodAfternoon;
+    return l10n.goodEvening;
   }
 }
 
@@ -477,11 +481,11 @@ class _RecentTracks extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 26, 20, 14),
           child: _SectionTitle(
-            title: 'Ajoutés récemment',
+            title: context.l10n.recentlyAdded,
             action: TextButton.icon(
               onPressed: () => context.read<PlayerProvider>().playAll(visible),
               icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Tout lire'),
+              label: Text(context.l10n.playAll),
             ),
           ),
         ),
@@ -549,7 +553,7 @@ class _RecentTracks extends StatelessWidget {
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                       Text(
-                        track.artist,
+                        context.l10n.metadata(track.artist),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall,
@@ -634,13 +638,13 @@ class _CollectionCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  title,
+                  context.l10n.metadata(title),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
                 Text(
-                  _trackCount(tracks.length),
+                  context.l10n.trackCount(tracks.length),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -671,7 +675,7 @@ class _CollectionScreen extends StatelessWidget {
             pinned: true,
             actions: [
               IconButton(
-                tooltip: 'Lecture aléatoire',
+                tooltip: context.l10n.shufflePlay,
                 onPressed: visible.isEmpty
                     ? null
                     : () =>
@@ -679,7 +683,7 @@ class _CollectionScreen extends StatelessWidget {
                 icon: const Icon(Icons.shuffle_rounded),
               ),
               IconButton.filledTonal(
-                tooltip: 'Lire la collection',
+                tooltip: context.l10n.playCollection,
                 onPressed: visible.isEmpty
                     ? null
                     : () => context.read<PlayerProvider>().playAll(visible),
@@ -688,7 +692,7 @@ class _CollectionScreen extends StatelessWidget {
               const SizedBox(width: 12),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              title: Text(title, maxLines: 1),
+              title: Text(context.l10n.metadata(title), maxLines: 1),
               background: visible.isEmpty
                   ? null
                   : Stack(
@@ -792,7 +796,7 @@ class _PlaylistCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontWeight: FontWeight.w800)),
-              Text(_trackCount(tracks.length),
+              Text(context.l10n.trackCount(tracks.length),
                   style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
@@ -831,13 +835,13 @@ class _PlaylistScreenState extends State<_PlaylistScreen> {
             actions: [
               if (reordering)
                 IconButton(
-                  tooltip: 'Terminer',
+                  tooltip: context.l10n.done,
                   onPressed: () => setState(() => _reordering = false),
                   icon: const Icon(Icons.check_rounded),
                 )
               else ...[
                 IconButton(
-                  tooltip: 'Ajouter des morceaux',
+                  tooltip: context.l10n.addTracks,
                   onPressed: () => _selectTracks(context, playlist),
                   icon: const Icon(Icons.playlist_add_rounded),
                 ),
@@ -857,14 +861,15 @@ class _PlaylistScreenState extends State<_PlaylistScreen> {
                     }
                   },
                   itemBuilder: (_) => [
-                    const PopupMenuItem(value: 'edit', child: Text('Modifier')),
+                    PopupMenuItem(
+                        value: 'edit', child: Text(context.l10n.edit)),
                     if (tracks.length > 1)
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'reorder',
-                        child: Text("Réorganiser l'ordre"),
+                        child: Text(context.l10n.reorder),
                       ),
-                    const PopupMenuItem(
-                        value: 'delete', child: Text('Supprimer')),
+                    PopupMenuItem(
+                        value: 'delete', child: Text(context.l10n.delete)),
                   ],
                 ),
               ],
@@ -894,7 +899,7 @@ class _PlaylistScreenState extends State<_PlaylistScreen> {
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
               sliver: SliverToBoxAdapter(
                 child: Text(
-                  'Faites glisser les poignées pour changer l’ordre.',
+                  context.l10n.reorderHint,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
@@ -928,13 +933,13 @@ class _PlaylistScreenState extends State<_PlaylistScreen> {
                       onPressed: () =>
                           context.read<PlayerProvider>().playAll(tracks),
                       icon: const Icon(Icons.play_arrow_rounded),
-                      label: const Text('Tout lire'),
+                      label: Text(context.l10n.playAll),
                     ),
                     FilledButton.tonalIcon(
                       onPressed: () =>
                           context.read<PlayerProvider>().playShuffled(tracks),
                       icon: const Icon(Icons.shuffle_rounded),
-                      label: const Text('Aléatoire'),
+                      label: Text(context.l10n.shuffle),
                     ),
                   ],
                 ),
@@ -995,7 +1000,7 @@ class _ReorderableTrackTile extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontWeight: FontWeight.w800)),
                       const SizedBox(height: 3),
-                      Text(track.artist,
+                      Text(context.l10n.metadata(track.artist),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodySmall),
@@ -1066,7 +1071,7 @@ class _EmptyLibrary extends StatelessWidget {
                     ),
                     const SizedBox(height: 72),
                     Text(
-                      'Donnez vie à\nvotre bibliothèque',
+                      context.l10n.emptyLibraryTitle,
                       style:
                           Theme.of(context).textTheme.headlineMedium?.copyWith(
                                 color: Colors.white,
@@ -1076,7 +1081,7 @@ class _EmptyLibrary extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Ajoutez vos morceaux : ils restent privés, disponibles hors connexion et classés automatiquement.',
+                      context.l10n.emptyLibraryBody,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Colors.white.withValues(alpha: .82),
                             height: 1.45,
@@ -1100,8 +1105,8 @@ class _EmptyLibrary extends StatelessWidget {
                             )
                           : const Icon(Icons.add_rounded),
                       label: Text(importing
-                          ? 'Import en cours…'
-                          : 'Ajouter ma musique'),
+                          ? context.l10n.importing
+                          : context.l10n.addMyMusic),
                     ),
                   ],
                 ),
@@ -1129,7 +1134,7 @@ class _EmptyHistory extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Votre historique est encore vide',
+                context.l10n.emptyHistoryTitle,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
@@ -1137,7 +1142,7 @@ class _EmptyHistory extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Les morceaux suffisamment écoutés apparaîtront ici.',
+                context.l10n.emptyHistoryBody,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -1163,19 +1168,19 @@ class _EmptyPlaylists extends StatelessWidget {
               Icon(Icons.queue_music_rounded,
                   size: 72, color: Theme.of(context).colorScheme.primary),
               const SizedBox(height: 18),
-              Text('Créez votre première playlist',
+              Text(context.l10n.emptyPlaylistsTitle,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 8),
-              const Text(
-                'Regroupez vos morceaux pour les retrouver et les lire dans l’ordre.',
+              Text(
+                context.l10n.emptyPlaylistsBody,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
               FilledButton.icon(
                 onPressed: onCreate,
                 icon: const Icon(Icons.add_rounded),
-                label: const Text('Créer une playlist'),
+                label: Text(context.l10n.createPlaylist),
               ),
             ],
           ),
@@ -1196,13 +1201,13 @@ class _EmptyPlaylist extends StatelessWidget {
             children: [
               const Icon(Icons.music_note_rounded, size: 64),
               const SizedBox(height: 16),
-              Text('Cette playlist est vide',
+              Text(context.l10n.emptyPlaylist,
                   style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 18),
               FilledButton.icon(
                 onPressed: onAdd,
                 icon: const Icon(Icons.playlist_add_rounded),
-                label: const Text('Ajouter des morceaux'),
+                label: Text(context.l10n.addTracks),
               ),
             ],
           ),
@@ -1223,11 +1228,11 @@ class _NoResults extends StatelessWidget {
               Icon(Icons.search_off_rounded,
                   size: 64, color: Theme.of(context).colorScheme.primary),
               const SizedBox(height: 16),
-              Text('Aucun résultat',
+              Text(context.l10n.noResults,
                   style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 6),
-              const Text(
-                'Essayez un autre titre, artiste, album ou genre.',
+              Text(
+                context.l10n.noResultsHint,
                 textAlign: TextAlign.center,
               ),
             ],
@@ -1292,47 +1297,49 @@ class _SelectionBar extends StatelessWidget {
                 child: Row(
                   children: [
                     IconButton(
-                      tooltip: 'Annuler la sélection',
+                      tooltip: context.l10n.clearSelection,
                       onPressed: selection.clear,
                       icon: const Icon(Icons.close_rounded),
                     ),
                     Expanded(
                       child: Text(
-                        '${selection.count} sélectionné${selection.count > 1 ? 's' : ''}',
+                        context.l10n.selectedCount(selection.count),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Lire ensuite',
+                      tooltip: context.l10n.playNext,
                       onPressed: () => _run(context, (tracks) async {
                         final messenger = ScaffoldMessenger.of(context);
+                        final message = context.l10n.playingNext;
                         await context
                             .read<PlayerProvider>()
                             .playNextAll(tracks);
-                        messenger.showSnackBar(
-                            const SnackBar(content: Text('Lecture suivante.')));
+                        messenger
+                            .showSnackBar(SnackBar(content: Text(message)));
                         return true;
                       }),
                       icon: const Icon(Icons.playlist_play_rounded),
                     ),
                     IconButton(
-                      tooltip: 'Ajouter à la file',
+                      tooltip: context.l10n.addToQueue,
                       onPressed: () => _run(context, (tracks) async {
                         final messenger = ScaffoldMessenger.of(context);
+                        final message =
+                            context.l10n.addedToQueue(tracks.length);
                         await context
                             .read<PlayerProvider>()
                             .addAllToQueue(tracks);
-                        messenger.showSnackBar(SnackBar(
-                            content: Text(
-                                'Ajouté${tracks.length > 1 ? 's' : ''} à la file.')));
+                        messenger
+                            .showSnackBar(SnackBar(content: Text(message)));
                         return true;
                       }),
                       icon: const Icon(Icons.queue_music_rounded),
                     ),
                     IconButton(
-                      tooltip: 'Ajouter à une playlist',
+                      tooltip: context.l10n.addToPlaylist,
                       onPressed: () => _run(
                         context,
                         (tracks) => _addTracksToPlaylist(context, tracks),
@@ -1340,7 +1347,7 @@ class _SelectionBar extends StatelessWidget {
                       icon: const Icon(Icons.playlist_add_rounded),
                     ),
                     PopupMenuButton<String>(
-                      tooltip: 'Plus d’actions',
+                      tooltip: context.l10n.moreActions,
                       onSelected: (action) => action == 'all'
                           ? selection
                               .selectAll(visible.map((track) => track.id))
@@ -1351,13 +1358,13 @@ class _SelectionBar extends StatelessWidget {
                       itemBuilder: (_) => [
                         if (visible
                             .any((track) => !selection.contains(track.id)))
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'all',
-                            child: Text('Tout sélectionner'),
+                            child: Text(context.l10n.selectAll),
                           ),
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'delete',
-                          child: Text('Supprimer du téléphone'),
+                          child: Text(context.l10n.deleteFromPhone),
                         ),
                       ],
                     ),
@@ -1471,7 +1478,9 @@ class _TrackTileState extends State<_TrackTile> {
                         ],
                       ),
                       const SizedBox(height: 3),
-                      Text('${track.artist}  •  ${track.album}',
+                      Text(
+                          '${context.l10n.metadata(track.artist)}  •  '
+                          '${context.l10n.metadata(track.album)}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodySmall),
@@ -1485,8 +1494,8 @@ class _TrackTileState extends State<_TrackTile> {
                   ),
                 IconButton(
                   tooltip: track.favorite
-                      ? 'Retirer des favoris'
-                      : 'Ajouter aux favoris',
+                      ? context.l10n.removeFavorite
+                      : context.l10n.addFavorite,
                   onPressed: () =>
                       context.read<LibraryProvider>().toggleFavorite(track.id),
                   icon: Icon(track.favorite
@@ -1495,30 +1504,30 @@ class _TrackTileState extends State<_TrackTile> {
                 ),
                 PopupMenuButton<String>(
                   key: _menuKey,
-                  tooltip: 'Options du morceau',
+                  tooltip: context.l10n.trackOptions,
                   onSelected: (action) => _onAction(context, action),
                   itemBuilder: (_) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'next',
-                      child: Text('Lire ensuite'),
+                      child: Text(context.l10n.playNext),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'queue',
-                      child: Text('Ajouter à la file'),
+                      child: Text(context.l10n.addToQueue),
                     ),
                     if (widget.playlistId == null)
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'add',
-                        child: Text('Ajouter à une playlist'),
+                        child: Text(context.l10n.addToPlaylist),
                       )
                     else
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'remove',
-                        child: Text('Retirer de la playlist'),
+                        child: Text(context.l10n.removeFromPlaylist),
                       ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'delete',
-                      child: Text('Supprimer du téléphone'),
+                      child: Text(context.l10n.deleteFromPhone),
                     ),
                   ],
                 ),
@@ -1536,14 +1545,14 @@ class _TrackTileState extends State<_TrackTile> {
       await context.read<PlayerProvider>().playNext(track);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Lecture suivante.')),
+          SnackBar(content: Text(context.l10n.playingNext)),
         );
       }
     } else if (action == 'queue') {
       await context.read<PlayerProvider>().addToQueue(track);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ajouté à la file.')),
+          SnackBar(content: Text(context.l10n.addedToQueue(1))),
         );
       }
     } else if (action == 'add') {
@@ -1607,7 +1616,12 @@ class _StaggeredEntry extends StatelessWidget {
       );
 }
 
-String _trackCount(int count) => '$count morceau${count > 1 ? 'x' : ''}';
+String _sortLabel(AppLocalizations l10n, TrackSort sort) => switch (sort) {
+      TrackSort.title => l10n.sortTitle,
+      TrackSort.artist => l10n.sortArtist,
+      TrackSort.album => l10n.sortAlbum,
+      TrackSort.recent => l10n.sortRecent,
+    };
 
 String _duration(int milliseconds) {
   final value = Duration(milliseconds: milliseconds);
@@ -1616,7 +1630,7 @@ String _duration(int milliseconds) {
 }
 
 Future<void> _createPlaylist(BuildContext context) async {
-  final name = await _askForName(context, title: 'Nouvelle playlist');
+  final name = await _askForName(context, title: context.l10n.newPlaylist);
   if (name == null || !context.mounted) return;
   await context.read<LibraryProvider>().createPlaylist(name);
 }
@@ -1668,7 +1682,7 @@ class _PlaylistDetailsDialogState extends State<_PlaylistDetailsDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: const Text('Modifier la playlist'),
+        title: Text(context.l10n.editPlaylist),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1676,7 +1690,7 @@ class _PlaylistDetailsDialogState extends State<_PlaylistDetailsDialog> {
               controller: _name,
               autofocus: true,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(labelText: 'Nom'),
+              decoration: InputDecoration(labelText: context.l10n.name),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -1685,18 +1699,18 @@ class _PlaylistDetailsDialogState extends State<_PlaylistDetailsDialog> {
               maxLines: 4,
               maxLength: 300,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(labelText: 'Description'),
+              decoration: InputDecoration(labelText: context.l10n.description),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: _submit,
-            child: const Text('Enregistrer'),
+            child: Text(context.l10n.save),
           ),
         ],
       );
@@ -1716,7 +1730,7 @@ Future<String?> _askForName(
         initialValue: initialValue,
         autofocus: true,
         textCapitalization: TextCapitalization.sentences,
-        decoration: const InputDecoration(labelText: 'Nom'),
+        decoration: InputDecoration(labelText: context.l10n.name),
         onChanged: (value) => currentValue = value,
         onFieldSubmitted: (value) {
           if (value.trim().isNotEmpty) {
@@ -1727,14 +1741,14 @@ Future<String?> _askForName(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(dialogContext),
-          child: const Text('Annuler'),
+          child: Text(context.l10n.cancel),
         ),
         FilledButton(
           onPressed: () {
             final name = currentValue.trim();
             if (name.isNotEmpty) Navigator.pop(dialogContext, name);
           },
-          child: const Text('Enregistrer'),
+          child: Text(context.l10n.save),
         ),
       ],
     ),
@@ -1750,23 +1764,21 @@ Future<void> _confirmDeleteDownloads(BuildContext context) async {
     final choice = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Anciens morceaux'),
-        content: Text(
-          '${unknown.length} morceau${unknown.length > 1 ? 'x' : ''} ajouté${unknown.length > 1 ? 's' : ''} avant cette version n’indique${unknown.length > 1 ? 'nt' : ''} pas leur origine. Ne les incluez que si vous savez qu’ils viennent tous du serveur : un ancien import local serait aussi supprimé.',
-        ),
+        title: Text(context.l10n.legacyTracksTitle),
+        content: Text(context.l10n.legacyTracksBody(unknown.length)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Annuler'),
+            child: Text(context.l10n.cancel),
           ),
           if (downloads.isNotEmpty)
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, 'known'),
-              child: const Text('Téléchargements identifiés'),
+              child: Text(context.l10n.identifiedDownloads),
             ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, 'all'),
-            child: const Text('Inclure les anciens'),
+            child: Text(context.l10n.includeLegacy),
           ),
         ],
       ),
@@ -1797,23 +1809,20 @@ Future<bool> _confirmDeleteTracks(
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: Text(bulk
-              ? 'Supprimer les téléchargements ?'
-              : count > 1
-                  ? 'Supprimer ces $count morceaux ?'
-                  : 'Supprimer ce morceau ?'),
+              ? context.l10n.deleteDownloadsTitle
+              : context.l10n.deleteTracksTitle(count)),
           content: Text(bulk
-              ? 'Les $count morceau${count > 1 ? 'x' : ''} sélectionné${count > 1 ? 's' : ''} seront supprimés de MusicStream sur ce téléphone. ${includeLegacy ? 'Cela inclut les anciens morceaux que vous avez choisis.' : 'Les imports locaux sont conservés.'}'
-              : count > 1
-                  ? 'Les morceaux et leurs fichiers associés seront supprimés de MusicStream sur ce téléphone. Les fichiers d’origine sont conservés.'
-                  : 'Le morceau et ses fichiers associés seront supprimés de MusicStream sur ce téléphone. Le fichier d’origine est conservé.'),
+              ? '${context.l10n.deleteDownloadsBody(count)} '
+                  '${includeLegacy ? context.l10n.deleteIncludesLegacy : context.l10n.deleteKeepsLocal}'
+              : context.l10n.deleteTracksBody(count)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Annuler'),
+              child: Text(context.l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Supprimer'),
+              child: Text(context.l10n.delete),
             ),
           ],
         ),
@@ -1821,17 +1830,17 @@ Future<bool> _confirmDeleteTracks(
       false;
   if (!confirmed || !context.mounted) return false;
   final messenger = ScaffoldMessenger.of(context);
+  final l10n = context.l10n;
   try {
     await context.read<PlayerProvider>().removeTracksByIds(ids);
     final removed = await library.deleteTracks(ids);
     messenger.showSnackBar(SnackBar(
-      content: Text(
-          '$removed morceau${removed > 1 ? 'x' : ''} supprimé${removed > 1 ? 's' : ''} du téléphone.'),
+      content: Text(l10n.deletedCount(removed)),
     ));
     return true;
   } catch (_) {
-    messenger.showSnackBar(const SnackBar(
-      content: Text('Suppression impossible. Réessayez.'),
+    messenger.showSnackBar(SnackBar(
+      content: Text(l10n.deleteFailed),
     ));
     return false;
   }
@@ -1841,17 +1850,16 @@ Future<bool> _confirmDelete(BuildContext context, String name) async =>
     await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Supprimer la playlist ?'),
-        content:
-            Text('« $name » sera supprimée. Vos morceaux seront conservés.'),
+        title: Text(context.l10n.deletePlaylistTitle),
+        content: Text(context.l10n.deletePlaylistBody(name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Annuler'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Supprimer'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -1865,19 +1873,19 @@ Future<bool> _addTracksToPlaylist(
   if (tracks.isEmpty) return false;
   final library = context.read<LibraryProvider>();
   final messenger = ScaffoldMessenger.of(context);
+  final l10n = context.l10n;
   final ids = tracks.map((track) => track.id).toList();
   Future<void> addTo(MusicPlaylist playlist) async {
     final added = await library.addTracksToPlaylist(playlist.id, ids);
     if (tracks.length > 1) {
       messenger.showSnackBar(SnackBar(
-        content: Text(
-            '${_trackCount(added)} ajouté${added > 1 ? 's' : ''} à « ${playlist.name} ».'),
+        content: Text(l10n.addedToPlaylist(added, playlist.name)),
       ));
     }
   }
 
   if (library.playlists.isEmpty) {
-    final name = await _askForName(context, title: 'Nouvelle playlist');
+    final name = await _askForName(context, title: context.l10n.newPlaylist);
     if (name == null || !context.mounted) return false;
     final playlist = await library.createPlaylist(name);
     if (playlist == null) return false;
@@ -1899,8 +1907,8 @@ Future<bool> _addTracksToPlaylist(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
                   tracks.length == 1
-                      ? 'Ajouter « ${tracks.single.title} »'
-                      : 'Ajouter ${_trackCount(tracks.length)}',
+                      ? l10n.addTrackTitle(tracks.single.title)
+                      : l10n.addTracksTitle(l10n.trackCount(tracks.length)),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(sheetContext).textTheme.titleLarge),
@@ -1949,12 +1957,11 @@ Future<void> _selectTracks(
     context: context,
     builder: (dialogContext) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-        title: const Text('Morceaux de la playlist'),
+        title: Text(context.l10n.playlistTracks),
         content: SizedBox(
           width: 520,
           child: library.allTracks.isEmpty
-              ? const Text(
-                  'Importez d’abord des morceaux dans la bibliothèque.')
+              ? Text(context.l10n.importTracksFirst)
               : ListView.builder(
                   shrinkWrap: true,
                   itemCount: library.allTracks.length,
@@ -1963,7 +1970,7 @@ Future<void> _selectTracks(
                     return CheckboxListTile(
                       value: selected.contains(track.id),
                       title: Text(track.title),
-                      subtitle: Text(track.artist),
+                      subtitle: Text(context.l10n.metadata(track.artist)),
                       onChanged: (checked) => setState(() {
                         checked == true
                             ? selected.add(track.id)
@@ -1976,11 +1983,11 @@ Future<void> _selectTracks(
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Annuler'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, selected),
-            child: const Text('Enregistrer'),
+            child: Text(context.l10n.save),
           ),
         ],
       ),
