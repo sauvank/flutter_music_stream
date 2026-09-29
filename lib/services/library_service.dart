@@ -29,6 +29,7 @@ class LibraryService {
   static const _libraryKey = 'music_library_v1';
   static const _positionsKey = 'music_positions_v1';
   static const _sortKey = 'library_sort_v1';
+  static const _deviceMediaKey = 'device_media_enabled_v1';
   static const supportedExtensions = <String>[
     'mp3',
     'm4a',
@@ -55,7 +56,13 @@ class LibraryService {
     }
     final audio = File.fromUri(audioUri);
     if (await audio.exists()) await audio.delete();
+    await deletePrivateExtras(track);
+  }
 
+  /// Deletes the artwork copy and cached lyrics the app keeps for a track,
+  /// never the audio file itself.
+  Future<void> deletePrivateExtras(MusicTrack track) async {
+    final root = await _documentsDirectory();
     final artworkUri = Uri.tryParse(track.artworkUri ?? '');
     if (artworkUri?.scheme == 'file' &&
         p.dirname(p.normalize(artworkUri!.toFilePath())) ==
@@ -141,6 +148,25 @@ class LibraryService {
       return [];
     }
   }
+
+  Future<bool> loadDeviceMediaEnabled() async =>
+      (await SharedPreferences.getInstance()).getBool(_deviceMediaKey) ?? false;
+
+  Future<void> saveDeviceMediaEnabled(bool enabled) async =>
+      (await SharedPreferences.getInstance()).setBool(_deviceMediaKey, enabled);
+
+  /// Builds a track for a file left in shared storage. Its id derives from
+  /// the path, since hashing every file's content would make scans slow.
+  Future<MusicTrack> readDeviceTrack(File file) => _readMetadata(MusicTrack(
+        id: deviceTrackId(file.path),
+        title: _titleFromFilename(p.basename(file.path)),
+        uri: file.uri.toString(),
+        addedAt: DateTime.now().toUtc(),
+        source: MusicSource.deviceMedia,
+      ));
+
+  static String deviceTrackId(String path) =>
+      'device-${sha256.convert(utf8.encode(path))}';
 
   Future<String?> loadSort() async =>
       (await SharedPreferences.getInstance()).getString(_sortKey);

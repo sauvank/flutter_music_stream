@@ -1,10 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/library_provider.dart';
+import '../services/audio_access.dart';
 import '../l10n/l10n.dart';
 
 enum _ImportSource { files, directory }
@@ -55,12 +53,12 @@ Future<void> showMusicImportSheet(BuildContext context) async {
   if (source == null || !context.mounted) return;
   final messenger = ScaffoldMessenger.of(context);
   final l10n = context.l10n;
-  if (source == _ImportSource.directory && !await _canReadSharedAudio()) {
+  if (source == _ImportSource.directory && !await AudioAccess.request()) {
     messenger.showSnackBar(SnackBar(
       content: Text(l10n.audioPermissionDenied),
       action: SnackBarAction(
         label: l10n.openSettings,
-        onPressed: openAppSettings,
+        onPressed: AudioAccess.openSettings,
       ),
     ));
     return;
@@ -79,15 +77,6 @@ Future<void> showMusicImportSheet(BuildContext context) async {
       SnackBar(content: Text(l10n.importFailed)),
     );
   }
-}
-
-/// Folder import lists shared storage by path, which Android only exposes
-/// with READ_MEDIA_AUDIO (13+) or READ_EXTERNAL_STORAGE (12 and below).
-/// Picking individual files goes through a copy and needs neither.
-Future<bool> _canReadSharedAudio() async {
-  if (!Platform.isAndroid) return true;
-  final statuses = await [Permission.audio, Permission.storage].request();
-  return statuses.values.any((status) => status.isGranted || status.isLimited);
 }
 
 String importSummaryText(AppLocalizations l10n, LocalImportSummary summary) {

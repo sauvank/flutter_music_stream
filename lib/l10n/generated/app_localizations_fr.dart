@@ -286,6 +286,42 @@ class AppLocalizationsFr extends AppLocalizations {
   String get description => 'Description';
 
   @override
+  String get deviceMedia => 'Médiathèque de l’appareil';
+
+  @override
+  String deviceMediaCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count morceaux du téléphone',
+      one: '$count morceau du téléphone',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get deviceMediaHint =>
+      'Ajoute les morceaux déjà présents sur le téléphone, sans les copier.';
+
+  @override
+  String get deviceMediaPermission =>
+      'MusicStream a besoin d’accéder à vos fichiers audio pour lire la médiathèque du téléphone.';
+
+  @override
+  String get deviceMediaRescan => 'Rechercher à nouveau';
+
+  @override
+  String get deviceMediaScanning => 'Recherche des morceaux du téléphone…';
+
+  @override
+  String deviceMediaSummary(int added, int removed) {
+    return '$added ajouté(s) · $removed retiré(s)';
+  }
+
+  @override
+  String get deviceTrackBadge => 'Sur l’appareil';
+
+  @override
   String get disconnect => 'Déconnecter';
 
   @override
@@ -914,6 +950,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sectionConnections => 'CONNEXIONS';
+
+  @override
+  String get sectionLibrary => 'BIBLIOTHÈQUE';
 
   @override
   String get sectionPlayback => 'LECTURE';

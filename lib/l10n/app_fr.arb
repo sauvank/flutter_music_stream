@@ -167,6 +167,31 @@
     }
   },
   "description": "Description",
+  "deviceMedia": "Médiathèque de l’appareil",
+  "deviceMediaCount": "{count, plural, one{{count} morceau du téléphone} other{{count} morceaux du téléphone}}",
+  "@deviceMediaCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deviceMediaHint": "Ajoute les morceaux déjà présents sur le téléphone, sans les copier.",
+  "deviceMediaPermission": "MusicStream a besoin d’accéder à vos fichiers audio pour lire la médiathèque du téléphone.",
+  "deviceMediaRescan": "Rechercher à nouveau",
+  "deviceMediaScanning": "Recherche des morceaux du téléphone…",
+  "deviceMediaSummary": "{added} ajouté(s) · {removed} retiré(s)",
+  "@deviceMediaSummary": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "removed": {
+        "type": "int"
+      }
+    }
+  },
+  "deviceTrackBadge": "Sur l’appareil",
   "disconnect": "Déconnecter",
   "done": "Terminer",
   "download": "Télécharger",
@@ -530,6 +555,7 @@
   "searchHint": "Rechercher dans votre musique",
   "sectionAppearance": "APPARENCE",
   "sectionConnections": "CONNEXIONS",
+  "sectionLibrary": "BIBLIOTHÈQUE",
   "sectionPlayback": "LECTURE",
   "sectionPrivacy": "CONFIDENTIALITÉ",
   "selectAll": "Tout sélectionner",

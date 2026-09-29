@@ -2,6 +2,7 @@
 
 ## Modifications récentes
 
+- Ajout de la médiathèque de l’appareil (Réglages › Bibliothèque), désactivée par défaut : les morceaux déjà présents sur le téléphone sont lus sur place, sans copie, jamais supprimés par l’application, et retirés de la bibliothèque si la source est désactivée. Les doublons évidents des imports privés sont ignorés; un scan en arrière-plan a lieu au démarrage si l’accès est accordé. 720 morceaux indexés en 17 s sur Galaxy S24.
 - FTP vérifié sur Galaxy S24 (serveur passif de test) : navigation, téléchargement d’un fichier et d’un dossier avec déduplication, référence et détection d’un nouvel album.
 - Correction du clavier qui se rouvrait après un dialogue : le champ de recherche de l’onglet Bibliothèque, masqué mais vivant, reprenait le focus. Le focus est libéré au changement d’onglet et au toucher hors du champ.
 - « Artiste inconnu » traduit dans la liste des fichiers distants; titre de l’écran Serveurs et sélecteur WebDAV/HTTP/FTP qui ne se coupent plus en plein mot; icône distincte pour l’import JSON.

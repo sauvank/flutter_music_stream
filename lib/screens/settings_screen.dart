@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/appearance_provider.dart';
+import '../providers/library_provider.dart';
+import '../services/audio_access.dart';
 import '../providers/player_provider.dart';
 import '../services/playback_settings_service.dart';
 import '../services/lyrics_service.dart';
@@ -73,10 +75,10 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 12),
           const _LanguageTile(),
           const SizedBox(height: 22),
-          _SectionLabel(context.l10n.sectionPlayback),
+          _SectionLabel(context.l10n.sectionLibrary),
           const SizedBox(height: 8),
-          const _FadeSettingsTile(),
-          const SizedBox(height: 22),
+          const _DeviceMediaTile(),
+          const SizedBox(height: 14),
           _ActionCard(
             icon: Icons.library_add_rounded,
             colors: const [Color(0xFF7C4DFF), Color(0xFFEC407A)],
@@ -85,6 +87,10 @@ class SettingsScreen extends StatelessWidget {
             actionLabel: context.l10n.importAction,
             onTap: () => showMusicImportSheet(context),
           ),
+          const SizedBox(height: 26),
+          _SectionLabel(context.l10n.sectionPlayback),
+          const SizedBox(height: 8),
+          const _FadeSettingsTile(),
           const SizedBox(height: 26),
           _SectionLabel(context.l10n.sectionConnections),
           const SizedBox(height: 8),
@@ -187,6 +193,82 @@ class _LanguageTile extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _DeviceMediaTile extends StatelessWidget {
+  const _DeviceMediaTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final library = context.watch<LibraryProvider>();
+    final enabled = library.deviceMediaEnabled;
+    final scanning = enabled && library.isImporting;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          secondary: const Icon(Icons.phone_android_rounded),
+          title: Text(context.l10n.deviceMedia),
+          subtitle: Text(enabled
+              ? scanning
+                  ? context.l10n.deviceMediaScanning
+                  : context.l10n.deviceMediaCount(library.deviceTrackCount)
+              : context.l10n.deviceMediaHint),
+          value: enabled,
+          onChanged: library.isImporting || library.isDeleting
+              ? null
+              : (value) => _toggle(context, value),
+        ),
+        if (enabled)
+          Padding(
+            padding: const EdgeInsets.only(left: 40),
+            child: TextButton.icon(
+              onPressed: scanning ? null : () => _scan(context),
+              icon: scanning
+                  ? const SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh_rounded),
+              label: Text(context.l10n.deviceMediaRescan),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _toggle(BuildContext context, bool value) async {
+    final library = context.read<LibraryProvider>();
+    if (!value) {
+      await library.setDeviceMediaEnabled(false);
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
+    if (!await AudioAccess.request()) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(l10n.deviceMediaPermission),
+        action: SnackBarAction(
+          label: l10n.openSettings,
+          onPressed: AudioAccess.openSettings,
+        ),
+      ));
+      return;
+    }
+    await library.setDeviceMediaEnabled(true);
+    if (context.mounted) await _scan(context);
+  }
+
+  Future<void> _scan(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
+    final summary = await context.read<LibraryProvider>().scanDeviceMedia();
+    if (summary == null) return;
+    messenger.showSnackBar(SnackBar(
+      content: Text(l10n.deviceMediaSummary(summary.added, summary.removed)),
+    ));
   }
 }
 

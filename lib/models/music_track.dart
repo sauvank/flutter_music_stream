@@ -1,6 +1,8 @@
 import 'dart:convert';
 
-enum MusicSource { localImport, serverDownload }
+/// Where a track's file lives: private copies for imports and downloads,
+/// the file in place for [deviceMedia], which the app never deletes.
+enum MusicSource { localImport, serverDownload, deviceMedia }
 
 class MusicTrack {
   // Stored placeholders for missing tags; translated only when displayed.
@@ -119,6 +121,7 @@ class MusicTrack {
         source: switch (json['source']) {
           'localImport' => MusicSource.localImport,
           'serverDownload' => MusicSource.serverDownload,
+          'deviceMedia' => MusicSource.deviceMedia,
           _ => null,
         },
         sourceUri: json['sourceUri'] as String?,

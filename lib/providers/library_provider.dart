@@ -1,20 +1,30 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/music_playlist.dart';
 import '../models/music_track.dart';
 import '../models/remote_audio_entry.dart';
+import '../services/device_media_service.dart';
 import '../services/library_service.dart';
 import '../services/playlist_service.dart';
 
 typedef LocalImportSummary = ({int added, int skipped, int failed});
+typedef DeviceScanSummary = ({int added, int removed, int skipped});
 
 enum TrackSort { title, artist, album, recent }
 
 class LibraryProvider extends ChangeNotifier {
-  LibraryProvider(this._service, this._playlistService);
+  LibraryProvider(
+    this._service,
+    this._playlistService, {
+    DeviceMediaService? deviceMedia,
+  }) : _deviceMedia = deviceMedia ?? DeviceMediaService();
   final LibraryService _service;
   final PlaylistService _playlistService;
+  final DeviceMediaService _deviceMedia;
+  bool deviceMediaEnabled = false;
   final List<MusicTrack> _tracks = [];
   final List<MusicPlaylist> _playlists = [];
   Set<String> _downloadedSourceUris = const {};
@@ -40,6 +50,8 @@ class LibraryProvider extends ChangeNotifier {
   List<MusicTrack> get unknownSourceTracks =>
       List.unmodifiable(_tracks.where((track) => track.source == null));
   List<MusicPlaylist> get playlists => List.unmodifiable(_playlists);
+  int get deviceTrackCount =>
+      _tracks.where((track) => track.source == MusicSource.deviceMedia).length;
 
   List<MusicTrack> get listeningHistory => _historyCache ??= List.unmodifiable(
         tracks.where((track) => track.lastPlayedAt != null).toList()
@@ -151,8 +163,133 @@ class LibraryProvider extends ChangeNotifier {
     _playlists
       ..clear()
       ..addAll(playlists);
+    deviceMediaEnabled = await _service.loadDeviceMediaEnabled();
     _refreshDownloadedSourceUris();
     notifyListeners();
+  }
+
+  /// Turning the device source off only forgets its tracks: their files
+  /// belong to the phone and stay where they are.
+  Future<void> setDeviceMediaEnabled(bool enabled) async {
+    if (isImporting || isDeleting) return;
+    deviceMediaEnabled = enabled;
+    await _service.saveDeviceMediaEnabled(enabled);
+    if (!enabled) {
+      await _forgetTracks({
+        for (final track in _tracks)
+          if (track.source == MusicSource.deviceMedia) track.id,
+      });
+    }
+    notifyListeners();
+  }
+
+  /// Adds audio files found in shared storage and forgets those that
+  /// disappeared. Files matching a private track (same title and artist,
+  /// durations within two seconds) are skipped to avoid obvious duplicates.
+  Future<DeviceScanSummary?> scanDeviceMedia() async {
+    if (!deviceMediaEnabled || isImporting || isDeleting) return null;
+    isImporting = true;
+    notifyListeners();
+    try {
+      final files = await _deviceMedia.listAudioFiles();
+      final known = {
+        for (final track in _tracks)
+          if (track.source == MusicSource.deviceMedia) track.uri: track,
+      };
+      final found = {for (final file in files) file.uri.toString()};
+      final fresh =
+          files.where((file) => !known.containsKey(file.uri.toString()));
+      final private = <String, List<int?>>{};
+      for (final track in _tracks) {
+        if (track.source == MusicSource.deviceMedia) continue;
+        private.putIfAbsent(_duplicateKey(track), () => []).add(
+              track.durationMs,
+            );
+      }
+      bool duplicate(MusicTrack track) =>
+          private[_duplicateKey(track)]?.any((duration) =>
+              duration == null ||
+              track.durationMs == null ||
+              (duration - track.durationMs!).abs() <= 2000) ??
+          false;
+
+      var added = 0;
+      var skipped = 0;
+      final pending = fresh.toList();
+      importProgress = (completed: 0, total: pending.length);
+      notifyListeners();
+      for (var index = 0; index < pending.length; index++) {
+        try {
+          final track = await _service.readDeviceTrack(pending[index]);
+          if (duplicate(track)) {
+            // Reading the tags already saved its artwork.
+            await _service.deletePrivateExtras(track);
+            skipped++;
+          } else {
+            added += _addNewTracks([track]);
+          }
+        } catch (error) {
+          skipped++;
+          debugPrint('Device media read failed: ${error.runtimeType}');
+        }
+        importProgress = (completed: index + 1, total: pending.length);
+        notifyListeners();
+        // Tag parsing is synchronous; let frames through between files.
+        await Future<void>.delayed(Duration.zero);
+      }
+      // An empty listing more likely means lost access than a wiped phone,
+      // so it never removes tracks.
+      final missing = files.isEmpty
+          ? <String>{}
+          : {
+              for (final entry in known.entries)
+                if (!found.contains(entry.key)) entry.value.id,
+            };
+      if (missing.isNotEmpty) {
+        await _forgetTracks(missing);
+      } else if (added > 0) {
+        await _service.save(_tracks);
+      }
+      return (added: added, removed: missing.length, skipped: skipped);
+    } finally {
+      isImporting = false;
+      importProgress = null;
+      notifyListeners();
+    }
+  }
+
+  static String _duplicateKey(MusicTrack track) =>
+      '${track.title.trim().toLowerCase()}|${track.artist.trim().toLowerCase()}';
+
+  /// Removes tracks from the index and playlists, with the artwork and
+  /// lyrics the app cached for them, without touching their audio files.
+  Future<void> _forgetTracks(Set<String> ids) async {
+    if (ids.isEmpty) return;
+    for (final track in _tracks.where((track) => ids.contains(track.id))) {
+      try {
+        await _service.deletePrivateExtras(track);
+      } on FileSystemException {
+        // Left for the orphan cleanup.
+      }
+    }
+    _tracks.removeWhere((track) => ids.contains(track.id));
+    _byIdCache = null;
+    _allTracksCache = null;
+    _tracksCache = null;
+    _historyCache = null;
+    _bySourceUriCache = null;
+    await _service.save(_tracks);
+    var playlistsChanged = false;
+    for (var index = 0; index < _playlists.length; index++) {
+      final playlist = _playlists[index];
+      if (playlist.trackIds.any(ids.contains)) {
+        _playlists[index] = playlist.copyWith(
+          trackIds: playlist.trackIds.where((id) => !ids.contains(id)).toList(),
+        );
+        playlistsChanged = true;
+      }
+    }
+    if (playlistsChanged) await _playlistService.save(_playlists);
   }
 
   /// Runs before downloads resume so no import is moving files meanwhile.
@@ -324,7 +461,8 @@ class LibraryProvider extends ChangeNotifier {
     try {
       for (final id in ids.toSet()) {
         final track = _byId[id];
-        if (track == null) continue;
+        // Device media files belong to the phone, never to this app.
+        if (track == null || track.source == MusicSource.deviceMedia) continue;
         await _service.deleteTrackFiles(track);
         _tracks.removeWhere((candidate) => candidate.id == id);
         _byIdCache?.remove(id);

@@ -12,6 +12,7 @@ import 'providers/player_provider.dart';
 import 'providers/server_provider.dart';
 import 'screens/home_screen.dart';
 import 'services/appearance_settings_service.dart';
+import 'services/audio_access.dart';
 import 'services/library_service.dart';
 import 'services/lyrics_service.dart';
 import 'services/playlist_service.dart';
@@ -57,8 +58,13 @@ Future<void> main() async {
   unawaited(library
       .removeOrphanFiles()
       .then((_) => downloads.initialize(localizations()))
-      .catchError((Object error) {
-    debugPrint('Download queue initialization failed: $error');
+      .then((_) async {
+    // Picks up files added to the phone since the last launch.
+    if (library.deviceMediaEnabled && await AudioAccess.granted()) {
+      await library.scanDeviceMedia();
+    }
+  }).catchError((Object error) {
+    debugPrint('Startup background work failed: $error');
   }));
   appearance.addListener(
     () => downloads.configureNotifications(localizations()),

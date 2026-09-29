@@ -17,6 +17,7 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 - La file affiche progression, cause d’échec, pause, reprise, annulation et nouvelle tentative.
 - `PlayerProvider.playRemote` lit un fichier serveur avec ses en-têtes d’authentification sans l’ajouter à la bibliothèque.
 - Le sélecteur d’import propose des fichiers ou un dossier; un dossier est parcouru récursivement par chemin et filtré par extension audio. Android 13+ ne montre les fichiers des autres applications qu’avec `READ_MEDIA_AUDIO` (`READ_EXTERNAL_STORAGE` jusqu’à Android 12) : `import_music_sheet.dart` la demande via `permission_handler` avant l’import de dossier. Les `.lrc` voisins ne sont pas des médias et restent invisibles avec cette seule permission sur Android 13+. `permission_handler` est limité à 11.x : la 13.x exige un Kotlin plus récent que 1.9.20.
+- La médiathèque de l’appareil est une source distincte (`MusicSource.deviceMedia`) : `DeviceMediaService` parcourt le stockage partagé par chemin (hors `Android/` et dossiers cachés), les pistes gardent leur `file://` d’origine et un id dérivé du chemin (`device-<sha256>`), sans empreinte du contenu pour garder le scan rapide. Un fichier au même titre/artiste qu’une piste privée (durées à 2 s près) est ignoré et sa pochette extraite supprimée. `deleteTracks` ignore ces pistes et le menu masque la suppression; désactiver la source les oublie avec leurs pochettes et paroles en cache. Une liste vide ne retire jamais de pistes (accès probablement perdu). Au démarrage : orphelins, puis file de téléchargements, puis rescan si la source est active et `AudioAccess.granted()`.
 - Au démarrage, `LibraryProvider.removeOrphanFiles` supprime les fichiers de `music/` et `artwork/` qu’aucun morceau ne référence (comparaison par nom de fichier), puis seulement la file de téléchargements redémarre. Rien n’est supprimé si l’index est vide ou si les orphelins sont plus nombreux que les morceaux.
 - `RemoteAudioMetadataService` construit un fichier creux de taille réelle à partir des plages HTTP de tête et, pour MP4/M4A/AAC, de fin. Deux requêtes au maximum s’exécutent simultanément.
 - `PlayerProvider` expose l’aléatoire et les cycles de répétition natifs de `just_audio`; l’écran de lecture affiche leurs états actifs.
@@ -35,6 +36,11 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 - Le FTP passif ne place jamais les identifiants dans l’URI. HTTP/WebDAV conservent la lecture directe et la file native en arrière-plan; un morceau FTP doit d’abord être téléchargé et importé dans le stockage privé.
 - `ServerScanService` conserve localement une empreinte SHA-256 des URI distantes sans paramètres ni fragments. Le premier scan crée la référence; les suivants regroupent les ajouts par dossier parent. Le scan reste manuel pour éviter une connexion réseau surprise, notamment en FTP non chiffré.
 
+## Tests sur appareil
+
+- Les écrans vivent dans un `IndexedStack` : un champ focalisé sur un onglet masqué reprend le focus à la fermeture d’un dialogue. `HomeScreen._select` libère le focus à chaque changement d’onglet.
+- Pour tester le FTP depuis WSL, le pare-feu Windows bloque les connexions entrantes : utiliser `adb reverse` sur le port de contrôle et les ports passifs, avec une adresse passive `127.0.0.1`.
+
 ## Contraintes
 
 - Ne jamais commiter le JSON serveur privé ni aucun secret, chemin personnel ou adresse privée réelle.
@@ -43,6 +49,6 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 
 ## Problème actif
 
-La lecture distante authentifiée, le téléchargement HTTP en arrière-plan, l’indexation finale, le sélecteur récursif de dossier, l’extraction distante des pochettes, les modes aléatoire/répétition, les fondus, le volume applicatif, l’historique, l’adaptation verticale de l’écran Lecture, le dialogue d’accord, la recherche automatique LRCLIB au morceau suivant, l’affichage synchronisé des paroles et la traduction ont été validés sur un Galaxy S24 sous Android 16. L’application démarre aussi sur l’émulateur Android API 35. L’import manuel `.lrc` (avec saut à la ligne touchée) a été validé sur appareil; le FTP reste à contrôler. L’égaliseur est différé tant qu’aucune solution Android/iOS cohérente n’est disponible.
+La lecture distante authentifiée, le téléchargement HTTP en arrière-plan, l’indexation finale, le sélecteur récursif de dossier, l’extraction distante des pochettes, les modes aléatoire/répétition, les fondus, le volume applicatif, l’historique, l’adaptation verticale de l’écran Lecture, le dialogue d’accord, la recherche automatique LRCLIB au morceau suivant, l’affichage synchronisé des paroles et la traduction ont été validés sur un Galaxy S24 sous Android 16. L’application démarre aussi sur l’émulateur Android API 35. L’import manuel `.lrc` (avec saut à la ligne touchée) et le FTP passif (navigation, téléchargements, scan) ont été validés sur appareil. L’import de dossier ne fonctionnait pas sur Android 13+ sans permission audio (corrigé en v0.1.36). L’égaliseur est différé tant qu’aucune solution Android/iOS cohérente n’est disponible.
 
 Architecture détaillée : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Travaux futurs : [ROADMAP.md](ROADMAP.md).

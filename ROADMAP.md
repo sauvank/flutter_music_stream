@@ -25,13 +25,14 @@
 - [x] Localisation français/anglais avec choix de langue persisté.
 - [x] Mesures sur Galaxy S24 : démarrage corrigé (0,7–0,95 s), défilement sans point chaud, import de 40 fichiers (146 Mo) en 2,6 s sans image figée.
 - [x] Permission audio demandée avant l’import de dossier et nettoyage des copies orphelines au démarrage.
+- [x] Médiathèque de l’appareil comme source distincte, sans copie : 720 morceaux indexés en 17 s sur Galaxy S24.
 
 ## En cours
 
 
 ## À venir
 
-- [ ] Scan de la médiathèque de l’appareil et widget d’accueil Android.
+- [ ] Widget d’accueil Android.
 - [ ] Synchronisation chiffrée des métadonnées entre appareils.
 
 ## Différé
@@ -41,4 +42,3 @@
 ## Décision ouverte
 
 - Déterminer si HTTP non chiffré doit rester autorisé globalement sur Android ou être limité par une configuration réseau fournie hors dépôt.
-- Définir si le scan de la médiathèque doit compléter les imports privés ou devenir une source distincte sur Android.

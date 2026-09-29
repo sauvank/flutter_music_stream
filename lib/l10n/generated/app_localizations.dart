@@ -452,6 +452,54 @@ abstract class AppLocalizations {
   /// **'Description'**
   String get description;
 
+  /// No description provided for @deviceMedia.
+  ///
+  /// In fr, this message translates to:
+  /// **'Médiathèque de l’appareil'**
+  String get deviceMedia;
+
+  /// No description provided for @deviceMediaCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{{count} morceau du téléphone} other{{count} morceaux du téléphone}}'**
+  String deviceMediaCount(int count);
+
+  /// No description provided for @deviceMediaHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajoute les morceaux déjà présents sur le téléphone, sans les copier.'**
+  String get deviceMediaHint;
+
+  /// No description provided for @deviceMediaPermission.
+  ///
+  /// In fr, this message translates to:
+  /// **'MusicStream a besoin d’accéder à vos fichiers audio pour lire la médiathèque du téléphone.'**
+  String get deviceMediaPermission;
+
+  /// No description provided for @deviceMediaRescan.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rechercher à nouveau'**
+  String get deviceMediaRescan;
+
+  /// No description provided for @deviceMediaScanning.
+  ///
+  /// In fr, this message translates to:
+  /// **'Recherche des morceaux du téléphone…'**
+  String get deviceMediaScanning;
+
+  /// No description provided for @deviceMediaSummary.
+  ///
+  /// In fr, this message translates to:
+  /// **'{added} ajouté(s) · {removed} retiré(s)'**
+  String deviceMediaSummary(int added, int removed);
+
+  /// No description provided for @deviceTrackBadge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sur l’appareil'**
+  String get deviceTrackBadge;
+
   /// No description provided for @disconnect.
   ///
   /// In fr, this message translates to:
@@ -1447,6 +1495,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'CONNEXIONS'**
   String get sectionConnections;
+
+  /// No description provided for @sectionLibrary.
+  ///
+  /// In fr, this message translates to:
+  /// **'BIBLIOTHÈQUE'**
+  String get sectionLibrary;
 
   /// No description provided for @sectionPlayback.
   ///

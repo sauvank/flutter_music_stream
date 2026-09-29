@@ -272,6 +272,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get description => 'Description';
 
   @override
+  String get deviceMedia => 'Device media';
+
+  @override
+  String deviceMediaCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tracks from this phone',
+      one: '$count track from this phone',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get deviceMediaHint =>
+      'Adds the tracks already on this phone, without copying them.';
+
+  @override
+  String get deviceMediaPermission =>
+      'MusicStream needs access to your audio files to read this phone’s media.';
+
+  @override
+  String get deviceMediaRescan => 'Scan again';
+
+  @override
+  String get deviceMediaScanning => 'Looking for tracks on this phone…';
+
+  @override
+  String deviceMediaSummary(int added, int removed) {
+    return '$added added · $removed removed';
+  }
+
+  @override
+  String get deviceTrackBadge => 'On device';
+
+  @override
   String get disconnect => 'Disconnect';
 
   @override
@@ -894,6 +930,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sectionConnections => 'CONNECTIONS';
+
+  @override
+  String get sectionLibrary => 'LIBRARY';
 
   @override
   String get sectionPlayback => 'PLAYBACK';
