@@ -125,13 +125,13 @@ void main() {
     expect(provider.playlists.single.description, 'Pour les longues routes.');
 
     await provider.movePlaylistTrack(playlist.id, 2, 0);
-    expect(provider.playlists.single.trackIds, ['c', 'a', 'b']);
+    expect(provider.playlists.single.trackIds, ['c', 'a', 'b', 'missing']);
     await provider.movePlaylistTrack(playlist.id, 0, 5);
-    expect(provider.playlists.single.trackIds, ['c', 'a', 'b']);
+    expect(provider.playlists.single.trackIds, ['c', 'a', 'b', 'missing']);
 
     final reloaded =
         MusicPlaylist.decodeAll(MusicPlaylist.encodeAll(playlistService.saved));
-    expect(reloaded.single.trackIds, ['c', 'a', 'b']);
+    expect(reloaded.single.trackIds, ['c', 'a', 'b', 'missing']);
     expect(reloaded.single.description, 'Pour les longues routes.');
   });
 

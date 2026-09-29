@@ -7,6 +7,8 @@ import '../providers/appearance_provider.dart';
 import '../providers/library_provider.dart';
 import '../services/audio_access.dart';
 import '../services/home_widget_service.dart';
+import '../providers/sync_provider.dart';
+import '../widgets/sync_sheet.dart';
 import '../providers/player_provider.dart';
 import '../services/playback_settings_service.dart';
 import '../services/lyrics_service.dart';
@@ -123,12 +125,18 @@ class SettingsScreen extends StatelessWidget {
             title: context.l10n.personalServers,
             subtitle: context.l10n.personalServersHint,
           ),
-          _InfoTile(
-            icon: Icons.sync_lock_outlined,
-            title: context.l10n.encryptedSync,
-            subtitle: context.l10n.encryptedSyncHint,
-            badge: context.l10n.comingSoon,
-          ),
+          Builder(builder: (context) {
+            final sync = context.watch<SyncProvider>();
+            return _InfoTile(
+              icon: Icons.sync_lock_outlined,
+              title: context.l10n.encryptedSync,
+              subtitle: sync.enabled
+                  ? syncStatusText(context, sync)
+                  : context.l10n.encryptedSyncHint,
+              badge: sync.enabled ? context.l10n.syncActive : null,
+              onTap: () => showSyncSheet(context),
+            );
+          }),
           const SizedBox(height: 22),
           _SectionLabel(context.l10n.sectionPrivacy),
           const SizedBox(height: 8),
@@ -497,55 +505,62 @@ class _InfoTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.badge,
+    this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final String? badge;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
-          decoration: BoxDecoration(
-            color: Theme.of(context)
-                .colorScheme
-                .surfaceContainer
-                .withValues(alpha: .56),
+        child: Material(
+          color: Theme.of(context)
+              .colorScheme
+              .surfaceContainer
+              .withValues(alpha: .56),
+          borderRadius: BorderRadius.circular(24),
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(24),
-          ),
-          child: Row(
-            children: [
-              CircleAvatar(child: Icon(icon)),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title,
-                        style: const TextStyle(fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 2),
-                    Text(subtitle,
-                        style: Theme.of(context).textTheme.bodySmall),
-                  ],
-                ),
-              ),
-              if (badge != null) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondaryContainer,
-                    borderRadius: BorderRadius.circular(99),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+              child: Row(
+                children: [
+                  CircleAvatar(child: Icon(icon)),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 2),
+                        Text(subtitle,
+                            style: Theme.of(context).textTheme.bodySmall),
+                      ],
+                    ),
                   ),
-                  child: Text(badge!,
-                      style: Theme.of(context).textTheme.labelSmall),
-                ),
-              ],
-            ],
+                  if (badge != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 9, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.secondaryContainer,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: Text(badge!,
+                          style: Theme.of(context).textTheme.labelSmall),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
       );

@@ -191,6 +191,9 @@ class ServerProvider extends ChangeNotifier {
     return '$scheme://$host$portPart$path';
   }
 
+  Future<String> passwordFor(ServerProfile profile) =>
+      _profilesService.readPassword(profile.id);
+
   Future<void> deleteProfile(ServerProfile profile) async {
     profiles.removeWhere((item) => item.id == profile.id);
     if (selected?.id == profile.id) disconnect();

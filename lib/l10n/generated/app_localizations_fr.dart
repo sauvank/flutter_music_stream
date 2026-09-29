@@ -174,9 +174,6 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get comingSoon => 'Bientôt';
-
-  @override
   String get connectCollectionBody =>
       'Parcourez un serveur WebDAV, HTTP ou FTP, puis gardez vos morceaux préférés hors connexion.';
 
@@ -1121,6 +1118,76 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get supportedFormats => 'MP3, M4A, AAC, FLAC, OGG, OPUS et WAV';
+
+  @override
+  String get syncActive => 'Active';
+
+  @override
+  String get syncConflict =>
+      'Un autre appareil synchronise en même temps. Réessayez.';
+
+  @override
+  String get syncDisable => 'Désactiver sur cet appareil';
+
+  @override
+  String get syncDone => 'Synchronisation terminée.';
+
+  @override
+  String get syncEnable => 'Activer et synchroniser';
+
+  @override
+  String get syncExplanation =>
+      'Favoris, écoutes et playlists sont chiffrés sur ce téléphone avec votre phrase secrète, puis déposés dans un fichier sur votre serveur WebDAV. Le serveur ne voit jamais leur contenu, et vos fichiers audio ne sont jamais envoyés.';
+
+  @override
+  String get syncFailed =>
+      'Synchronisation impossible. Vérifiez la connexion au serveur.';
+
+  @override
+  String syncLastRun(String date) {
+    return 'Dernière synchronisation : $date';
+  }
+
+  @override
+  String get syncNeedsWebdav =>
+      'Ajoutez d’abord un serveur WebDAV dans l’onglet Serveurs.';
+
+  @override
+  String get syncNever => 'Jamais synchronisé';
+
+  @override
+  String get syncNow => 'Synchroniser maintenant';
+
+  @override
+  String get syncPassphrase => 'Phrase secrète';
+
+  @override
+  String get syncPassphraseConfirm => 'Confirmer la phrase secrète';
+
+  @override
+  String get syncPassphraseHint =>
+      'Au moins 8 caractères. Utilisez la même sur chaque appareil : elle ne peut pas être récupérée.';
+
+  @override
+  String get syncPassphraseMismatch =>
+      'Les deux phrases secrètes ne correspondent pas.';
+
+  @override
+  String get syncPassphraseTooShort => 'Utilisez au moins 8 caractères.';
+
+  @override
+  String get syncServer => 'Serveur';
+
+  @override
+  String get syncServerMissing =>
+      'Le serveur de synchronisation n’existe plus. Désactivez puis réactivez la synchronisation.';
+
+  @override
+  String get syncTitle => 'Synchronisation chiffrée';
+
+  @override
+  String get syncWrongPassphrase =>
+      'Cette phrase secrète n’ouvre pas le fichier de synchronisation de ce serveur.';
 
   @override
   String get theme => 'Thème';

@@ -162,9 +162,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get comingSoon => 'Soon';
-
-  @override
   String get connectCollectionBody =>
       'Browse a WebDAV, HTTP or FTP server, then keep your favorite tracks offline.';
 
@@ -1094,6 +1091,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get supportedFormats => 'MP3, M4A, AAC, FLAC, OGG, OPUS and WAV';
+
+  @override
+  String get syncActive => 'On';
+
+  @override
+  String get syncConflict =>
+      'Another device is syncing at the same time. Try again.';
+
+  @override
+  String get syncDisable => 'Turn off on this device';
+
+  @override
+  String get syncDone => 'Sync complete.';
+
+  @override
+  String get syncEnable => 'Turn on and sync';
+
+  @override
+  String get syncExplanation =>
+      'Favorites, plays and playlists are encrypted on this phone with your passphrase, then stored in a file on your WebDAV server. The server never sees their content, and your audio files are never sent.';
+
+  @override
+  String get syncFailed => 'Sync failed. Check the connection to the server.';
+
+  @override
+  String syncLastRun(String date) {
+    return 'Last synced: $date';
+  }
+
+  @override
+  String get syncNeedsWebdav => 'Add a WebDAV server in the Servers tab first.';
+
+  @override
+  String get syncNever => 'Never synced';
+
+  @override
+  String get syncNow => 'Sync now';
+
+  @override
+  String get syncPassphrase => 'Passphrase';
+
+  @override
+  String get syncPassphraseConfirm => 'Confirm passphrase';
+
+  @override
+  String get syncPassphraseHint =>
+      'At least 8 characters. Use the same one on every device: it cannot be recovered.';
+
+  @override
+  String get syncPassphraseMismatch => 'The two passphrases do not match.';
+
+  @override
+  String get syncPassphraseTooShort => 'Use at least 8 characters.';
+
+  @override
+  String get syncServer => 'Server';
+
+  @override
+  String get syncServerMissing =>
+      'The sync server no longer exists. Turn sync off and on again.';
+
+  @override
+  String get syncTitle => 'Encrypted sync';
+
+  @override
+  String get syncWrongPassphrase =>
+      'This passphrase does not open this server’s sync file.';
 
   @override
   String get theme => 'Theme';

@@ -10,6 +10,7 @@ import 'providers/library_provider.dart';
 import 'providers/download_queue_provider.dart';
 import 'providers/player_provider.dart';
 import 'providers/server_provider.dart';
+import 'providers/sync_provider.dart';
 import 'screens/home_screen.dart';
 import 'services/appearance_settings_service.dart';
 import 'services/audio_access.dart';
@@ -20,6 +21,7 @@ import 'services/playlist_service.dart';
 import 'services/playback_settings_service.dart';
 import 'services/remote_server_service.dart';
 import 'services/server_profile_service.dart';
+import 'services/sync/sync_service.dart';
 import 'l10n/l10n.dart';
 
 Future<void> main() async {
@@ -71,10 +73,13 @@ Future<void> main() async {
     () => downloads.configureNotifications(localizations()),
   );
   await servers.load();
+  final sync = SyncProvider(SyncService(), library, servers);
+  await sync.load();
   runApp(MusicStreamApp(
     library: library,
     downloads: downloads,
     servers: servers,
+    sync: sync,
     appearance: appearance,
     localizations: localizations,
     playbackSettings: playbackSettings,
@@ -89,6 +94,7 @@ class MusicStreamApp extends StatelessWidget {
     required this.library,
     required this.downloads,
     required this.servers,
+    required this.sync,
     required this.appearance,
     required this.localizations,
     required this.playbackSettings,
@@ -98,6 +104,7 @@ class MusicStreamApp extends StatelessWidget {
   final LibraryProvider library;
   final DownloadQueueProvider downloads;
   final ServerProvider servers;
+  final SyncProvider sync;
   final AppearanceProvider appearance;
   final AppLocalizations Function() localizations;
   final PlaybackSettingsService playbackSettings;
@@ -110,6 +117,7 @@ class MusicStreamApp extends StatelessWidget {
           ChangeNotifierProvider.value(value: library),
           ChangeNotifierProvider.value(value: downloads),
           ChangeNotifierProvider.value(value: servers),
+          ChangeNotifierProvider.value(value: sync),
           ChangeNotifierProvider.value(value: appearance),
           ChangeNotifierProvider(
             create: (_) => PlayerProvider(

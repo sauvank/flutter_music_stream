@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- Ajout de la synchronisation chiffrée (Réglages › Connexions) : favoris, écoutes et playlists chiffrés en AES-256-GCM avec une clé PBKDF2-SHA256 dérivée d’une phrase secrète, stockés dans `musicstream-sync.json` sur un serveur WebDAV choisi. Fusion par dernière modification, suppressions de playlists propagées, envoi conditionné par ETag. Vérifié sur Galaxy S24 avec un serveur WebDAV local (activation en 3,7 s).
+- Correction du bouton de la feuille de synchronisation sous la barre de navigation et du libellé « WebDAV » coupé dans l’ajout de serveur.
 - Ajout d’un widget d’accueil Android 4×1 : pochette, titre, artiste et boutons précédent/lecture/suivant, ajoutable depuis Réglages › Lecture. Quand l’application n’est pas lancée, les boutons l’ouvrent. Vérifié sur Galaxy S24.
 - Ajout de la médiathèque de l’appareil (Réglages › Bibliothèque), désactivée par défaut : les morceaux déjà présents sur le téléphone sont lus sur place, sans copie, jamais supprimés par l’application, et retirés de la bibliothèque si la source est désactivée. Les doublons évidents des imports privés sont ignorés; un scan en arrière-plan a lieu au démarrage si l’accès est accordé. 720 morceaux indexés en 17 s sur Galaxy S24.
 - FTP vérifié sur Galaxy S24 (serveur passif de test) : navigation, téléchargement d’un fichier et d’un dossier avec déduplication, référence et détection d’un nouvel album.

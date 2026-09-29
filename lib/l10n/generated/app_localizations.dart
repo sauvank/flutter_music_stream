@@ -314,12 +314,6 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{{count} collection} other{{count} collections}}'**
   String collectionCount(int count);
 
-  /// No description provided for @comingSoon.
-  ///
-  /// In fr, this message translates to:
-  /// **'Bientôt'**
-  String get comingSoon;
-
   /// No description provided for @connectCollectionBody.
   ///
   /// In fr, this message translates to:
@@ -1765,6 +1759,126 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'MP3, M4A, AAC, FLAC, OGG, OPUS et WAV'**
   String get supportedFormats;
+
+  /// No description provided for @syncActive.
+  ///
+  /// In fr, this message translates to:
+  /// **'Active'**
+  String get syncActive;
+
+  /// No description provided for @syncConflict.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un autre appareil synchronise en même temps. Réessayez.'**
+  String get syncConflict;
+
+  /// No description provided for @syncDisable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Désactiver sur cet appareil'**
+  String get syncDisable;
+
+  /// No description provided for @syncDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Synchronisation terminée.'**
+  String get syncDone;
+
+  /// No description provided for @syncEnable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Activer et synchroniser'**
+  String get syncEnable;
+
+  /// No description provided for @syncExplanation.
+  ///
+  /// In fr, this message translates to:
+  /// **'Favoris, écoutes et playlists sont chiffrés sur ce téléphone avec votre phrase secrète, puis déposés dans un fichier sur votre serveur WebDAV. Le serveur ne voit jamais leur contenu, et vos fichiers audio ne sont jamais envoyés.'**
+  String get syncExplanation;
+
+  /// No description provided for @syncFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Synchronisation impossible. Vérifiez la connexion au serveur.'**
+  String get syncFailed;
+
+  /// No description provided for @syncLastRun.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dernière synchronisation : {date}'**
+  String syncLastRun(String date);
+
+  /// No description provided for @syncNeedsWebdav.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajoutez d’abord un serveur WebDAV dans l’onglet Serveurs.'**
+  String get syncNeedsWebdav;
+
+  /// No description provided for @syncNever.
+  ///
+  /// In fr, this message translates to:
+  /// **'Jamais synchronisé'**
+  String get syncNever;
+
+  /// No description provided for @syncNow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Synchroniser maintenant'**
+  String get syncNow;
+
+  /// No description provided for @syncPassphrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Phrase secrète'**
+  String get syncPassphrase;
+
+  /// No description provided for @syncPassphraseConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmer la phrase secrète'**
+  String get syncPassphraseConfirm;
+
+  /// No description provided for @syncPassphraseHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Au moins 8 caractères. Utilisez la même sur chaque appareil : elle ne peut pas être récupérée.'**
+  String get syncPassphraseHint;
+
+  /// No description provided for @syncPassphraseMismatch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les deux phrases secrètes ne correspondent pas.'**
+  String get syncPassphraseMismatch;
+
+  /// No description provided for @syncPassphraseTooShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Utilisez au moins 8 caractères.'**
+  String get syncPassphraseTooShort;
+
+  /// No description provided for @syncServer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Serveur'**
+  String get syncServer;
+
+  /// No description provided for @syncServerMissing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le serveur de synchronisation n’existe plus. Désactivez puis réactivez la synchronisation.'**
+  String get syncServerMissing;
+
+  /// No description provided for @syncTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Synchronisation chiffrée'**
+  String get syncTitle;
+
+  /// No description provided for @syncWrongPassphrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette phrase secrète n’ouvre pas le fichier de synchronisation de ce serveur.'**
+  String get syncWrongPassphrase;
 
   /// No description provided for @theme.
   ///

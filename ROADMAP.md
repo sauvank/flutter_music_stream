@@ -27,13 +27,13 @@
 - [x] Permission audio demandée avant l’import de dossier et nettoyage des copies orphelines au démarrage.
 - [x] Médiathèque de l’appareil comme source distincte, sans copie : 720 morceaux indexés en 17 s sur Galaxy S24.
 - [x] Widget d’accueil Android (morceau, pochette, précédent/lecture/suivant), ajoutable depuis Réglages.
+- [x] Synchronisation chiffrée de bout en bout (favoris, écoutes, playlists) via un fichier sur un serveur WebDAV de l’utilisateur.
 
 ## En cours
 
 
 ## À venir
 
-- [ ] Synchronisation chiffrée des métadonnées entre appareils.
 
 ## Différé
 

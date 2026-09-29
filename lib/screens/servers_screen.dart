@@ -125,6 +125,13 @@ class ServersScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 SegmentedButton<ServerType>(
                   showSelectedIcon: false,
+                  // The dialog is narrow: keep "WebDAV" on one line.
+                  style: const ButtonStyle(
+                    visualDensity: VisualDensity.compact,
+                    padding: WidgetStatePropertyAll(
+                      EdgeInsets.symmetric(horizontal: 4),
+                    ),
+                  ),
                   segments: const [
                     ButtonSegment(
                         value: ServerType.webdav, label: Text('WebDAV')),

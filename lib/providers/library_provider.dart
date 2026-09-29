@@ -9,6 +9,8 @@ import '../models/remote_audio_entry.dart';
 import '../services/device_media_service.dart';
 import '../services/library_service.dart';
 import '../services/playlist_service.dart';
+import '../services/sync/sync_journal.dart';
+import '../services/sync/sync_payload.dart';
 
 typedef LocalImportSummary = ({int added, int skipped, int failed});
 typedef DeviceScanSummary = ({int added, int removed, int skipped});
@@ -20,10 +22,13 @@ class LibraryProvider extends ChangeNotifier {
     this._service,
     this._playlistService, {
     DeviceMediaService? deviceMedia,
-  }) : _deviceMedia = deviceMedia ?? DeviceMediaService();
+    SyncJournal? journal,
+  })  : _deviceMedia = deviceMedia ?? DeviceMediaService(),
+        _journal = journal ?? SyncJournal();
   final LibraryService _service;
   final PlaylistService _playlistService;
   final DeviceMediaService _deviceMedia;
+  final SyncJournal _journal;
   bool deviceMediaEnabled = false;
   final List<MusicTrack> _tracks = [];
   final List<MusicPlaylist> _playlists = [];
@@ -164,6 +169,7 @@ class LibraryProvider extends ChangeNotifier {
       ..clear()
       ..addAll(playlists);
     deviceMediaEnabled = await _service.loadDeviceMediaEnabled();
+    await _journal.load();
     _refreshDownloadedSourceUris();
     notifyListeners();
   }
@@ -375,8 +381,7 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Moves a track using indexes of [tracksForPlaylist]; references to
-  /// tracks that no longer exist are dropped at the same time.
+  /// Moves a track using indexes of [tracksForPlaylist].
   Future<void> movePlaylistTrack(
     String playlistId,
     int oldIndex,
@@ -387,6 +392,13 @@ class LibraryProvider extends ChangeNotifier {
     if (index == -1) return;
     final ids =
         tracksForPlaylist(_playlists[index]).map((track) => track.id).toList();
+    // References to tracks this device lacks (synced from another phone)
+    // stay at the end instead of being dropped.
+    final visible = ids.toSet();
+    final absent = _playlists[index]
+        .trackIds
+        .where((id) => !visible.contains(id))
+        .toList();
     if (oldIndex < 0 ||
         oldIndex >= ids.length ||
         newIndex < 0 ||
@@ -395,13 +407,16 @@ class LibraryProvider extends ChangeNotifier {
       return;
     }
     ids.insert(newIndex, ids.removeAt(oldIndex));
-    _playlists[index] = _playlists[index].copyWith(trackIds: ids);
+    _playlists[index] =
+        _playlists[index].copyWith(trackIds: [...ids, ...absent]);
     notifyListeners();
     await _playlistService.save(_playlists);
   }
 
   Future<void> deletePlaylist(String id) async {
     _playlists.removeWhere((playlist) => playlist.id == id);
+    _journal.deletedPlaylists[id] = DateTime.now().toUtc();
+    await _journal.save();
     await _playlistService.save(_playlists);
     notifyListeners();
   }
@@ -565,7 +580,72 @@ class LibraryProvider extends ChangeNotifier {
     if (index == -1) return;
     _tracks[index] =
         _tracks[index].copyWith(favorite: !_tracks[index].favorite);
+    _journal.favoriteTimes[id] = DateTime.now().toUtc();
     await _service.save(_tracks);
+    await _journal.save();
+    notifyListeners();
+  }
+
+  /// State shared with other devices. Device media tracks are left out:
+  /// their path-based ids mean nothing on another phone.
+  SyncPayload syncSnapshot() => SyncPayload(
+        tracks: {
+          for (final track in _tracks)
+            if (track.source != MusicSource.deviceMedia &&
+                (track.favorite ||
+                    track.playCount > 0 ||
+                    _journal.favoriteTimes.containsKey(track.id)))
+              track.id: SyncTrackState(
+                favorite: track.favorite,
+                favoriteAt: _journal.favoriteTimes[track.id],
+                playCount: track.playCount,
+                lastPlayedAt: track.lastPlayedAt,
+              ),
+        },
+        playlists: List.of(_playlists),
+        deletedPlaylists: Map.of(_journal.deletedPlaylists),
+      );
+
+  /// Adopts a merged sync state. Entries for tracks missing here are kept
+  /// in the shared file by the caller, not applied.
+  Future<void> applySync(SyncPayload merged) async {
+    var tracksChanged = false;
+    for (var index = 0; index < _tracks.length; index++) {
+      final track = _tracks[index];
+      final state = merged.tracks[track.id];
+      if (state == null || track.source == MusicSource.deviceMedia) continue;
+      final playCount =
+          state.playCount > track.playCount ? state.playCount : track.playCount;
+      final lastPlayedAt = switch ((track.lastPlayedAt, state.lastPlayedAt)) {
+        (final local?, final remote?) => remote.isAfter(local) ? remote : local,
+        (final local, final remote) => local ?? remote,
+      };
+      if (state.favorite != track.favorite ||
+          playCount != track.playCount ||
+          lastPlayedAt != track.lastPlayedAt) {
+        _tracks[index] = track.copyWith(
+          favorite: state.favorite,
+          playCount: playCount,
+          lastPlayedAt: lastPlayedAt,
+        );
+        tracksChanged = true;
+      }
+      if (state.favoriteAt != null) {
+        _journal.favoriteTimes[track.id] = state.favoriteAt!;
+      }
+    }
+    _playlists
+      ..clear()
+      ..addAll(merged.playlists);
+    _journal.deletedPlaylists
+      ..clear()
+      ..addAll(merged.deletedPlaylists);
+    if (tracksChanged) {
+      _invalidateViews();
+      await _service.save(_tracks);
+    }
+    await _playlistService.save(_playlists);
+    await _journal.save();
     notifyListeners();
   }
 
