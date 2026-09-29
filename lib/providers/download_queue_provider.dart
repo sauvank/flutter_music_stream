@@ -28,7 +28,15 @@ class DownloadQueueProvider extends ChangeNotifier {
   int get activeCount =>
       _records.where((record) => record.status.isNotFinalState).length;
 
-  Future<void> initialize() async {
+  /// Runs off the startup path: enqueues wait for it through [_enqueueChain],
+  /// and the queue notifies listeners once its records are loaded.
+  Future<void> initialize() {
+    final ready = _initialize();
+    _enqueueChain = ready.catchError((Object _) {});
+    return ready;
+  }
+
+  Future<void> _initialize() async {
     await _downloader.configure(globalConfig: [
       (Config.holdingQueue, (3, 2, 3)),
     ]);

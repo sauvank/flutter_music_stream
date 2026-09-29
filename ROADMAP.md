@@ -24,7 +24,7 @@
 
 ## En cours
 
-- [ ] Mesurer les temps de démarrage, de défilement et d'import sur appareil avec une grande bibliothèque; traiter les points chauds restants.
+- [ ] Mesurer les temps de démarrage, de défilement et d'import sur appareil avec une grande bibliothèque; traiter les points chauds restants. Démarrage mesuré et corrigé sur Galaxy S24 (≈300 morceaux, 0,7–0,95 s); défilement et import restent à mesurer.
 
 ## À venir
 

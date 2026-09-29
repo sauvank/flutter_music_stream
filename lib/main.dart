@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:provider/provider.dart';
@@ -31,7 +33,11 @@ Future<void> main() async {
   final fadeDuration = await playbackSettings.loadFadeDuration();
   final volume = await playbackSettings.loadVolume();
   await library.load();
-  await downloads.initialize();
+  // The native downloader takes up to a second to start; keep it off the
+  // first frame.
+  unawaited(downloads.initialize().catchError((Object error) {
+    debugPrint('Download queue initialization failed: $error');
+  }));
   await servers.load();
   runApp(MusicStreamApp(
     library: library,
