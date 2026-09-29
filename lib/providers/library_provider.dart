@@ -166,6 +166,7 @@ class LibraryProvider extends ChangeNotifier {
       debugPrint('Orphan cleanup failed: ${error.runtimeType}');
     } finally {
       isDeleting = false;
+      notifyListeners();
     }
   }
 

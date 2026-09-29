@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- Correction du bouton d’import resté en chargement après le nettoyage des orphelins au démarrage (v0.1.36).
+- La notification de lecture système traduit « Artiste inconnu » et « Album inconnu » selon la langue.
 - Correction de l’import de dossier sur Android 13+ : sans `READ_MEDIA_AUDIO`, le dossier paraissait vide. La permission est déclarée et demandée avant l’import, avec accès aux réglages en cas de refus.
 - Nettoyage au démarrage des copies privées qu’aucun morceau ne référence (import ou téléchargement interrompu), avec garde-fous contre un index illisible.
 - Mesure de l’import sur Galaxy S24 : 40 fichiers de 3 min (146 Mo) en 2,6 s, soit ~55 ms d’empreinte, 8 ms de copie et 3 ms de tags par fichier, sans image figée au-delà de 50 ms.

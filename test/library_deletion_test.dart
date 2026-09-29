@@ -117,6 +117,22 @@ void main() {
     expect(await orphanCover.exists(), isFalse);
   });
 
+  test('orphan cleanup releases the import lock for listeners', () async {
+    final music = await Directory('${root.path}/music').create();
+    final file = File('${music.path}/kept.mp3')..writeAsStringSync('kept');
+    final service = LibraryService(documentsDirectory: () async => root);
+    await service.save([_track('kept', file)]);
+    final library = LibraryProvider(service, PlaylistService());
+    await library.load();
+    final busyStates = <bool>[];
+    library.addListener(() => busyStates.add(library.isDeleting));
+
+    await library.removeOrphanFiles();
+
+    expect(library.isDeleting, isFalse);
+    expect(busyStates.last, isFalse);
+  });
+
   test('never cleans up without tracks or when most files look orphaned',
       () async {
     final music = await Directory('${root.path}/music').create();

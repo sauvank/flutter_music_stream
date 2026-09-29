@@ -69,6 +69,7 @@ Future<void> main() async {
     downloads: downloads,
     servers: servers,
     appearance: appearance,
+    localizations: localizations,
     playbackSettings: playbackSettings,
     fadeDuration: fadeDuration,
     volume: volume,
@@ -82,6 +83,7 @@ class MusicStreamApp extends StatelessWidget {
     required this.downloads,
     required this.servers,
     required this.appearance,
+    required this.localizations,
     required this.playbackSettings,
     required this.fadeDuration,
     required this.volume,
@@ -90,6 +92,7 @@ class MusicStreamApp extends StatelessWidget {
   final DownloadQueueProvider downloads;
   final ServerProvider servers;
   final AppearanceProvider appearance;
+  final AppLocalizations Function() localizations;
   final PlaybackSettingsService playbackSettings;
   final Duration fadeDuration;
   final double volume;
@@ -115,6 +118,7 @@ class MusicStreamApp extends StatelessWidget {
                   // Automatic enrichment must never interrupt playback.
                 }
               },
+              displayMetadata: (value) => localizations().metadata(value),
               fadeDuration: fadeDuration,
               volume: volume,
               onFadeDurationChanged: playbackSettings.saveFadeDuration,

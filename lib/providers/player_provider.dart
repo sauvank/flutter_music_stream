@@ -14,6 +14,7 @@ class PlayerProvider extends ChangeNotifier {
     this.onVolumeChanged,
     this.onTrackListened,
     this.onCurrentTrackChanged,
+    this.displayMetadata,
     Duration fadeDuration = const Duration(milliseconds: 500),
     double volume = 1,
     AudioPlayer? audioPlayer,
@@ -54,6 +55,9 @@ class PlayerProvider extends ChangeNotifier {
   final Future<void> Function(double volume)? onVolumeChanged;
   final Future<void> Function(String id)? onTrackListened;
   final Future<void> Function(MusicTrack track)? onCurrentTrackChanged;
+
+  /// Translates stored tag placeholders for the system media notification.
+  final String Function(String value)? displayMetadata;
   List<MusicTrack> _queue = [];
   MusicTrack? _current;
   Duration _fadeDuration;
@@ -360,8 +364,8 @@ class PlayerProvider extends ChangeNotifier {
         tag: MediaItem(
           id: track.id,
           title: track.title,
-          artist: track.artist,
-          album: track.album,
+          artist: displayMetadata?.call(track.artist) ?? track.artist,
+          album: displayMetadata?.call(track.album) ?? track.album,
           duration: track.durationMs == null
               ? null
               : Duration(milliseconds: track.durationMs!),
