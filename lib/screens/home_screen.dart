@@ -27,6 +27,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _select(int value) {
     if (value == _index) return;
+    // Tabs stay alive in an IndexedStack: a focused field on a hidden tab
+    // would otherwise reopen the keyboard whenever a dialog closes.
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       _visited
         ..remove(_index)

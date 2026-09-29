@@ -2,6 +2,9 @@
 
 ## Modifications récentes
 
+- FTP vérifié sur Galaxy S24 (serveur passif de test) : navigation, téléchargement d’un fichier et d’un dossier avec déduplication, référence et détection d’un nouvel album.
+- Correction du clavier qui se rouvrait après un dialogue : le champ de recherche de l’onglet Bibliothèque, masqué mais vivant, reprenait le focus. Le focus est libéré au changement d’onglet et au toucher hors du champ.
+- « Artiste inconnu » traduit dans la liste des fichiers distants; titre de l’écran Serveurs et sélecteur WebDAV/HTTP/FTP qui ne se coupent plus en plein mot; icône distincte pour l’import JSON.
 - Import manuel d’un `.lrc`, affichage synchronisé et saut à une ligne vérifiés sur Galaxy S24.
 - Correction du bouton d’import resté en chargement après le nettoyage des orphelins au démarrage (v0.1.36).
 - La notification de lecture système traduit « Artiste inconnu » et « Album inconnu » selon la langue.

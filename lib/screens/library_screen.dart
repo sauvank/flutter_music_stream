@@ -124,6 +124,8 @@ class LibraryScreenState extends State<LibraryScreen> {
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
           sliver: SliverToBoxAdapter(
             child: SearchBar(
+              onTapOutside: (_) =>
+                  FocusManager.instance.primaryFocus?.unfocus(),
               elevation: const WidgetStatePropertyAll(0),
               backgroundColor: WidgetStatePropertyAll(
                 Theme.of(context)

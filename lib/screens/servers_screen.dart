@@ -124,6 +124,7 @@ class ServersScreen extends StatelessWidget {
                     decoration: InputDecoration(labelText: context.l10n.name)),
                 const SizedBox(height: 12),
                 SegmentedButton<ServerType>(
+                  showSelectedIcon: false,
                   segments: const [
                     ButtonSegment(
                         value: ServerType.webdav, label: Text('WebDAV')),
@@ -427,11 +428,17 @@ class _ServerHeader extends StatelessWidget {
                               color: Theme.of(context).colorScheme.primary,
                             ),
                       ),
-                      Text(
-                        context.l10n.personalServers,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          context.l10n.personalServers,
+                          maxLines: 1,
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                        ),
                       ),
                     ],
                   ),
@@ -455,7 +462,7 @@ class _ServerHeader extends StatelessWidget {
                 IconButton.filledTonal(
                   tooltip: context.l10n.importJsonFile,
                   onPressed: onImport,
-                  icon: const Icon(Icons.file_download_outlined),
+                  icon: const Icon(Icons.file_open_outlined),
                 ),
                 const SizedBox(width: 8),
                 IconButton.filled(
@@ -546,7 +553,7 @@ class _EmptyServers extends StatelessWidget {
                 TextButton.icon(
                   style: TextButton.styleFrom(foregroundColor: Colors.white),
                   onPressed: onImport,
-                  icon: const Icon(Icons.file_download_outlined),
+                  icon: const Icon(Icons.file_open_outlined),
                   label: Text(context.l10n.importJsonFile),
                 ),
               ],
@@ -897,7 +904,7 @@ class _RemoteTile extends StatelessWidget {
               children: [
                 Text(
                   [
-                    if (details != null) details.artist,
+                    if (details != null) context.l10n.metadata(details.artist),
                     if (details?.album != null) details!.album!,
                     if (entry.size != null) _size(context.l10n, entry.size!),
                   ].join(' • '),
