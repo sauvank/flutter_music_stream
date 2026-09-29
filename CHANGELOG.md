@@ -2,6 +2,7 @@
 
 ## Modifications récentes
 
+- Import manuel d’un `.lrc`, affichage synchronisé et saut à une ligne vérifiés sur Galaxy S24.
 - Correction du bouton d’import resté en chargement après le nettoyage des orphelins au démarrage (v0.1.36).
 - La notification de lecture système traduit « Artiste inconnu » et « Album inconnu » selon la langue.
 - Correction de l’import de dossier sur Android 13+ : sans `READ_MEDIA_AUDIO`, le dossier paraissait vide. La permission est déclarée et demandée avant l’import, avec accès aux réglages en cas de refus.

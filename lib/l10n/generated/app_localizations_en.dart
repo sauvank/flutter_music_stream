@@ -84,19 +84,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get audioChannelName => 'Audio playback';
 
   @override
-  String get audioPermissionDenied => 'MusicStream needs access to your audio files to import a folder.';
+  String get audioPermissionDenied =>
+      'MusicStream needs access to your audio files to import a folder.';
 
   @override
   String get automaticLyrics => 'Automatic lyrics';
 
   @override
-  String get automaticLyricsHint => 'During playback, sends the track’s metadata to LRCLIB when its lyrics are not saved yet.';
+  String get automaticLyricsHint =>
+      'During playback, sends the track’s metadata to LRCLIB when its lyrics are not saved yet.';
 
   @override
   String get availableOffline => 'Available offline';
 
   @override
-  String get availableOfflineHint => 'Your tracks stay in the app’s private storage';
+  String get availableOfflineHint =>
+      'Your tracks stay in the app’s private storage';
 
   @override
   String baselineBody(int count) {
@@ -162,7 +165,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get comingSoon => 'Soon';
 
   @override
-  String get connectCollectionBody => 'Browse a WebDAV, HTTP or FTP server, then keep your favorite tracks offline.';
+  String get connectCollectionBody =>
+      'Browse a WebDAV, HTTP or FTP server, then keep your favorite tracks offline.';
 
   @override
   String get connectCollectionTitle => 'Connect your\ncollection';
@@ -187,7 +191,8 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The $count selected tracks will be deleted from MusicStream on this phone.',
+      other:
+          'The $count selected tracks will be deleted from MusicStream on this phone.',
       one: 'The selected track will be deleted from MusicStream on this phone.',
     );
     return '$_temp0';
@@ -206,7 +211,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteFromPhone => 'Delete from phone';
 
   @override
-  String get deleteIncludesLegacy => 'This includes the older tracks you chose.';
+  String get deleteIncludesLegacy =>
+      'This includes the older tracks you chose.';
 
   @override
   String get deleteKeepsLocal => 'Local imports are kept.';
@@ -232,8 +238,10 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The tracks and their related files will be deleted from MusicStream on this phone. The original files are kept.',
-      one: 'The track and its related files will be deleted from MusicStream on this phone. The original file is kept.',
+      other:
+          'The tracks and their related files will be deleted from MusicStream on this phone. The original files are kept.',
+      one:
+          'The track and its related files will be deleted from MusicStream on this phone. The original file is kept.',
     );
     return '$_temp0';
   }
@@ -312,19 +320,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emptyHeadline => 'Your music deserves\na beautiful home.';
 
   @override
-  String get emptyHistoryBody => 'Tracks you listen to long enough will show up here.';
+  String get emptyHistoryBody =>
+      'Tracks you listen to long enough will show up here.';
 
   @override
   String get emptyHistoryTitle => 'Your history is still empty';
 
   @override
-  String get emptyLibraryBody => 'Add your tracks: they stay private, available offline and organized automatically.';
+  String get emptyLibraryBody =>
+      'Add your tracks: they stay private, available offline and organized automatically.';
 
   @override
   String get emptyLibraryTitle => 'Bring your\nlibrary to life';
 
   @override
-  String get emptyPlayerHint => 'Pick a track from your library to get started.';
+  String get emptyPlayerHint =>
+      'Pick a track from your library to get started.';
 
   @override
   String get emptyPlayerTitle => 'Ready to groove?';
@@ -333,7 +344,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emptyPlaylist => 'This playlist is empty';
 
   @override
-  String get emptyPlaylistsBody => 'Group your tracks to find them and play them in order.';
+  String get emptyPlaylistsBody =>
+      'Group your tracks to find them and play them in order.';
 
   @override
   String get emptyPlaylistsTitle => 'Create your first playlist';
@@ -415,7 +427,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ftpAddress => 'FTP address';
 
   @override
-  String get ftpUnencrypted => 'FTP sends credentials and files without encryption.';
+  String get ftpUnencrypted =>
+      'FTP sends credentials and files without encryption.';
 
   @override
   String get goodAfternoon => 'Good afternoon';
@@ -459,7 +472,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importChooseFolder => 'Choose a folder';
 
   @override
-  String get importChooseFolderHint => 'Import every track in the folder and its subfolders';
+  String get importChooseFolderHint =>
+      'Import every track in the folder and its subfolders';
 
   @override
   String get importFailed => 'Import failed. Please try again.';
@@ -548,13 +562,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lyrics => 'Lyrics';
 
   @override
-  String get lyricsAutoBody => 'For tracks without saved lyrics, MusicStream will send their title, artist, album and duration to LRCLIB when they play. You can change this in Settings.';
+  String get lyricsAutoBody =>
+      'For tracks without saved lyrics, MusicStream will send their title, artist, album and duration to LRCLIB when they play. You can change this in Settings.';
 
   @override
   String get lyricsAutoTitle => 'Find lyrics automatically?';
 
   @override
-  String get lyricsEmpty => 'No lyrics found. Import an .lrc file or search again.';
+  String get lyricsEmpty =>
+      'No lyrics found. Import an .lrc file or search again.';
 
   @override
   String get lyricsImportEmpty => 'The lyrics file is empty.';
@@ -563,7 +579,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lyricsImportFailed => 'Unable to import this .lrc file.';
 
   @override
-  String get lyricsMissingMetadata => 'A title and an artist are required to search for lyrics.';
+  String get lyricsMissingMetadata =>
+      'A title and an artist are required to search for lyrics.';
 
   @override
   String get lyricsNotFoundOnline => 'No lyrics found on LRCLIB.';
@@ -574,7 +591,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get lyricsPrivacyHint => 'Searching sends the title, artist, album and duration to LRCLIB.';
+  String get lyricsPrivacyHint =>
+      'Searching sends the title, artist, album and duration to LRCLIB.';
 
   @override
   String lyricsRateLimitAfter(String time) {
@@ -582,7 +600,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get lyricsRateLimitLater => 'LRCLIB is temporarily limiting requests. Try again later.';
+  String get lyricsRateLimitLater =>
+      'LRCLIB is temporarily limiting requests. Try again later.';
 
   @override
   String lyricsRateLimitSeconds(int seconds) {
@@ -593,10 +612,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lyricsReadFailed => 'Unable to read the saved lyrics.';
 
   @override
-  String get lyricsSearchFailed => 'Search failed. Check your connection and try again.';
+  String get lyricsSearchFailed =>
+      'Search failed. Check your connection and try again.';
 
   @override
-  String get lyricsSynchronized => 'Synced with playback • tap a line to jump to it';
+  String get lyricsSynchronized =>
+      'Synced with playback • tap a line to jump to it';
 
   @override
   String get lyricsUnsynchronized => 'Unsynced lyrics';
@@ -749,7 +770,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get personalServers => 'Personal servers';
 
   @override
-  String get personalServersHint => 'WebDAV and HTTP, with credentials in the system keystore';
+  String get personalServersHint =>
+      'WebDAV and HTTP, with credentials in the system keystore';
 
   @override
   String get pickMusicFolder => 'Choose a music folder';
@@ -891,7 +913,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverAlreadyConfigured => 'This server is already configured.';
 
   @override
-  String get serverConnectionFailed => 'Connection failed. Check the address and credentials.';
+  String get serverConnectionFailed =>
+      'Connection failed. Check the address and credentials.';
 
   @override
   String get serverRoot => 'Server root';
@@ -1057,13 +1080,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get translate => 'Translate';
 
   @override
-  String get translateLyricsHint => 'The lyrics will be sent to MyMemory. The translation is kept on this device.';
+  String get translateLyricsHint =>
+      'The lyrics will be sent to MyMemory. The translation is kept on this device.';
 
   @override
   String get translateLyricsTitle => 'Translate lyrics';
 
   @override
-  String get translationFailed => 'Translation failed. Check your connection and try again.';
+  String get translationFailed =>
+      'Translation failed. Check your connection and try again.';
 
   @override
   String translationLanguage(String language) {
@@ -1074,10 +1099,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get translationLineTooLong => 'A line is too long to translate.';
 
   @override
-  String get translationRateLimited => 'MyMemory is temporarily limiting translations. Try again later.';
+  String get translationRateLimited =>
+      'MyMemory is temporarily limiting translations. Try again later.';
 
   @override
-  String get translationUnavailable => 'Translation failed (network or service unavailable).';
+  String get translationUnavailable =>
+      'Translation failed (network or service unavailable).';
 
   @override
   String get unknownAlbum => 'Unknown album';

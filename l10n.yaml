@@ -4,3 +4,4 @@ output-dir: lib/l10n/generated
 output-localization-file: app_localizations.dart
 synthetic-package: false
 nullable-getter: false
+format: true
