@@ -33,6 +33,7 @@ class LibraryProvider extends ChangeNotifier {
   final List<MusicTrack> _tracks = [];
   final List<MusicPlaylist> _playlists = [];
   Set<String> _downloadedSourceUris = const {};
+  Set<String> _hiddenDeviceUris = {};
   bool isImporting = false;
   bool isDeleting = false;
   String query = '';
@@ -169,6 +170,7 @@ class LibraryProvider extends ChangeNotifier {
       ..clear()
       ..addAll(playlists);
     deviceMediaEnabled = await _service.loadDeviceMediaEnabled();
+    _hiddenDeviceUris = await _service.loadHiddenDeviceUris();
     await _journal.load();
     _refreshDownloadedSourceUris();
     notifyListeners();
@@ -203,8 +205,10 @@ class LibraryProvider extends ChangeNotifier {
           if (track.source == MusicSource.deviceMedia) track.uri: track,
       };
       final found = {for (final file in files) file.uri.toString()};
-      final fresh =
-          files.where((file) => !known.containsKey(file.uri.toString()));
+      final fresh = files.where((file) {
+        final uri = file.uri.toString();
+        return !known.containsKey(uri) && !_hiddenDeviceUris.contains(uri);
+      });
       final private = <String, List<int?>>{};
       for (final track in _tracks) {
         if (track.source == MusicSource.deviceMedia) continue;
@@ -251,6 +255,10 @@ class LibraryProvider extends ChangeNotifier {
               for (final entry in known.entries)
                 if (!found.contains(entry.key)) entry.value.id,
             };
+      if (files.isNotEmpty && !_hiddenDeviceUris.every(found.contains)) {
+        _hiddenDeviceUris = _hiddenDeviceUris.where(found.contains).toSet();
+        await _service.saveHiddenDeviceUris(_hiddenDeviceUris);
+      }
       if (missing.isNotEmpty) {
         await _forgetTracks(missing);
       } else if (added > 0) {
@@ -468,17 +476,28 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Deletes app-owned tracks with their files. Device media tracks are only
+  /// hidden: their files belong to the phone and later scans skip them.
   Future<int> deleteTracks(Iterable<String> ids) async {
     if (isDeleting || isImporting) return 0;
     isDeleting = true;
     notifyListeners();
     final removedIds = <String>{};
+    var hiddenChanged = false;
     try {
       for (final id in ids.toSet()) {
         final track = _byId[id];
-        // Device media files belong to the phone, never to this app.
-        if (track == null || track.source == MusicSource.deviceMedia) continue;
-        await _service.deleteTrackFiles(track);
+        if (track == null) continue;
+        if (track.source == MusicSource.deviceMedia) {
+          try {
+            await _service.deletePrivateExtras(track);
+          } on FileSystemException {
+            // Left for the orphan cleanup.
+          }
+          hiddenChanged = _hiddenDeviceUris.add(track.uri) || hiddenChanged;
+        } else {
+          await _service.deleteTrackFiles(track);
+        }
         _tracks.removeWhere((candidate) => candidate.id == id);
         _byIdCache?.remove(id);
         removedIds.add(id);
@@ -486,6 +505,9 @@ class LibraryProvider extends ChangeNotifier {
       return removedIds.length;
     } finally {
       try {
+        if (hiddenChanged) {
+          await _service.saveHiddenDeviceUris(_hiddenDeviceUris);
+        }
         if (removedIds.isNotEmpty) {
           _refreshDownloadedSourceUris();
           await _service.save(_tracks);

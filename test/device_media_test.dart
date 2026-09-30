@@ -100,15 +100,36 @@ void main() {
     expect(library.deviceTrackCount, 1);
   });
 
-  test('never deletes device files; disabling only forgets them', () async {
+  test('deleting device tracks hides them without touching their files',
+      () async {
     final file = audio('Music/Mine.mp3');
+    final other = audio('Music/Other.mp3');
     final library = await provider();
     await library.setDeviceMediaEnabled(true);
     await library.scanDeviceMedia();
     final id = LibraryService.deviceTrackId(file.path);
 
-    expect(await library.deleteTracks([id]), 0);
+    expect(await library.deleteTracks([id]), 1);
     expect(file.existsSync(), isTrue);
+    expect(library.tracks.map((track) => track.id), isNot(contains(id)));
+
+    expect((await library.scanDeviceMedia())?.added, 0);
+    final reloaded = await provider();
+    await reloaded.scanDeviceMedia();
+    expect(reloaded.tracks.map((track) => track.id), isNot(contains(id)));
+    expect(reloaded.deviceTrackCount, 1);
+
+    await reloaded.setDeviceMediaEnabled(false);
+    expect(reloaded.deviceTrackCount, 0);
+    expect(file.existsSync(), isTrue);
+    expect(other.existsSync(), isTrue);
+  });
+
+  test('disabling device media only forgets its tracks', () async {
+    final file = audio('Music/Mine.mp3');
+    final library = await provider();
+    await library.setDeviceMediaEnabled(true);
+    await library.scanDeviceMedia();
 
     await library.setDeviceMediaEnabled(false);
     expect(library.deviceTrackCount, 0);

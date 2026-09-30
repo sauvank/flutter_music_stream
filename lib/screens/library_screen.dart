@@ -1527,12 +1527,10 @@ class _TrackTileState extends State<_TrackTile> {
                         value: 'remove',
                         child: Text(context.l10n.removeFromPlaylist),
                       ),
-                    // The app never deletes files that belong to the phone.
-                    if (track.source != MusicSource.deviceMedia)
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Text(context.l10n.deleteFromPhone),
-                      ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Text(context.l10n.deleteFromPhone),
+                    ),
                   ],
                 ),
               ],

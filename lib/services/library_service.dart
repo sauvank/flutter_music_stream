@@ -30,6 +30,7 @@ class LibraryService {
   static const _positionsKey = 'music_positions_v1';
   static const _sortKey = 'library_sort_v1';
   static const _deviceMediaKey = 'device_media_enabled_v1';
+  static const _hiddenDeviceMediaKey = 'device_media_hidden_v1';
   static const supportedExtensions = <String>[
     'mp3',
     'm4a',
@@ -154,6 +155,17 @@ class LibraryService {
 
   Future<void> saveDeviceMediaEnabled(bool enabled) async =>
       (await SharedPreferences.getInstance()).setBool(_deviceMediaKey, enabled);
+
+  /// Uris of phone files removed from MusicStream, skipped by later scans.
+  Future<Set<String>> loadHiddenDeviceUris() async =>
+      ((await SharedPreferences.getInstance())
+                  .getStringList(_hiddenDeviceMediaKey) ??
+              const <String>[])
+          .toSet();
+
+  Future<void> saveHiddenDeviceUris(Set<String> uris) async =>
+      (await SharedPreferences.getInstance())
+          .setStringList(_hiddenDeviceMediaKey, uris.toList()..sort());
 
   /// Builds a track for a file left in shared storage. Its id derives from
   /// the path, since hashing every file's content would make scans slow.
