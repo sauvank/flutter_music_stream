@@ -84,6 +84,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get audioChannelName => 'Audio playback';
 
   @override
+  String get audioOutput => 'Play on another device';
+
+  @override
+  String get audioOutputUnavailable => 'Couldn’t open the audio output picker.';
+
+  @override
   String get audioPermissionDenied =>
       'MusicStream needs access to your audio files to import a folder.';
 

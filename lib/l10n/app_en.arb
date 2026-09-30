@@ -19,6 +19,8 @@
   "allTracks": "All tracks",
   "alreadyDownloading": "{name} is already downloading.",
   "audioChannelName": "Audio playback",
+  "audioOutput": "Play on another device",
+  "audioOutputUnavailable": "Couldn’t open the audio output picker.",
   "audioPermissionDenied": "MusicStream needs access to your audio files to import a folder.",
   "automaticLyrics": "Automatic lyrics",
   "automaticLyricsHint": "During playback, sends the track’s metadata to LRCLIB when its lyrics are not saved yet.",

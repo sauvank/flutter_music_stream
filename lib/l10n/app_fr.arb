@@ -64,6 +64,8 @@
     }
   },
   "audioChannelName": "Lecture audio",
+  "audioOutput": "Diffuser sur un autre appareil",
+  "audioOutputUnavailable": "Impossible d’ouvrir le choix de sortie audio.",
   "audioPermissionDenied": "MusicStream a besoin d’accéder à vos fichiers audio pour importer un dossier.",
   "automaticLyrics": "Paroles automatiques",
   "automaticLyricsHint": "Pendant la lecture, envoie les métadonnées du morceau à LRCLIB si ses paroles ne sont pas déjà enregistrées.",

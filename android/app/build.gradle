@@ -50,3 +50,8 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Opens Android's output switcher (Bluetooth, speakers, cast devices).
+    implementation("androidx.mediarouter:mediarouter:1.7.0")
+}

@@ -212,6 +212,18 @@ abstract class AppLocalizations {
   /// **'Lecture audio'**
   String get audioChannelName;
 
+  /// No description provided for @audioOutput.
+  ///
+  /// In fr, this message translates to:
+  /// **'Diffuser sur un autre appareil'**
+  String get audioOutput;
+
+  /// No description provided for @audioOutputUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible d’ouvrir le choix de sortie audio.'**
+  String get audioOutputUnavailable;
+
   /// No description provided for @audioPermissionDenied.
   ///
   /// In fr, this message translates to:

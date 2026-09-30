@@ -1,5 +1,6 @@
 package com.sauvank.musicstream
 
+import androidx.mediarouter.app.SystemOutputSwitcherDialogController
 import com.ryanheise.audioservice.AudioServiceActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -33,10 +34,21 @@ class MainActivity : AudioServiceActivity() {
                 PlayerWidgetProvider.refreshAll(this)
                 result.success(null)
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, OUTPUT_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                if (call.method == "showOutputSwitcher") {
+                    // Falls back to Bluetooth settings where the system
+                    // switcher is unavailable.
+                    result.success(SystemOutputSwitcherDialogController.showDialog(this))
+                } else {
+                    result.notImplemented()
+                }
+            }
     }
 
     companion object {
         private const val WIDGET_CHANNEL = "com.sauvank.musicstream/widget"
+        private const val OUTPUT_CHANNEL = "com.sauvank.musicstream/output"
 
         /** Whether this process hosts the Flutter engine that plays audio. */
         @Volatile

@@ -28,12 +28,14 @@
 - [x] Médiathèque de l’appareil comme source distincte, sans copie : 720 morceaux indexés en 17 s sur Galaxy S24.
 - [x] Widget d’accueil Android (morceau, pochette, précédent/lecture/suivant), ajoutable depuis Réglages.
 - [x] Synchronisation chiffrée de bout en bout (favoris, écoutes, playlists) via un fichier sur un serveur WebDAV de l’utilisateur.
+- [x] Bouton de diffusion ouvrant le sélecteur de sortie audio Android (Bluetooth, Alexa appairée).
 
 ## En cours
 
 
 ## À venir
 
+- [ ] Diffusion réseau Chromecast/DLNA si besoin (SDK Cast ou découverte UPnP, plus un serveur HTTP local pour les fichiers). Alexa n’accepte pas la diffusion d’applis tierces, uniquement le Bluetooth.
 
 ## Différé
 

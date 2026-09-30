@@ -96,6 +96,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get audioChannelName => 'Lecture audio';
 
   @override
+  String get audioOutput => 'Diffuser sur un autre appareil';
+
+  @override
+  String get audioOutputUnavailable =>
+      'Impossible d’ouvrir le choix de sortie audio.';
+
+  @override
   String get audioPermissionDenied =>
       'MusicStream a besoin d’accéder à vos fichiers audio pour importer un dossier.';
 

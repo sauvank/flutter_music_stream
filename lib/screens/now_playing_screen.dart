@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
+import '../services/audio_output_service.dart';
 import '../widgets/track_artwork.dart';
 import 'lyrics_sheet.dart';
 import '../l10n/l10n.dart';
@@ -127,6 +128,14 @@ class NowPlayingScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (const AudioOutputService().supported) ...[
+                  IconButton(
+                    tooltip: context.l10n.audioOutput,
+                    onPressed: () => _showOutputSwitcher(context),
+                    icon: const Icon(Icons.speaker_group_outlined),
+                  ),
+                  const SizedBox(width: 4),
+                ],
                 IconButton.filledTonal(
                   tooltip: favorite
                       ? context.l10n.removeFavorite
@@ -347,6 +356,14 @@ class NowPlayingScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _showOutputSwitcher(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final message = context.l10n.audioOutputUnavailable;
+    if (!await const AudioOutputService().showOutputSwitcher()) {
+      messenger.showSnackBar(SnackBar(content: Text(message)));
+    }
   }
 
   String _time(Duration value) {
