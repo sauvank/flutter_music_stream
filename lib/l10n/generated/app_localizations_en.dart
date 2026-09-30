@@ -1002,6 +1002,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get showAll => 'Show all';
 
   @override
+  String get showVisualizer => 'Show sound waves';
+
+  @override
   String get shuffle => 'Shuffle';
 
   @override

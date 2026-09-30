@@ -91,6 +91,10 @@ class PlayerProvider extends ChangeNotifier {
 
   MusicTrack? get current => _current;
   bool get playing => _player.playing;
+
+  /// Android audio session of the player, which the visualizer attaches to.
+  Stream<int?> get audioSessionIdStream =>
+      _player.androidAudioSessionIdStream.distinct();
   Duration get position => _player.position;
 
   /// Position updates are published separately so that frequent ticks only

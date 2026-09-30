@@ -34,14 +34,32 @@
             android:textSize="14sp"
             android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/widget_artist"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- An indeterminate progress bar is the only view a widget can
+                 keep animating without updates. -->
+            <ProgressBar
+                android:id="@+id/widget_bars"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginEnd="6dp"
+                android:indeterminate="true"
+                android:indeterminateDrawable="@drawable/anim_widget_bars"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/widget_artist"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="#CCFFFFFF"
-            android:textSize="12sp" />
+                android:textColor="#CCFFFFFF"
+                android:textSize="12sp" />
+        </LinearLayout>
     </LinearLayout>
 
     <ImageButton

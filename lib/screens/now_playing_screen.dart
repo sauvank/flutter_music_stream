@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
 import '../services/audio_output_service.dart';
+import '../widgets/audio_visualizer.dart';
 import '../widgets/track_artwork.dart';
 import 'lyrics_sheet.dart';
 import '../l10n/l10n.dart';
@@ -87,10 +88,19 @@ class NowPlayingScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: TrackArtwork(
-                    track: track,
-                    size: artworkSize,
+                  child: ClipRRect(
                     borderRadius: BorderRadius.circular(42),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        TrackArtwork(
+                          track: track,
+                          size: artworkSize,
+                          borderRadius: BorderRadius.circular(42),
+                        ),
+                        AudioVisualizer(height: artworkSize * .2),
+                      ],
+                    ),
                   ),
                 );
               },

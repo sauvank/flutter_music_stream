@@ -9,6 +9,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.view.KeyEvent
+import android.view.View
 import android.widget.RemoteViews
 import com.ryanheise.audioservice.MediaButtonReceiver
 import java.io.File
@@ -113,6 +114,7 @@ class PlayerWidgetProvider : AppWidgetProvider() {
                 views.setImageViewResource(R.id.widget_artwork, R.drawable.ic_widget_music)
             }
             val playing = state.getBoolean("playing", false)
+            views.setViewVisibility(R.id.widget_bars, if (playing) View.VISIBLE else View.GONE)
             views.setImageViewResource(
                 R.id.widget_play_pause,
                 if (playing) R.drawable.ic_widget_pause else R.drawable.ic_widget_play,

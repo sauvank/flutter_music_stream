@@ -28,6 +28,7 @@
 - [x] Médiathèque de l’appareil comme source distincte, sans copie : 720 morceaux indexés en 17 s sur Galaxy S24.
 - [x] Widget d’accueil Android (morceau, pochette, précédent/lecture/suivant), ajoutable depuis Réglages.
 - [x] Synchronisation chiffrée de bout en bout (favoris, écoutes, playlists) via un fichier sur un serveur WebDAV de l’utilisateur.
+- [x] Visualiseur en direct sur la pochette et barres animées dans le widget d’accueil.
 - [x] Bouton de diffusion ouvrant le sélecteur de sortie audio Android (Bluetooth, Alexa appairée).
 
 ## En cours

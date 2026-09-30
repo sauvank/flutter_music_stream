@@ -64,7 +64,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final screens = [
       LibraryScreen(key: _library),
       const ServersScreen(),
-      const NowPlayingScreen(),
+      // Hidden, it must not keep the live visualizer running.
+      TickerMode(enabled: _index == 2, child: const NowPlayingScreen()),
       const SettingsScreen(),
     ];
     final dark = Theme.of(context).brightness == Brightness.dark;

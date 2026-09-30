@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Looping equalizer bars. Home screen widgets cannot follow the live
+     spectrum, so the widget shows this while music plays. -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="20dp"
+            android:height="20dp"
+            android:viewportWidth="16"
+            android:viewportHeight="16">
+            <group android:name="bar0" android:pivotY="16">
+                <path android:fillColor="#FFFFFFFF" android:pathData="M1,2h2.5v14h-2.5z" />
+            </group>
+            <group android:name="bar1" android:pivotY="16">
+                <path android:fillColor="#FFFFFFFF" android:pathData="M5,2h2.5v14h-2.5z" />
+            </group>
+            <group android:name="bar2" android:pivotY="16">
+                <path android:fillColor="#FFFFFFFF" android:pathData="M9,2h2.5v14h-2.5z" />
+            </group>
+            <group android:name="bar3" android:pivotY="16">
+                <path android:fillColor="#FFFFFFFF" android:pathData="M13,2h2.5v14h-2.5z" />
+            </group>
+        </vector>
+    </aapt:attr>
+    <target android:name="bar0">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="420"
+                android:propertyName="scaleY"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"
+                android:valueFrom="0.3"
+                android:valueTo="1"
+                android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+    <target android:name="bar1">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="560"
+                android:propertyName="scaleY"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"
+                android:valueFrom="0.55"
+                android:valueTo="1"
+                android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+    <target android:name="bar2">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="380"
+                android:propertyName="scaleY"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"
+                android:valueFrom="0.2"
+                android:valueTo="1"
+                android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+    <target android:name="bar3">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="500"
+                android:propertyName="scaleY"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"
+                android:valueFrom="0.45"
+                android:valueTo="1"
+                android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+</animated-vector>

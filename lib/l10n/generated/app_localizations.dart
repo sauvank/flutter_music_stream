@@ -1610,6 +1610,12 @@ abstract class AppLocalizations {
   /// **'Afficher tout'**
   String get showAll;
 
+  /// No description provided for @showVisualizer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Afficher les ondes du son'**
+  String get showVisualizer;
+
   /// No description provided for @shuffle.
   ///
   /// In fr, this message translates to:

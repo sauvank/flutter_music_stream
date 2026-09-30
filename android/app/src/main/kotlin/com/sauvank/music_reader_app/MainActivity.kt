@@ -8,6 +8,14 @@ import io.flutter.plugin.common.MethodChannel
 // Extends AudioServiceActivity so background playback keeps working, and
 // exposes the channel the Dart side uses to refresh the home screen widget.
 class MainActivity : AudioServiceActivity() {
+    private var visualizer: AudioVisualizer? = null
+
+    override fun onDestroy() {
+        visualizer?.stop()
+        visualizer = null
+        super.onDestroy()
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         // audio_service caches the engine beyond this activity, so the flag
@@ -34,6 +42,8 @@ class MainActivity : AudioServiceActivity() {
                 PlayerWidgetProvider.refreshAll(this)
                 result.success(null)
             }
+        visualizer?.stop()
+        visualizer = AudioVisualizer(flutterEngine.dartExecutor.binaryMessenger)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, OUTPUT_CHANNEL)
             .setMethodCallHandler { call, result ->
                 if (call.method == "showOutputSwitcher") {

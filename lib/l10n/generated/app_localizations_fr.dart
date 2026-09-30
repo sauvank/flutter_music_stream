@@ -1030,6 +1030,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get showAll => 'Afficher tout';
 
   @override
+  String get showVisualizer => 'Afficher les ondes du son';
+
+  @override
   String get shuffle => 'Aléatoire';
 
   @override
