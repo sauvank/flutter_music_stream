@@ -2,6 +2,7 @@
 
 ## Modifications récentes
 
+- Ajout d’un bouton « Ajouter à une playlist » dans l’écran Lecture, qui réutilise la feuille de choix de la bibliothèque. Vérifié sur Galaxy S24.
 - Correction du bouton lecture masqué par la barre de navigation : la pochette réserve plus de place et rétrécit encore d’une ligne quand le titre passe sur deux lignes. Vérifié sur Galaxy S24.
 - Correction du visualiseur qui disparaissait au changement de morceau : l’écran sortant arrêtait la capture du nouveau, et la vérification tardive de l’autorisation ne relançait pas la capture.
 - Ajout d’un visualiseur en direct par-dessus la pochette (écran Lecture) : 24 bandes du spectre réel de la session audio de l’app (`android.media.audiofx.Visualizer`), activé d’un toucher. Android impose la permission micro, mais rien n’est enregistré. La capture ne tourne que si l’onglet est visible, l’app au premier plan et la musique en lecture. Le widget d’accueil affiche des barres animées pendant la lecture. Vérifié sur Galaxy S24.

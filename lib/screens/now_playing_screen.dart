@@ -7,6 +7,7 @@ import '../providers/player_provider.dart';
 import '../services/audio_output_service.dart';
 import '../widgets/audio_visualizer.dart';
 import '../widgets/track_artwork.dart';
+import 'library_screen.dart' show showAddToPlaylistSheet;
 import 'lyrics_sheet.dart';
 import '../l10n/l10n.dart';
 
@@ -76,7 +77,7 @@ class NowPlayingScreen extends StatelessWidget {
                   maxLines: 1,
                   textDirection: Directionality.of(context),
                   textScaler: MediaQuery.textScalerOf(context),
-                )..layout(maxWidth: constraints.maxWidth - 108);
+                )..layout(maxWidth: constraints.maxWidth - 156);
                 final extraTitleLine =
                     title.didExceedMaxLines ? title.height : 0.0;
                 title.dispose();
@@ -146,6 +147,11 @@ class NowPlayingScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
+                IconButton(
+                  tooltip: context.l10n.addToPlaylist,
+                  onPressed: () => showAddToPlaylistSheet(context, [track]),
+                  icon: const Icon(Icons.playlist_add_rounded),
                 ),
                 if (const AudioOutputService().supported) ...[
                   IconButton(

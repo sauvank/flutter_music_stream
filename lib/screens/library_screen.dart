@@ -1344,7 +1344,7 @@ class _SelectionBar extends StatelessWidget {
                       tooltip: context.l10n.addToPlaylist,
                       onPressed: () => _run(
                         context,
-                        (tracks) => _addTracksToPlaylist(context, tracks),
+                        (tracks) => showAddToPlaylistSheet(context, tracks),
                       ),
                       icon: const Icon(Icons.playlist_add_rounded),
                     ),
@@ -1558,7 +1558,7 @@ class _TrackTileState extends State<_TrackTile> {
         );
       }
     } else if (action == 'add') {
-      await _addTracksToPlaylist(context, [track]);
+      await showAddToPlaylistSheet(context, [track]);
     } else if (action == 'remove') {
       await context
           .read<LibraryProvider>()
@@ -1868,7 +1868,9 @@ Future<bool> _confirmDelete(BuildContext context, String name) async =>
     ) ??
     false;
 
-Future<bool> _addTracksToPlaylist(
+/// Lets the user pick a playlist for [tracks], creating the first one if
+/// none exists. Also used by the now playing screen.
+Future<bool> showAddToPlaylistSheet(
   BuildContext context,
   List<MusicTrack> tracks,
 ) async {
