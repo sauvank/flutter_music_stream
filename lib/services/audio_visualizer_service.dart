@@ -17,6 +17,10 @@ class AudioVisualizerService {
       .receiveBroadcastStream()
       .map((levels) => List<double>.from(levels as List));
 
+  /// The platform visualizer is a singleton: only its latest owner may stop
+  /// it, so a screen leaving during a transition keeps the new one running.
+  static Object? _owner;
+
   bool get supported => Platform.isAndroid;
 
   /// Band levels between 0 and 1, low frequencies first.
@@ -33,7 +37,8 @@ class AudioVisualizerService {
     return status.isGranted;
   }
 
-  Future<bool> start(int sessionId) async {
+  Future<bool> start(Object owner, int sessionId) async {
+    _owner = owner;
     try {
       return await _methods.invokeMethod<bool>('start', {
             'sessionId': sessionId,
@@ -46,7 +51,9 @@ class AudioVisualizerService {
     }
   }
 
-  Future<void> stop() async {
+  Future<void> stop(Object owner) async {
+    if (!identical(_owner, owner)) return;
+    _owner = null;
     try {
       await _methods.invokeMethod<void>('stop');
     } on PlatformException {

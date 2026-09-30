@@ -41,7 +41,9 @@ class _AudioVisualizerState extends State<AudioVisualizer>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _service.granted().then((granted) {
-      if (mounted) setState(() => _granted = granted);
+      if (!mounted) return;
+      setState(() => _granted = granted);
+      _sync();
     });
     _sessionSubscription =
         context.read<PlayerProvider>().audioSessionIdStream.listen((id) {
@@ -81,11 +83,11 @@ class _AudioVisualizerState extends State<AudioVisualizer>
     if (wanted == _capturingSession) return;
     _capturingSession = wanted;
     if (wanted == null) {
-      unawaited(_service.stop());
+      unawaited(_service.stop(this));
       _targets = const [];
       if (!_ticker.isActive && _values.isNotEmpty) _ticker.start();
     } else {
-      unawaited(_service.start(wanted));
+      unawaited(_service.start(this, wanted));
     }
   }
 
@@ -120,7 +122,7 @@ class _AudioVisualizerState extends State<AudioVisualizer>
     WidgetsBinding.instance.removeObserver(this);
     _sessionSubscription?.cancel();
     _levelsSubscription?.cancel();
-    if (_capturingSession != null) unawaited(_service.stop());
+    if (_capturingSession != null) unawaited(_service.stop(this));
     _ticker.dispose();
     super.dispose();
   }

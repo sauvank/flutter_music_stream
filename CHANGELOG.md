@@ -2,6 +2,7 @@
 
 ## Modifications récentes
 
+- Correction du visualiseur qui disparaissait au changement de morceau : l’écran sortant arrêtait la capture du nouveau, et la vérification tardive de l’autorisation ne relançait pas la capture.
 - Ajout d’un visualiseur en direct par-dessus la pochette (écran Lecture) : 24 bandes du spectre réel de la session audio de l’app (`android.media.audiofx.Visualizer`), activé d’un toucher. Android impose la permission micro, mais rien n’est enregistré. La capture ne tourne que si l’onglet est visible, l’app au premier plan et la musique en lecture. Le widget d’accueil affiche des barres animées pendant la lecture. Vérifié sur Galaxy S24.
 - Ajout d’un bouton « Diffuser sur un autre appareil » dans l’écran Lecture : il ouvre le sélecteur de sortie audio d’Android (Bluetooth, dont un Echo appairé, et appareils compatibles), via `androidx.mediarouter`. Vérifié sur Galaxy S24.
 - Correction : supprimer un morceau de la médiathèque du téléphone le retire désormais de MusicStream (listes, « Ajoutés récemment ») au lieu d’être ignoré en silence. Le fichier d’origine est conservé et son URI est mémorisée (`device_media_hidden_v1`) pour que les scans suivants ne le réimportent pas.
