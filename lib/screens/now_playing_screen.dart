@@ -68,7 +68,20 @@ class NowPlayingScreen extends StatelessWidget {
             LayoutBuilder(
               builder: (context, constraints) {
                 final widthLimit = constraints.maxWidth.clamp(180.0, 460.0);
-                final heightLimit = (screenHeight - 450).clamp(180.0, 460.0);
+                // A title wrapping to a second line takes that height from
+                // the artwork, so the controls stay above the navigation.
+                final title = TextPainter(
+                  text:
+                      TextSpan(text: track.title, style: _titleStyle(context)),
+                  maxLines: 1,
+                  textDirection: Directionality.of(context),
+                  textScaler: MediaQuery.textScalerOf(context),
+                )..layout(maxWidth: constraints.maxWidth - 108);
+                final extraTitleLine =
+                    title.didExceedMaxLines ? title.height : 0.0;
+                title.dispose();
+                final heightLimit =
+                    (screenHeight - 500 - extraTitleLine).clamp(180.0, 460.0);
                 final artworkSize =
                     widthLimit < heightLimit ? widthLimit : heightLimit;
                 return Container(
@@ -116,11 +129,7 @@ class NowPlayingScreen extends StatelessWidget {
                         track.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style:
-                            Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -.6,
-                                ),
+                        style: _titleStyle(context),
                       ),
                       const SizedBox(height: 5),
                       Text(
@@ -367,6 +376,12 @@ class NowPlayingScreen extends StatelessWidget {
       ),
     );
   }
+
+  static TextStyle? _titleStyle(BuildContext context) =>
+      Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w900,
+            letterSpacing: -.6,
+          );
 
   Future<void> _showOutputSwitcher(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
