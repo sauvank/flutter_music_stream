@@ -35,7 +35,6 @@
 
 ## À venir
 
-- [ ] Diffusion réseau Chromecast/DLNA si besoin (SDK Cast ou découverte UPnP, plus un serveur HTTP local pour les fichiers). Alexa n’accepte pas la diffusion d’applis tierces, uniquement le Bluetooth.
 
 ## Différé
 
