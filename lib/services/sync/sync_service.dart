@@ -45,6 +45,13 @@ class SyncConflictException implements Exception {
   const SyncConflictException();
 }
 
+/// The server refused to store the file (HTTP 401/403): the account can
+/// read but not write over WebDAV.
+class SyncWriteForbiddenException implements Exception {
+  const SyncWriteForbiddenException(this.statusCode);
+  final int statusCode;
+}
+
 /// Stores sync settings and the derived key on this device, and moves the
 /// encrypted file to and from the user's WebDAV server.
 class SyncService {
@@ -142,8 +149,10 @@ class SyncService {
         ),
       );
     } on DioException catch (error) {
-      if (error.response?.statusCode == 412) {
-        throw const SyncConflictException();
+      final status = error.response?.statusCode;
+      if (status == 412) throw const SyncConflictException();
+      if (status == 401 || status == 403) {
+        throw SyncWriteForbiddenException(status!);
       }
       rethrow;
     }

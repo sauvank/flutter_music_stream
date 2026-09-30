@@ -63,7 +63,14 @@ class SyncProvider extends ChangeNotifier {
         await _service.saveKey(key);
         settings = SyncSettings(profileId: profile.id, kdf: kdf);
         await _service.saveSettings(settings!);
-        await _sync();
+        try {
+          await _sync();
+        } catch (_) {
+          // Stays off until one sync succeeds, instead of looking active.
+          await _service.clear();
+          settings = null;
+          rethrow;
+        }
       });
 
   Future<void> syncNow() => _run(_sync);

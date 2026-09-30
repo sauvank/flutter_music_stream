@@ -59,6 +59,15 @@ void main() {
     expect(a.sync.settings?.lastSyncAt, isNotNull);
   });
 
+  test('a server refusing writes leaves sync disabled', () async {
+    final device = await _Device.create(_MemoryServer(), readOnly: true);
+
+    await expectLater(device.sync.enable(profile, 'correct horse battery'),
+        throwsA(isA<SyncWriteForbiddenException>()));
+    expect(device.sync.enabled, isFalse);
+    expect(device.sync.busy, isFalse);
+  });
+
   test('a wrong passphrase cannot join an existing sync file', () async {
     final server = _MemoryServer();
     final a = await _Device.create(server);
@@ -72,12 +81,28 @@ void main() {
   });
 }
 
+class _ReadOnlySyncService extends _MemorySyncService {
+  _ReadOnlySyncService(super.server);
+
+  @override
+  Future<void> upload(
+    Uri uri,
+    Map<String, String> headers,
+    Map<String, Object?> envelope, {
+    required RemoteSyncFile? replacing,
+  }) async =>
+      throw const SyncWriteForbiddenException(403);
+}
+
 class _Device {
   _Device(this.library, this.sync);
   final LibraryProvider library;
   final SyncProvider sync;
 
-  static Future<_Device> create(_MemoryServer server) async {
+  static Future<_Device> create(
+    _MemoryServer server, {
+    bool readOnly = false,
+  }) async {
     // Each device keeps its own preferences; the test switches between them.
     final library = LibraryProvider(
       _MemoryLibraryService(),
@@ -91,7 +116,7 @@ class _Device {
     );
     await servers.load();
     final sync = SyncProvider(
-      _MemorySyncService(server),
+      readOnly ? _ReadOnlySyncService(server) : _MemorySyncService(server),
       library,
       servers,
       iterations: 1000,

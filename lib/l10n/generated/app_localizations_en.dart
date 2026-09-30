@@ -482,6 +482,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get headline => 'What would you like\nto hear?';
 
   @override
+  String get hidePassphrase => 'Hide passphrase';
+
+  @override
   String get homeWidget => 'Home screen widget';
 
   @override
@@ -1002,6 +1005,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get showAll => 'Show all';
 
   @override
+  String get showPassphrase => 'Show passphrase';
+
+  @override
   String get showVisualizer => 'Show sound waves';
 
   @override
@@ -1163,6 +1169,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncTitle => 'Encrypted sync';
+
+  @override
+  String syncWriteForbidden(int status) {
+    return 'The server refuses to write the sync file (HTTP $status). This account can read but not write over WebDAV: allow writing on the server (AList: “Webdav manage” permission), then try again.';
+  }
 
   @override
   String get syncWrongPassphrase =>

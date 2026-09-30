@@ -301,6 +301,7 @@
   "goodEvening": "Bonsoir",
   "goodMorning": "Bonjour",
   "headline": "Qu’avez-vous envie\nd’écouter ?",
+  "hidePassphrase": "Masquer la phrase secrète",
   "homeWidget": "Widget d’accueil",
   "homeWidgetAdd": "Ajouter",
   "homeWidgetHint": "Morceau en cours et commandes de lecture sur l’écran d’accueil.",
@@ -588,6 +589,7 @@
   "settingsTagline": "Une bibliothèque privée, locale et prête à vous suivre.",
   "settingsTitle": "Réglages",
   "showAll": "Afficher tout",
+  "showPassphrase": "Afficher la phrase secrète",
   "showVisualizer": "Afficher les ondes du son",
   "shuffle": "Aléatoire",
   "shuffleDisable": "Désactiver la lecture aléatoire",
@@ -677,6 +679,14 @@
   "syncServer": "Serveur",
   "syncServerMissing": "Le serveur de synchronisation n’existe plus. Désactivez puis réactivez la synchronisation.",
   "syncTitle": "Synchronisation chiffrée",
+  "syncWriteForbidden": "Le serveur refuse d’écrire le fichier de synchronisation (HTTP {status}). Ce compte peut lire mais pas écrire en WebDAV : autorisez l’écriture sur le serveur (AList : permission « Gérer WebDAV ») puis réessayez.",
+  "@syncWriteForbidden": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
   "syncWrongPassphrase": "Cette phrase secrète n’ouvre pas le fichier de synchronisation de ce serveur.",
   "theme": "Thème",
   "themeDark": "Sombre",

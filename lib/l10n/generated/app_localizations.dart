@@ -782,6 +782,12 @@ abstract class AppLocalizations {
   /// **'Qu’avez-vous envie\nd’écouter ?'**
   String get headline;
 
+  /// No description provided for @hidePassphrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Masquer la phrase secrète'**
+  String get hidePassphrase;
+
   /// No description provided for @homeWidget.
   ///
   /// In fr, this message translates to:
@@ -1610,6 +1616,12 @@ abstract class AppLocalizations {
   /// **'Afficher tout'**
   String get showAll;
 
+  /// No description provided for @showPassphrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Afficher la phrase secrète'**
+  String get showPassphrase;
+
   /// No description provided for @showVisualizer.
   ///
   /// In fr, this message translates to:
@@ -1891,6 +1903,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Synchronisation chiffrée'**
   String get syncTitle;
+
+  /// No description provided for @syncWriteForbidden.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le serveur refuse d’écrire le fichier de synchronisation (HTTP {status}). Ce compte peut lire mais pas écrire en WebDAV : autorisez l’écriture sur le serveur (AList : permission « Gérer WebDAV ») puis réessayez.'**
+  String syncWriteForbidden(int status);
 
   /// No description provided for @syncWrongPassphrase.
   ///

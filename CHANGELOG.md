@@ -2,6 +2,7 @@
 
 ## Modifications récentes
 
+- Synchronisation chiffrée : bouton pour afficher la phrase secrète tapée ; message dédié quand le serveur refuse l’écriture (HTTP 401/403, cas d’un compte AList sans « Gérer WebDAV ») ; cause de l’échec (méthode et code HTTP) ajoutée aux autres erreurs ; l’activation est annulée si la première synchronisation échoue, au lieu d’afficher « Active » sans jamais synchroniser.
 - Ajout d’un bouton « Ajouter à une playlist » dans l’écran Lecture, qui réutilise la feuille de choix de la bibliothèque. Vérifié sur Galaxy S24.
 - Correction du bouton lecture masqué par la barre de navigation : la pochette réserve plus de place et rétrécit encore d’une ligne quand le titre passe sur deux lignes. Vérifié sur Galaxy S24.
 - Correction du visualiseur qui disparaissait au changement de morceau : l’écran sortant arrêtait la capture du nouveau, et la vérification tardive de l’autorisation ne relançait pas la capture.

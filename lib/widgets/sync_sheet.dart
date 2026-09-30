@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -37,6 +38,7 @@ class _SyncSheetState extends State<_SyncSheet> {
   final _confirmation = TextEditingController();
   ServerProfile? _profile;
   String? _error;
+  bool _showPassphrase = false;
 
   @override
   void dispose() {
@@ -142,9 +144,19 @@ class _SyncSheetState extends State<_SyncSheet> {
       const SizedBox(height: 12),
       TextField(
         controller: _passphrase,
-        obscureText: true,
+        obscureText: !_showPassphrase,
+        autocorrect: false,
+        enableSuggestions: false,
         decoration: InputDecoration(
           labelText: l10n.syncPassphrase,
+          suffixIcon: IconButton(
+            tooltip:
+                _showPassphrase ? l10n.hidePassphrase : l10n.showPassphrase,
+            onPressed: () => setState(() => _showPassphrase = !_showPassphrase),
+            icon: Icon(_showPassphrase
+                ? Icons.visibility_off_outlined
+                : Icons.visibility_outlined),
+          ),
           helperText: l10n.syncPassphraseHint,
           helperMaxLines: 3,
         ),
@@ -152,7 +164,9 @@ class _SyncSheetState extends State<_SyncSheet> {
       const SizedBox(height: 8),
       TextField(
         controller: _confirmation,
-        obscureText: true,
+        obscureText: !_showPassphrase,
+        autocorrect: false,
+        enableSuggestions: false,
         decoration: InputDecoration(labelText: l10n.syncPassphraseConfirm),
       ),
       const SizedBox(height: 18),
@@ -200,9 +214,25 @@ class _SyncSheetState extends State<_SyncSheet> {
       if (mounted) setState(() => _error = l10n.syncWrongPassphrase);
     } on SyncConflictException {
       if (mounted) setState(() => _error = l10n.syncConflict);
+    } on SyncWriteForbiddenException catch (error) {
+      if (mounted) {
+        setState(() => _error = l10n.syncWriteForbidden(error.statusCode));
+      }
     } catch (error) {
-      debugPrint('Sync failed: ${error.runtimeType}');
-      if (mounted) setState(() => _error = l10n.syncFailed);
+      final detail = _describe(error);
+      debugPrint('Sync failed: $detail');
+      if (mounted) setState(() => _error = '${l10n.syncFailed} ($detail)');
     }
+  }
+
+  /// A short cause without URLs or credentials: HTTP status, network error
+  /// kind or exception type.
+  static String _describe(Object error) {
+    if (error is DioException) {
+      final status = error.response?.statusCode;
+      final method = error.requestOptions.method;
+      return status != null ? '$method HTTP $status' : error.type.name;
+    }
+    return error.runtimeType.toString();
   }
 }

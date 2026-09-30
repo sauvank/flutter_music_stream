@@ -498,6 +498,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get headline => 'Qu’avez-vous envie\nd’écouter ?';
 
   @override
+  String get hidePassphrase => 'Masquer la phrase secrète';
+
+  @override
   String get homeWidget => 'Widget d’accueil';
 
   @override
@@ -1030,6 +1033,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get showAll => 'Afficher tout';
 
   @override
+  String get showPassphrase => 'Afficher la phrase secrète';
+
+  @override
   String get showVisualizer => 'Afficher les ondes du son';
 
   @override
@@ -1194,6 +1200,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get syncTitle => 'Synchronisation chiffrée';
+
+  @override
+  String syncWriteForbidden(int status) {
+    return 'Le serveur refuse d’écrire le fichier de synchronisation (HTTP $status). Ce compte peut lire mais pas écrire en WebDAV : autorisez l’écriture sur le serveur (AList : permission « Gérer WebDAV ») puis réessayez.';
+  }
 
   @override
   String get syncWrongPassphrase =>
