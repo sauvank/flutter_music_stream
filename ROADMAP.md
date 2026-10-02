@@ -36,7 +36,7 @@
 
 - [ ] Vérifier sur Galaxy S24 la connexion Google/e-mail et la synchro Firestore entre deux appareils.
 - [ ] Clé d’envoi Play (keystore hors dépôt, `.aab`) et ajout de ses empreintes SHA à Firebase.
-- [ ] Passe d’ergonomie sur Galaxy S24 (v0.1.62 installée) : lecture, teinte, visualiseur, diffusion, file et minuterie vérifiés ; reste gestes, recherche sans accents/historique, annulation du retrait en playlist, reprise de la file au lancement.
+- [ ] Passe d’ergonomie sur Galaxy S24 (v0.1.63) : lecture, balayage, teinte, visualiseur, diffusion, file, minuterie, recherche et reprise de la file vérifiés ; reste l’annulation du retrait en playlist (à tester sur une playlist de test, pas celle de l’utilisateur) et la recherche avec accents.
 
 ## À venir
 
