@@ -49,6 +49,9 @@ class PlayerProvider extends ChangeNotifier {
     _subscriptions
         .add(_player.shuffleModeEnabledStream.listen((_) => notifyListeners()));
     _subscriptions.add(_player.currentIndexStream.listen((index) {
+      // Loading a restored queue first reports index 0; ignore it so the
+      // saved current track is not overwritten.
+      if (_restoreIndex != null && index != _restoreIndex) return;
       if (_sleepAtTrackEnd && _reachedTrackEnd) {
         _cancelSleepTimer();
         unawaited(_player.pause().then((_) => _player.seek(Duration.zero)));
@@ -82,6 +85,7 @@ class PlayerProvider extends ChangeNotifier {
   /// can be restored on the next launch.
   final void Function(List<String> trackIds, String? currentId)? onQueueChanged;
   int _queueRevision = 0;
+  int? _restoreIndex;
   String? _queueKey;
 
   @override
@@ -188,12 +192,21 @@ class PlayerProvider extends ChangeNotifier {
     _queueRevision++;
     _current = track;
     _resetListeningSession(track, force: true);
-    await _player.setAudioSources(
-      tracks.map(_audioSource).toList(),
-      initialIndex: index,
-      initialPosition: Duration(milliseconds: track.lastPositionMs),
-      preload: false,
-    );
+    _restoreIndex = index;
+    try {
+      final position = Duration(milliseconds: track.lastPositionMs);
+      await _player.setAudioSources(
+        tracks.map(_audioSource).toList(),
+        initialIndex: index,
+        initialPosition: position,
+        preload: false,
+      );
+      if (_player.currentIndex != index) {
+        await _player.seek(position, index: index);
+      }
+    } finally {
+      _restoreIndex = null;
+    }
     notifyListeners();
   }
 
