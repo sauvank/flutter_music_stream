@@ -30,9 +30,11 @@
 - [x] Synchronisation chiffrée de bout en bout (favoris, écoutes, playlists) via un fichier sur un serveur WebDAV de l’utilisateur.
 - [x] Visualiseur en direct sur la pochette et barres animées dans le widget d’accueil.
 - [x] Bouton de diffusion ouvrant le sélecteur de sortie audio Android (Bluetooth, Alexa appairée).
+- [x] Passe d’ergonomie : annulation du retrait en playlist, aléatoire depuis la vignette, minuterie de sommeil, reprise de la file au lancement, retours haptiques, gestes et animation de l’écran Lecture, teinte issue de la pochette, recherche sans accents avec historique et playlists.
 
 ## En cours
 
+- [ ] Vérifier sur Galaxy S24 la passe d’ergonomie v0.1.52–v0.1.60 (non installée : débogage sans fil déconnecté pendant le travail).
 
 ## À venir
 
