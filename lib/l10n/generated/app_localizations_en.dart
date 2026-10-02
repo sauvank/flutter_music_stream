@@ -494,6 +494,55 @@ class AppLocalizationsEn extends AppLocalizations {
   String get privacyPolicyHint => 'Read how MusicStream handles your data';
 
   @override
+  String get pairSignInWithPhone => 'Sign in with your phone';
+
+  @override
+  String get pairQrTitle => 'Scan with your phone';
+
+  @override
+  String get pairQrHint =>
+      'On your phone, open Settings → Encrypted sync → Connect a computer, then scan this code.';
+
+  @override
+  String get pairWaiting => 'Waiting for your phone…';
+
+  @override
+  String get pairConnectComputer => 'Connect a computer';
+
+  @override
+  String get pairConnectComputerHint =>
+      'Scan the QR code shown on the computer';
+
+  @override
+  String get pairScanTitle => 'Scan the QR code';
+
+  @override
+  String get pairConfirmTitle => 'Sign in this computer?';
+
+  @override
+  String get pairConfirmBody =>
+      'It will be signed in to your account. Only continue if you started this on your own computer.';
+
+  @override
+  String get pairConfirm => 'Connect';
+
+  @override
+  String get pairDone => 'Computer connected.';
+
+  @override
+  String get pairGoogleOnly =>
+      'This only works with an account signed in through Google.';
+
+  @override
+  String get pairInvalidCode => 'This is not a MusicStream code.';
+
+  @override
+  String get pairExpired => 'The code expired. Try again.';
+
+  @override
+  String get pairFailed => 'Pairing failed. Try again.';
+
+  @override
   String get hidePassphrase => 'Hide passphrase';
 
   @override

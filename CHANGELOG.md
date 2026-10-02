@@ -2,6 +2,7 @@
 
 ## Modifications récentes
 
+- Connexion d’un ordinateur par QR code : l’ordinateur affiche un code (id aléatoire de 128 bits), le téléphone connecté via Google le scanne (`mobile_scanner` 6.0.2, la 6.0.11 exige un AGP 8.6) puis dépose son jeton Google (≈1 h) dans `pairings/{id}` (règles Firestore dédiées, lecture par id seulement, suppression par l’ordinateur après usage, pas de TTL : il exige la facturation Google Cloud). Permission CAMERA ajoutée; politique de confidentialité mise à jour.
 - Windows : connexion e-mail/mot de passe pour la synchronisation (app Web Firebase « MusicStream Desktop », configuration injectée au build par `--dart-define=FIREBASE_DESKTOP_CONFIG_B64`, secret GitHub du même nom). Le bouton Google est masqué sur Windows et Linux, `google_sign_in` n’y existant pas. Installateurs `.exe` et `.msi` joints aux releases. Non testé sur PC.
 - Écran Lecture : le nom de l’artiste (en couleur) ouvre la liste de tous ses morceaux de la bibliothèque, avec lecture d’un titre, « tout lire » et aléatoire (`showArtistTracks`).
 - Version Windows : le service audio d’arrière-plan n’est initialisé que sur Android, iOS et macOS, `just_audio_windows` fournit le moteur audio; le workflow `build_and_release.yml` joint APK signés et zip Windows à la release GitHub de chaque tag. Build Windows non testé sur machine.

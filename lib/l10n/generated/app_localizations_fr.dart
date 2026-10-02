@@ -511,6 +511,55 @@ class AppLocalizationsFr extends AppLocalizations {
       'Découvrez comment MusicStream traite vos données';
 
   @override
+  String get pairSignInWithPhone => 'Se connecter avec le téléphone';
+
+  @override
+  String get pairQrTitle => 'Scannez avec votre téléphone';
+
+  @override
+  String get pairQrHint =>
+      'Sur votre téléphone, ouvrez Réglages → Synchronisation chiffrée → Connecter un ordinateur, puis scannez ce code.';
+
+  @override
+  String get pairWaiting => 'En attente du téléphone…';
+
+  @override
+  String get pairConnectComputer => 'Connecter un ordinateur';
+
+  @override
+  String get pairConnectComputerHint =>
+      'Scannez le QR code affiché sur l’ordinateur';
+
+  @override
+  String get pairScanTitle => 'Scanner le QR code';
+
+  @override
+  String get pairConfirmTitle => 'Connecter cet ordinateur ?';
+
+  @override
+  String get pairConfirmBody =>
+      'Il sera connecté à votre compte. Continuez seulement si vous l’avez demandé sur votre propre ordinateur.';
+
+  @override
+  String get pairConfirm => 'Connecter';
+
+  @override
+  String get pairDone => 'Ordinateur connecté.';
+
+  @override
+  String get pairGoogleOnly =>
+      'Disponible uniquement avec un compte connecté via Google.';
+
+  @override
+  String get pairInvalidCode => 'Ce code n’est pas un code MusicStream.';
+
+  @override
+  String get pairExpired => 'Le code a expiré. Réessayez.';
+
+  @override
+  String get pairFailed => 'La connexion a échoué. Réessayez.';
+
+  @override
   String get hidePassphrase => 'Masquer la phrase secrète';
 
   @override

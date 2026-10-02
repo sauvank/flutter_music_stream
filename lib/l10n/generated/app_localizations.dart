@@ -806,6 +806,96 @@ abstract class AppLocalizations {
   /// **'Découvrez comment MusicStream traite vos données'**
   String get privacyPolicyHint;
 
+  /// No description provided for @pairSignInWithPhone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Se connecter avec le téléphone'**
+  String get pairSignInWithPhone;
+
+  /// No description provided for @pairQrTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scannez avec votre téléphone'**
+  String get pairQrTitle;
+
+  /// No description provided for @pairQrHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sur votre téléphone, ouvrez Réglages → Synchronisation chiffrée → Connecter un ordinateur, puis scannez ce code.'**
+  String get pairQrHint;
+
+  /// No description provided for @pairWaiting.
+  ///
+  /// In fr, this message translates to:
+  /// **'En attente du téléphone…'**
+  String get pairWaiting;
+
+  /// No description provided for @pairConnectComputer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecter un ordinateur'**
+  String get pairConnectComputer;
+
+  /// No description provided for @pairConnectComputerHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scannez le QR code affiché sur l’ordinateur'**
+  String get pairConnectComputerHint;
+
+  /// No description provided for @pairScanTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scanner le QR code'**
+  String get pairScanTitle;
+
+  /// No description provided for @pairConfirmTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecter cet ordinateur ?'**
+  String get pairConfirmTitle;
+
+  /// No description provided for @pairConfirmBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Il sera connecté à votre compte. Continuez seulement si vous l’avez demandé sur votre propre ordinateur.'**
+  String get pairConfirmBody;
+
+  /// No description provided for @pairConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecter'**
+  String get pairConfirm;
+
+  /// No description provided for @pairDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ordinateur connecté.'**
+  String get pairDone;
+
+  /// No description provided for @pairGoogleOnly.
+  ///
+  /// In fr, this message translates to:
+  /// **'Disponible uniquement avec un compte connecté via Google.'**
+  String get pairGoogleOnly;
+
+  /// No description provided for @pairInvalidCode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce code n’est pas un code MusicStream.'**
+  String get pairInvalidCode;
+
+  /// No description provided for @pairExpired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le code a expiré. Réessayez.'**
+  String get pairExpired;
+
+  /// No description provided for @pairFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'La connexion a échoué. Réessayez.'**
+  String get pairFailed;
+
   /// No description provided for @hidePassphrase.
   ///
   /// In fr, this message translates to:

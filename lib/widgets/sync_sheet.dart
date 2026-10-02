@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/l10n.dart';
+import 'device_pairing_ui.dart';
 import '../providers/sync_provider.dart';
+import '../services/sync/device_pairing.dart';
 import '../services/sync/sync_account.dart';
 import '../services/sync/sync_crypto.dart';
 import '../services/sync/sync_remote.dart';
@@ -87,6 +89,15 @@ class _SyncSheetState extends State<_SyncSheet> {
               ..._signIn(context, sync)
             else ...[
               _account(context, sync),
+              if ((Platform.isAndroid || Platform.isIOS) &&
+                  DevicePairing().canApprove)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.qr_code_scanner_rounded),
+                  title: Text(l10n.pairConnectComputer),
+                  subtitle: Text(l10n.pairConnectComputerHint),
+                  onTap: () => connectComputer(context),
+                ),
               const SizedBox(height: 8),
               if (sync.enabled)
                 ..._enabled(context, sync)
@@ -151,8 +162,28 @@ class _SyncSheetState extends State<_SyncSheet> {
     final l10n = context.l10n;
     final busy = sync.busy;
     return [
-      // google_sign_in has no Windows or Linux implementation.
-      if (!Platform.isWindows && !Platform.isLinux) ...[
+      // google_sign_in has no Windows or Linux implementation: a phone signed
+      // in with Google signs the computer in through a QR code instead.
+      if (Platform.isWindows || Platform.isLinux) ...[
+        FilledButton.icon(
+          onPressed: busy ? null : () => showPairingQrDialog(context),
+          icon: const Icon(Icons.qr_code_2_rounded),
+          label: Text(l10n.pairSignInWithPhone),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Row(
+            children: [
+              const Expanded(child: Divider()),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(l10n.syncOr),
+              ),
+              const Expanded(child: Divider()),
+            ],
+          ),
+        ),
+      ] else ...[
         FilledButton.icon(
           onPressed: busy
               ? null
