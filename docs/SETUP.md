@@ -40,7 +40,8 @@ Secrets GitHub du dépôt :
 - `GOOGLE_SERVICES_JSON_BASE64` : `android/app/google-services.json`.
 - `PLAY_SERVICE_ACCOUNT_JSON` : clé JSON d’un compte de service Google Cloud
   invité dans la Play Console (Utilisateurs et autorisations) avec le droit de
-  publier des versions. À créer une fois.
+  publier des versions. Compte actuel : `play-publisher@musicstream-ks.iam.gserviceaccount.com`
+  (projet `musicstream-ks`, API Google Play Android Developer activée).
 
 Le premier `.aab` d’une nouvelle application doit être envoyé à la main dans la
 Play Console. Google Sign-In depuis Play exige aussi l’empreinte **SHA-1** de la
