@@ -338,8 +338,10 @@ class _MiniPlayer extends StatelessWidget {
           onHorizontalDragEnd: (details) {
             final velocity = details.primaryVelocity ?? 0;
             if (velocity < -300 && player.hasNext) {
+              HapticFeedback.lightImpact();
               player.next();
             } else if (velocity > 300 && player.hasPrevious) {
+              HapticFeedback.lightImpact();
               player.previous();
             }
           },
@@ -396,14 +398,15 @@ class _MiniPlayer extends StatelessWidget {
                           tooltip: player.playing
                               ? context.l10n.actionPause
                               : context.l10n.actionPlay,
-                          onPressed: player.toggle,
+                          onPressed: () => _tap(player.toggle),
                           icon: Icon(player.playing
                               ? Icons.pause_rounded
                               : Icons.play_arrow_rounded),
                         ),
                         IconButton(
                           tooltip: context.l10n.actionNext,
-                          onPressed: player.hasNext ? player.next : null,
+                          onPressed:
+                              player.hasNext ? () => _tap(player.next) : null,
                           icon: const Icon(Icons.skip_next_rounded),
                         ),
                       ],
@@ -434,4 +437,10 @@ class _MiniPlayer extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Playback buttons answer with a light tap, like system media controls.
+void _tap(Future<void> Function() action) {
+  HapticFeedback.lightImpact();
+  action();
 }

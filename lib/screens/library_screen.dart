@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../models/music_playlist.dart';
@@ -928,6 +929,7 @@ class _PlaylistScreenState extends State<_PlaylistScreen> {
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 32),
               sliver: SliverReorderableList(
                 itemCount: tracks.length,
+                onReorderStart: (_) => HapticFeedback.mediumImpact(),
                 onReorder: (oldIndex, newIndex) {
                   if (newIndex > oldIndex) newIndex--;
                   context
@@ -1580,7 +1582,10 @@ class _TrackTileState extends State<_TrackTile> {
         child: Icon(Icons.playlist_remove_rounded,
             color: colors.onErrorContainer),
       ),
-      onDismissed: (_) => _removeFromPlaylist(context, playlistId, track),
+      onDismissed: (_) {
+        HapticFeedback.mediumImpact();
+        _removeFromPlaylist(context, playlistId, track);
+      },
       child: tile,
     );
   }

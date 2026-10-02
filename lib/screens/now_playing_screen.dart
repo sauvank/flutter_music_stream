@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 
@@ -249,13 +250,14 @@ class NowPlayingScreen extends StatelessWidget {
                   color: player.shuffleEnabled
                       ? Theme.of(context).colorScheme.primary
                       : null,
-                  onPressed: player.toggleShuffle,
+                  onPressed: () => _tap(player.toggleShuffle),
                   icon: const Icon(Icons.shuffle_rounded),
                 ),
                 IconButton(
                   iconSize: 38,
                   tooltip: context.l10n.actionPrevious,
-                  onPressed: player.hasPrevious ? player.previous : null,
+                  onPressed:
+                      player.hasPrevious ? () => _tap(player.previous) : null,
                   icon: const Icon(Icons.skip_previous_rounded),
                 ),
                 const SizedBox(width: 8),
@@ -290,7 +292,7 @@ class NowPlayingScreen extends StatelessWidget {
                     tooltip: player.playing
                         ? context.l10n.actionPause
                         : context.l10n.actionPlay,
-                    onPressed: player.toggle,
+                    onPressed: () => _tap(player.toggle),
                     icon: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 180),
                       transitionBuilder: (child, animation) =>
@@ -308,7 +310,7 @@ class NowPlayingScreen extends StatelessWidget {
                 IconButton(
                   iconSize: 38,
                   tooltip: context.l10n.actionNext,
-                  onPressed: player.hasNext ? player.next : null,
+                  onPressed: player.hasNext ? () => _tap(player.next) : null,
                   icon: const Icon(Icons.skip_next_rounded),
                 ),
                 IconButton(
@@ -572,6 +574,7 @@ class _QueueSheet extends StatelessWidget {
                   scrollController: scrollController,
                   padding: const EdgeInsets.only(bottom: 24),
                   itemCount: queue.length,
+                  onReorderStart: (_) => HapticFeedback.mediumImpact(),
                   onReorder: (oldIndex, newIndex) {
                     if (newIndex > oldIndex) newIndex--;
                     player.moveQueueItem(oldIndex, newIndex);
@@ -691,4 +694,10 @@ class _NothingPlaying extends StatelessWidget {
           ),
         ),
       );
+}
+
+/// Playback buttons answer with a light tap, like system media controls.
+void _tap(Future<void> Function() action) {
+  HapticFeedback.lightImpact();
+  action();
 }
