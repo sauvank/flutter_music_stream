@@ -133,7 +133,7 @@ class LyricsService {
       options: Options(
         headers: const {
           'User-Agent':
-              'MusicStream/0.1 (https://github.com/sauvank/flutter_music_reade)',
+              'MusicStream/0.1 (https://github.com/sauvank/flutter_music_stream)',
         },
         receiveTimeout: const Duration(seconds: 20),
         validateStatus: (status) => status != null && status < 500,
@@ -160,7 +160,7 @@ class LyricsService {
       options: Options(
         headers: const {
           'User-Agent':
-              'MusicStream/0.1 (https://github.com/sauvank/flutter_music_reade)',
+              'MusicStream/0.1 (https://github.com/sauvank/flutter_music_stream)',
         },
         receiveTimeout: const Duration(seconds: 20),
         validateStatus: (status) => status != null && status < 500,
