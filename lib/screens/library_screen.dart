@@ -8,6 +8,7 @@ import '../models/music_track.dart';
 import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
 import '../widgets/track_artwork.dart';
+import 'home_screen.dart';
 import '../widgets/import_music_sheet.dart';
 import '../l10n/l10n.dart';
 
@@ -1408,6 +1409,12 @@ class _TrackTile extends StatefulWidget {
 class _TrackTileState extends State<_TrackTile> {
   final _menuKey = GlobalKey<PopupMenuButtonState<String>>();
 
+  /// Inside a playlist, starting a track also opens Now Playing.
+  void _play(BuildContext context) {
+    context.read<PlayerProvider>().playTrack(widget.track, widget.queue);
+    if (widget.playlistId != null) HomeScreen.openNowPlaying(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final track = widget.track;
@@ -1428,7 +1435,7 @@ class _TrackTileState extends State<_TrackTile> {
           borderRadius: BorderRadius.circular(22),
           onTap: () => selection?.active ?? false
               ? selection!.toggle(track.id)
-              : context.read<PlayerProvider>().playTrack(track, widget.queue),
+              : _play(context),
           onLongPress: () => selection != null
               ? selection.toggle(track.id)
               : _menuKey.currentState?.showButtonMenu(),

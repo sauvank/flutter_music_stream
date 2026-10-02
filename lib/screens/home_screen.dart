@@ -15,6 +15,14 @@ import '../l10n/l10n.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  static final _nowPlayingRequests = ValueNotifier<int>(0);
+
+  /// Closes the pages pushed over the tabs and shows Now Playing.
+  static void openNowPlaying(BuildContext context) {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    _nowPlayingRequests.value++;
+  }
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -24,6 +32,20 @@ class _HomeScreenState extends State<HomeScreen> {
   int _index = 0;
   // Visited tabs, most recent last, so back returns where the user was.
   final List<int> _visited = [];
+
+  @override
+  void initState() {
+    super.initState();
+    HomeScreen._nowPlayingRequests.addListener(_showNowPlaying);
+  }
+
+  @override
+  void dispose() {
+    HomeScreen._nowPlayingRequests.removeListener(_showNowPlaying);
+    super.dispose();
+  }
+
+  void _showNowPlaying() => _select(2);
 
   void _select(int value) {
     if (value == _index) return;
