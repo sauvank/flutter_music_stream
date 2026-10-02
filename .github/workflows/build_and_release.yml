@@ -93,6 +93,22 @@ jobs:
           New-Item -ItemType Directory -Force -Path release_windows | Out-Null
           Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath "release_windows\MusicStream-v$ver-Windows-x64.zip"
 
+      - name: Build the Setup .exe (Inno Setup)
+        shell: pwsh
+        run: |
+          $ver = ((Get-Content pubspec.yaml | Select-String "^version:") -split ":")[1].Trim().Split("+")[0].Trim()
+          choco install innosetup -y
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=$ver" windows\installer\installer.iss
+          if (-not (Test-Path "release_windows\MusicStream-v$ver-Setup-x64.exe")) { throw "Setup .exe was not produced" }
+
+      - name: Build the .msi (WiX)
+        shell: pwsh
+        run: |
+          $ver = ((Get-Content pubspec.yaml | Select-String "^version:") -split ":")[1].Trim().Split("+")[0].Trim()
+          heat dir build\windows\x64\runner\Release -cg AppFiles -gg -scom -sreg -sfrag -srd -dr INSTALLFOLDER -var var.SourceDir -out windows\installer\AppFiles.wxs
+          candle -arch x64 "-dSourceDir=build\windows\x64\runner\Release" "-dAppVersion=$ver" -ext WixUIExtension windows\installer\Product.wxs windows\installer\AppFiles.wxs -out windows\installer\
+          light -ext WixUIExtension -sval windows\installer\Product.wixobj windows\installer\AppFiles.wixobj -out "release_windows\MusicStream-v$ver-x64.msi"
+
       - uses: actions/upload-artifact@v4
         with:
           name: release-windows
