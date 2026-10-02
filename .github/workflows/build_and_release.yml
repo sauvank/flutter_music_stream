@@ -84,7 +84,11 @@ jobs:
           cache: true
       - run: flutter config --enable-windows-desktop
       - run: flutter pub get
-      - run: flutter build windows --release
+      - name: Build Windows
+        shell: pwsh
+        env:
+          FIREBASE_DESKTOP_CONFIG_B64: ${{ secrets.FIREBASE_DESKTOP_CONFIG_B64 }}
+        run: flutter build windows --release "--dart-define=FIREBASE_DESKTOP_CONFIG_B64=$env:FIREBASE_DESKTOP_CONFIG_B64"
 
       - name: Zip the portable build
         shell: pwsh

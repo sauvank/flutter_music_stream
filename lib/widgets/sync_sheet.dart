@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -149,26 +151,29 @@ class _SyncSheetState extends State<_SyncSheet> {
     final l10n = context.l10n;
     final busy = sync.busy;
     return [
-      FilledButton.icon(
-        onPressed: busy
-            ? null
-            : () => _guard(context, sync.signInWithGoogle, signIn: true),
-        icon: const Icon(Icons.account_circle_rounded),
-        label: Text(l10n.syncSignInGoogle),
-      ),
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Row(
-          children: [
-            const Expanded(child: Divider()),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text(l10n.syncOr),
-            ),
-            const Expanded(child: Divider()),
-          ],
+      // google_sign_in has no Windows or Linux implementation.
+      if (!Platform.isWindows && !Platform.isLinux) ...[
+        FilledButton.icon(
+          onPressed: busy
+              ? null
+              : () => _guard(context, sync.signInWithGoogle, signIn: true),
+          icon: const Icon(Icons.account_circle_rounded),
+          label: Text(l10n.syncSignInGoogle),
         ),
-      ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Row(
+            children: [
+              const Expanded(child: Divider()),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(l10n.syncOr),
+              ),
+              const Expanded(child: Divider()),
+            ],
+          ),
+        ),
+      ],
       TextField(
         controller: _email,
         keyboardType: TextInputType.emailAddress,

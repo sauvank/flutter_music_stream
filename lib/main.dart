@@ -8,6 +8,7 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/appearance_provider.dart';
+import 'services/sync/desktop_firebase_options.dart';
 import 'providers/library_provider.dart';
 import 'providers/download_queue_provider.dart';
 import 'providers/player_provider.dart';
@@ -235,7 +236,13 @@ class MusicStreamApp extends StatelessWidget {
 /// sync. Native config comes from google-services.json / the plist.
 Future<bool> _initializeFirebase() async {
   try {
-    await Firebase.initializeApp();
+    if (Platform.isWindows || Platform.isLinux) {
+      final options = desktopFirebaseOptions();
+      if (options == null) return false;
+      await Firebase.initializeApp(options: options);
+    } else {
+      await Firebase.initializeApp();
+    }
     return true;
   } catch (error) {
     debugPrint('Firebase unavailable, sync disabled: $error');

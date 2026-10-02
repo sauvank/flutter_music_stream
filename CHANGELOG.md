@@ -2,6 +2,7 @@
 
 ## Modifications récentes
 
+- Windows : connexion e-mail/mot de passe pour la synchronisation (app Web Firebase « MusicStream Desktop », configuration injectée au build par `--dart-define=FIREBASE_DESKTOP_CONFIG_B64`, secret GitHub du même nom). Le bouton Google est masqué sur Windows et Linux, `google_sign_in` n’y existant pas. Installateurs `.exe` et `.msi` joints aux releases. Non testé sur PC.
 - Écran Lecture : le nom de l’artiste (en couleur) ouvre la liste de tous ses morceaux de la bibliothèque, avec lecture d’un titre, « tout lire » et aléatoire (`showArtistTracks`).
 - Version Windows : le service audio d’arrière-plan n’est initialisé que sur Android, iOS et macOS, `just_audio_windows` fournit le moteur audio; le workflow `build_and_release.yml` joint APK signés et zip Windows à la release GitHub de chaque tag. Build Windows non testé sur machine.
 - v0.1.63 : la reprise de session recharge bien le morceau en cours (le premier événement d’index 0 émis au chargement de la file écrasait le morceau sauvegardé ; ignoré via `_restoreIndex`). Passe d’ergonomie vérifiée sur Galaxy S24.
