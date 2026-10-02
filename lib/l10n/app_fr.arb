@@ -612,6 +612,26 @@
       }
     }
   },
+  "sleepTimer": "Minuterie de sommeil",
+  "sleepTimerAtTrackEnd": "Pause à la fin du morceau",
+  "sleepTimerEndOfTrack": "À la fin du morceau",
+  "sleepTimerMinutes": "{minutes} min",
+  "@sleepTimerMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "sleepTimerOff": "Désactivée",
+  "sleepTimerRemaining": "Pause dans {time}",
+  "@sleepTimerRemaining": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "sortAlbum": "Album",
   "sortArtist": "Artiste",
   "sortBy": "Trier par {sort}",

@@ -28,6 +28,13 @@ class PlayerProvider extends ChangeNotifier {
     _subscriptions.add(_player.positionStream.listen((position) {
       final track = _current;
       _trackListening(track, position);
+      // Sticky until the track changes: a first tick of the next track may
+      // arrive before its index does.
+      final duration = _player.duration;
+      if (duration != null &&
+          position >= duration - const Duration(seconds: 3)) {
+        _reachedTrackEnd = true;
+      }
       final now = DateTime.now();
       if (track != null &&
           now.difference(_lastPersistedAt) >= const Duration(seconds: 5)) {
@@ -41,6 +48,11 @@ class PlayerProvider extends ChangeNotifier {
     _subscriptions
         .add(_player.shuffleModeEnabledStream.listen((_) => notifyListeners()));
     _subscriptions.add(_player.currentIndexStream.listen((index) {
+      if (_sleepAtTrackEnd && _reachedTrackEnd) {
+        _cancelSleepTimer();
+        unawaited(_player.pause().then((_) => _player.seek(Duration.zero)));
+      }
+      _reachedTrackEnd = false;
       _current = index != null && index < _queue.length ? _queue[index] : null;
       _resetListeningSession(_current);
       _announceTrack();
@@ -88,6 +100,10 @@ class PlayerProvider extends ChangeNotifier {
   bool _historyRecorded = false;
   String? _lastAnnouncedTrackId;
   bool _isDisposed = false;
+  bool _reachedTrackEnd = false;
+  Timer? _sleepTimer;
+  DateTime? _sleepAt;
+  bool _sleepAtTrackEnd = false;
 
   MusicTrack? get current => _current;
   bool get playing => _player.playing;
@@ -109,6 +125,45 @@ class PlayerProvider extends ChangeNotifier {
   double get volume => _volume;
   List<MusicTrack> get queue => List.unmodifiable(_queue);
   int? get currentIndex => _player.currentIndex;
+
+  /// When the sleep timer pauses playback, or null without a timed sleep.
+  DateTime? get sleepAt => _sleepAt;
+  bool get sleepAtTrackEnd => _sleepAtTrackEnd;
+  bool get sleepTimerActive => _sleepAt != null || _sleepAtTrackEnd;
+
+  /// Pauses with a long fade after [delay]; null cancels the sleep timer.
+  void setSleepTimer(Duration? delay) {
+    _cancelSleepTimer();
+    if (delay != null) {
+      _sleepAt = DateTime.now().add(delay);
+      _sleepTimer = Timer(delay, () => unawaited(_sleep()));
+    }
+    notifyListeners();
+  }
+
+  /// Pauses when the current track ends on its own, not on a manual skip.
+  void setSleepAtTrackEnd() {
+    _cancelSleepTimer();
+    _sleepAtTrackEnd = true;
+    notifyListeners();
+  }
+
+  void _cancelSleepTimer() {
+    _sleepTimer?.cancel();
+    _sleepTimer = null;
+    _sleepAt = null;
+    _sleepAtTrackEnd = false;
+  }
+
+  Future<void> _sleep() async {
+    _cancelSleepTimer();
+    notifyListeners();
+    if (!_player.playing) return;
+    if (await _fadeTo(0, duration: const Duration(seconds: 8))) {
+      await _player.pause();
+      await _player.setVolume(_volume);
+    }
+  }
 
   Future<void> playTrack(MusicTrack track, List<MusicTrack> library) async {
     final startIndex = library.indexWhere((item) => item.id == track.id);
@@ -332,7 +387,10 @@ class PlayerProvider extends ChangeNotifier {
         LoopMode.one => LoopMode.off,
       });
 
-  Future<void> seek(Duration position) => _player.seek(position);
+  Future<void> seek(Duration position) {
+    _reachedTrackEnd = false;
+    return _player.seek(position);
+  }
   Future<void> next() => _changeTrack(_player.seekToNext);
   Future<void> previous() => _changeTrack(_player.seekToPrevious);
 
@@ -355,17 +413,18 @@ class PlayerProvider extends ChangeNotifier {
     if (wasPlaying) await _fadeTo(_volume);
   }
 
-  Future<bool> _fadeTo(double target) async {
+  Future<bool> _fadeTo(double target, {Duration? duration}) async {
+    final fadeDuration = duration ?? _fadeDuration;
     final operation = ++_fadeOperation;
-    if (_fadeDuration == Duration.zero) {
+    if (fadeDuration == Duration.zero) {
       await _player.setVolume(target);
       return operation == _fadeOperation;
     }
 
     final start = _player.volume;
-    final steps = (_fadeDuration.inMilliseconds / 50).ceil().clamp(1, 20);
+    final steps = (fadeDuration.inMilliseconds / 50).ceil().clamp(1, 200);
     final delay = Duration(
-      microseconds: (_fadeDuration.inMicroseconds / steps).round(),
+      microseconds: (fadeDuration.inMicroseconds / steps).round(),
     );
     for (var step = 1; step <= steps; step++) {
       await Future<void>.delayed(delay);
@@ -458,6 +517,7 @@ class PlayerProvider extends ChangeNotifier {
   void dispose() {
     _isDisposed = true;
     _fadeOperation++;
+    _sleepTimer?.cancel();
     for (final subscription in _subscriptions) {
       unawaited(subscription.cancel());
     }

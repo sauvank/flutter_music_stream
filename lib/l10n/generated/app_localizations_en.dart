@@ -1036,6 +1036,28 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get sleepTimer => 'Sleep timer';
+
+  @override
+  String get sleepTimerAtTrackEnd => 'Pausing at the end of the track';
+
+  @override
+  String get sleepTimerEndOfTrack => 'At the end of the track';
+
+  @override
+  String sleepTimerMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get sleepTimerOff => 'Off';
+
+  @override
+  String sleepTimerRemaining(String time) {
+    return 'Pausing in $time';
+  }
+
+  @override
   String get sortAlbum => 'Album';
 
   @override

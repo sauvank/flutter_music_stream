@@ -1670,6 +1670,42 @@ abstract class AppLocalizations {
   /// **'{size} Mo'**
   String sizeMegabytes(String size);
 
+  /// No description provided for @sleepTimer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Minuterie de sommeil'**
+  String get sleepTimer;
+
+  /// No description provided for @sleepTimerAtTrackEnd.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pause à la fin du morceau'**
+  String get sleepTimerAtTrackEnd;
+
+  /// No description provided for @sleepTimerEndOfTrack.
+  ///
+  /// In fr, this message translates to:
+  /// **'À la fin du morceau'**
+  String get sleepTimerEndOfTrack;
+
+  /// No description provided for @sleepTimerMinutes.
+  ///
+  /// In fr, this message translates to:
+  /// **'{minutes} min'**
+  String sleepTimerMinutes(int minutes);
+
+  /// No description provided for @sleepTimerOff.
+  ///
+  /// In fr, this message translates to:
+  /// **'Désactivée'**
+  String get sleepTimerOff;
+
+  /// No description provided for @sleepTimerRemaining.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pause dans {time}'**
+  String sleepTimerRemaining(String time);
+
   /// No description provided for @sortAlbum.
   ///
   /// In fr, this message translates to:

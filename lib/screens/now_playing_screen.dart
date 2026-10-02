@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
@@ -54,15 +56,37 @@ class NowPlayingScreen extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                Text(
-                  context.l10n.nowPlayingLabel,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        letterSpacing: 1.6,
-                        fontWeight: FontWeight.w800,
-                      ),
+                Column(
+                  children: [
+                    Text(
+                      context.l10n.nowPlayingLabel,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            letterSpacing: 1.6,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    if (player.sleepTimerActive) const _SleepTimerLabel(),
+                  ],
                 ),
                 const Spacer(),
-                const SizedBox(width: 38),
+                SizedBox(
+                  width: 38,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    tooltip: context.l10n.sleepTimer,
+                    color: player.sleepTimerActive
+                        ? Theme.of(context).colorScheme.primary
+                        : null,
+                    onPressed: () => showModalBottomSheet<void>(
+                      context: context,
+                      showDragHandle: true,
+                      builder: (_) => const _SleepTimerSheet(),
+                    ),
+                    icon: Icon(player.sleepTimerActive
+                        ? Icons.bedtime_rounded
+                        : Icons.bedtime_outlined),
+                  ),
+                ),
               ],
             ),
             SizedBox(height: compactHeight ? 14 : 24),
@@ -412,6 +436,102 @@ class NowPlayingScreen extends StatelessWidget {
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => const _QueueSheet(),
+    );
+  }
+}
+
+class _SleepTimerLabel extends StatefulWidget {
+  const _SleepTimerLabel();
+
+  @override
+  State<_SleepTimerLabel> createState() => _SleepTimerLabelState();
+}
+
+class _SleepTimerLabelState extends State<_SleepTimerLabel> {
+  late final Timer _ticker;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker =
+        Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _ticker.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final player = context.watch<PlayerProvider>();
+    final sleepAt = player.sleepAt;
+    final String text;
+    if (sleepAt == null) {
+      text = context.l10n.sleepTimerAtTrackEnd;
+    } else {
+      final left = sleepAt.difference(DateTime.now());
+      final seconds = left.isNegative ? 0 : left.inSeconds;
+      text = context.l10n.sleepTimerRemaining(
+          '${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}');
+    }
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+    );
+  }
+}
+
+class _SleepTimerSheet extends StatelessWidget {
+  const _SleepTimerSheet();
+
+  static const _minutes = [15, 30, 45, 60, 90];
+
+  @override
+  Widget build(BuildContext context) {
+    final player = context.watch<PlayerProvider>();
+    void choose(VoidCallback action) {
+      action();
+      Navigator.pop(context);
+    }
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+              child: Text(context.l10n.sleepTimer,
+                  style: Theme.of(context).textTheme.titleLarge),
+            ),
+            ListTile(
+              leading: const Icon(Icons.timer_off_outlined),
+              title: Text(context.l10n.sleepTimerOff),
+              selected: !player.sleepTimerActive,
+              onTap: () => choose(() => player.setSleepTimer(null)),
+            ),
+            for (final minutes in _minutes)
+              ListTile(
+                leading: const Icon(Icons.timer_outlined),
+                title: Text(context.l10n.sleepTimerMinutes(minutes)),
+                onTap: () => choose(
+                    () => player.setSleepTimer(Duration(minutes: minutes))),
+              ),
+            ListTile(
+              leading: const Icon(Icons.music_off_outlined),
+              title: Text(context.l10n.sleepTimerEndOfTrack),
+              selected: player.sleepAtTrackEnd,
+              onTap: () => choose(player.setSleepAtTrackEnd),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
     );
   }
 }

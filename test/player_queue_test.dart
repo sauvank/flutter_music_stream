@@ -191,6 +191,41 @@ void main() {
     player.dispose();
   });
 
+  test('the sleep timer pauses only when a track ends on its own', () async {
+    final audioPlayer = _FakeAudioPlayer()
+      ..currentDuration = const Duration(minutes: 3);
+    final player = PlayerProvider(
+      audioPlayer: audioPlayer,
+      fadeDuration: Duration.zero,
+    );
+    final tracks = [_track('1'), _track('2'), _track('3')];
+    await player.playTrack(tracks.first, tracks);
+    player.setSleepAtTrackEnd();
+    expect(player.sleepTimerActive, isTrue);
+
+    audioPlayer.emitPosition(const Duration(seconds: 40));
+    await Future<void>.delayed(Duration.zero);
+    audioPlayer.advance();
+    await Future<void>.delayed(Duration.zero);
+    expect(audioPlayer.playing, isTrue, reason: 'A manual skip keeps playing');
+    expect(player.sleepAtTrackEnd, isTrue);
+
+    audioPlayer.emitPosition(const Duration(minutes: 2, seconds: 59));
+    // The next track's first tick may come before its index.
+    audioPlayer.emitPosition(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+    audioPlayer.advance();
+    await Future<void>.delayed(Duration.zero);
+    expect(audioPlayer.playing, isFalse);
+    expect(player.sleepTimerActive, isFalse);
+
+    player.setSleepTimer(const Duration(minutes: 30));
+    expect(player.sleepAt, isNotNull);
+    player.setSleepTimer(null);
+    expect(player.sleepTimerActive, isFalse);
+    player.dispose();
+  });
+
   test('announces the current track once for automatic enrichment', () async {
     final announced = <String>[];
     final player = PlayerProvider(
@@ -254,8 +289,10 @@ class _FakeAudioPlayer extends AudioPlayer {
   @override
   Duration get position => currentPosition;
 
+  Duration? currentDuration;
+
   @override
-  Duration? get duration => null;
+  Duration? get duration => currentDuration;
 
   @override
   double get volume => currentVolume;
@@ -339,6 +376,12 @@ class _FakeAudioPlayer extends AudioPlayer {
   @override
   Future<void> setVolume(double volume) async {
     currentVolume = volume;
+  }
+
+  /// Moves to the next source the way playback does at the end of a track.
+  void advance() {
+    index = index! + 1;
+    _currentIndex.add(index);
   }
 
   void emitPosition(Duration position) {
