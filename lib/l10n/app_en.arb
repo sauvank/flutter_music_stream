@@ -116,6 +116,8 @@
   "goodEvening": "Good evening",
   "goodMorning": "Good morning",
   "headline": "What would you like\nto hear?",
+  "privacyPolicy": "Privacy policy",
+  "privacyPolicyHint": "Read how MusicStream handles your data",
   "hidePassphrase": "Hide passphrase",
   "homeWidget": "Home screen widget",
   "homeWidgetAdd": "Add",

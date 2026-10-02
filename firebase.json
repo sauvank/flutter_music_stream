@@ -3,5 +3,20 @@
     "database": "(default)",
     "location": "eur3",
     "rules": "firestore.rules"
+  },
+  "hosting": {
+    "public": "hosting",
+    "ignore": [
+      "firebase.json",
+      "**/.*"
+    ],
+    "cleanUrls": true,
+    "redirects": [
+      {
+        "source": "/",
+        "destination": "/privacy",
+        "type": 302
+      }
+    ]
   }
 }

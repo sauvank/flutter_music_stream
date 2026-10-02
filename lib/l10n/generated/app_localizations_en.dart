@@ -488,6 +488,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get headline => 'What would you like\nto hear?';
 
   @override
+  String get privacyPolicy => 'Privacy policy';
+
+  @override
+  String get privacyPolicyHint => 'Read how MusicStream handles your data';
+
+  @override
   String get hidePassphrase => 'Hide passphrase';
 
   @override

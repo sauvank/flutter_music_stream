@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MusicStream — Politique de confidentialité</title>
+<style>
+  :root { color-scheme: light dark; --fg:#1b1b1f; --bg:#fbf8ff; --muted:#5d5b66; --accent:#5b4a9a; }
+  @media (prefers-color-scheme: dark) { :root { --fg:#e6e1e9; --bg:#141218; --muted:#aaa5b3; --accent:#c9bfff; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 system-ui, sans-serif; }
+  main { max-width:44rem; margin:0 auto; padding:2rem 1rem 4rem; }
+  h1 { font-size:1.9rem; } h2 { margin-top:2rem; font-size:1.2rem; color:var(--accent); }
+  a { color:var(--accent); } .muted { color:var(--muted); }
+  nav a { margin-right:1rem; }
+</style>
+</head>
+<body>
+<main>
+<nav><a href="#fr">Français</a><a href="#en">English</a></nav>
+
+<section id="fr">
+<h1>MusicStream — Politique de confidentialité</h1>
+<p class="muted">Dernière mise à jour : 2 octobre 2026. Éditeur : sauvank (développeur indépendant).</p>
+
+<p>MusicStream est un lecteur de musique pour Android. Il fonctionne d’abord sur votre téléphone : sans compte, aucune donnée n’est envoyée à l’éditeur. Il ne contient ni publicité, ni outil d’analyse d’audience, ni traceur, et ne vend aucune donnée.</p>
+
+<h2>Données conservées sur votre téléphone</h2>
+<p>Votre bibliothèque (titres, tags, pochettes, favoris, playlists, historique d’écoute, positions de lecture, paroles mises en cache, réglages) est stockée uniquement dans l’espace privé de l’application. Les mots de passe des serveurs que vous configurez sont conservés sur l’appareil et jamais envoyés à l’éditeur. Désinstaller l’application supprime ces données.</p>
+
+<h2>Autorisations Android</h2>
+<ul>
+<li><strong>Fichiers audio (lecture des médias audio)</strong> : indexer la musique de votre téléphone et importer des dossiers. Les fichiers de la médiathèque de l’appareil sont lus sur place, sans copie ni envoi.</li>
+<li><strong>Enregistrement audio (micro)</strong> : requis par Android pour le visualiseur animé, qui analyse le niveau sonore du lecteur de l’application. Rien n’est enregistré ni transmis.</li>
+<li><strong>Notifications, service au premier plan, maintien en veille</strong> : commandes de lecture, téléchargements et lecture en arrière-plan.</li>
+<li><strong>Internet</strong> : voir ci-dessous.</li>
+</ul>
+
+<h2>Services avec lesquels l’application communique</h2>
+<ul>
+<li><strong>Vos serveurs (WebDAV, HTTP, FTP)</strong> : l’application se connecte aux serveurs que vous ajoutez, avec les identifiants que vous saisissez, pour parcourir, écouter ou télécharger votre musique. L’éditeur n’y a pas accès. FTP et HTTP non chiffrés transmettent les données sans chiffrement.</li>
+<li><strong>Synchronisation de compte (facultative)</strong> : si vous vous connectez avec Google ou une adresse e-mail, l’application utilise Firebase Authentication et Cloud Firestore (Google) pour synchroniser vos favoris, écoutes et playlists entre vos appareils. Ces données sont chiffrées sur votre téléphone (AES-256-GCM) avec une phrase secrète que vous choisissez, puis stockées dans un document réservé à votre compte ; l’éditeur et Google n’en voient pas le contenu et la phrase secrète ne peut pas être récupérée. Vos fichiers audio ne sont jamais envoyés. Firebase Authentication traite votre adresse e-mail ou votre identifiant Google pour gérer la connexion (<a href="https://policies.google.com/privacy">règles de confidentialité de Google</a>).</li>
+<li><strong>LRCLIB (paroles, facultatif)</strong> : après votre accord, le titre, l’artiste, l’album et la durée du morceau sont envoyés à lrclib.net pour trouver ses paroles.</li>
+<li><strong>MyMemory (traduction, facultatif)</strong> : si vous demandez une traduction, les lignes de paroles sont envoyées à api.mymemory.translated.net.</li>
+</ul>
+<p>L’éditeur ne partage aucune donnée avec d’autres tiers.</p>
+
+<h2>Vos droits et la suppression de vos données</h2>
+<p>Les données locales se suppriment depuis l’application ou en la désinstallant. Pour supprimer votre compte de synchronisation et les données chiffrées associées, ou exercer vos droits d’accès, de rectification et d’effacement, écrivez à <a href="mailto:gra-contact-app@proton.me">gra-contact-app@proton.me</a> : la demande est traitée dans un délai raisonnable.</p>
+
+<h2>Enfants</h2>
+<p>MusicStream ne s’adresse pas spécifiquement aux enfants et ne collecte pas sciemment de données auprès d’eux.</p>
+
+<h2>Modifications et contact</h2>
+<p>Cette politique peut évoluer ; la date ci-dessus est mise à jour. Contact : <a href="mailto:gra-contact-app@proton.me">gra-contact-app@proton.me</a>.</p>
+</section>
+
+<hr>
+
+<section id="en" lang="en">
+<h1>MusicStream — Privacy Policy</h1>
+<p class="muted">Last updated: October 2, 2026. Publisher: sauvank (independent developer).</p>
+
+<p>MusicStream is an Android music player. It works on your phone first: without an account, no data is sent to the publisher. It contains no ads, no analytics, no trackers, and sells no data.</p>
+
+<h2>Data kept on your phone</h2>
+<p>Your library (tracks, tags, artwork, favorites, playlists, listening history, playback positions, cached lyrics, settings) is stored only in the app’s private storage. Passwords for servers you configure stay on the device and are never sent to the publisher. Uninstalling the app removes this data.</p>
+
+<h2>Android permissions</h2>
+<ul>
+<li><strong>Audio files (media read)</strong>: to index music on your phone and import folders. Device library files are read in place, never copied or uploaded.</li>
+<li><strong>Record audio (microphone)</strong>: required by Android for the animated visualizer, which analyses the loudness of the app’s own player. Nothing is recorded or transmitted.</li>
+<li><strong>Notifications, foreground service, wake lock</strong>: playback controls, downloads and background playback.</li>
+<li><strong>Internet</strong>: see below.</li>
+</ul>
+
+<h2>Services the app talks to</h2>
+<ul>
+<li><strong>Your servers (WebDAV, HTTP, FTP)</strong>: the app connects to servers you add, with the credentials you enter, to browse, stream or download your music. The publisher has no access. Unencrypted FTP/HTTP sends data in clear.</li>
+<li><strong>Account sync (optional)</strong>: if you sign in with Google or an e-mail address, the app uses Firebase Authentication and Cloud Firestore (Google) to sync your favorites, plays and playlists across your devices. This data is encrypted on your phone (AES-256-GCM) with a passphrase you choose, then stored in a document reserved to your account; neither the publisher nor Google can read it, and the passphrase cannot be recovered. Your audio files are never uploaded. Firebase Authentication processes your e-mail address or Google identifier to manage sign-in (<a href="https://policies.google.com/privacy">Google Privacy Policy</a>).</li>
+<li><strong>LRCLIB (lyrics, optional)</strong>: after your consent, the track title, artist, album and duration are sent to lrclib.net to find lyrics.</li>
+<li><strong>MyMemory (translation, optional)</strong>: if you request a translation, lyric lines are sent to api.mymemory.translated.net.</li>
+</ul>
+<p>The publisher shares no data with any other third party.</p>
+
+<h2>Your rights and data deletion</h2>
+<p>Local data can be deleted in the app or by uninstalling it. To delete your sync account and its encrypted data, or to exercise your access, rectification and erasure rights, write to <a href="mailto:gra-contact-app@proton.me">gra-contact-app@proton.me</a>; requests are handled within a reasonable time.</p>
+
+<h2>Children</h2>
+<p>MusicStream is not directed at children and does not knowingly collect data from them.</p>
+
+<h2>Changes and contact</h2>
+<p>This policy may change; the date above is updated accordingly. Contact: <a href="mailto:gra-contact-app@proton.me">gra-contact-app@proton.me</a>.</p>
+</section>
+</main>
+</body>
+</html>

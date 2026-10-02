@@ -794,6 +794,18 @@ abstract class AppLocalizations {
   /// **'Qu’avez-vous envie\nd’écouter ?'**
   String get headline;
 
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Politique de confidentialité'**
+  String get privacyPolicy;
+
+  /// No description provided for @privacyPolicyHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Découvrez comment MusicStream traite vos données'**
+  String get privacyPolicyHint;
+
   /// No description provided for @hidePassphrase.
   ///
   /// In fr, this message translates to:

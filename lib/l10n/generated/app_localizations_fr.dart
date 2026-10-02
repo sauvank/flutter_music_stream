@@ -504,6 +504,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get headline => 'Qu’avez-vous envie\nd’écouter ?';
 
   @override
+  String get privacyPolicy => 'Politique de confidentialité';
+
+  @override
+  String get privacyPolicyHint =>
+      'Découvrez comment MusicStream traite vos données';
+
+  @override
   String get hidePassphrase => 'Masquer la phrase secrète';
 
   @override

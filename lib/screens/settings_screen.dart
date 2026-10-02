@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/appearance_provider.dart';
 import '../providers/library_provider.dart';
@@ -150,6 +151,15 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.offline_pin_rounded,
             title: context.l10n.availableOffline,
             subtitle: context.l10n.availableOfflineHint,
+          ),
+          _InfoTile(
+            icon: Icons.policy_outlined,
+            title: context.l10n.privacyPolicy,
+            subtitle: context.l10n.privacyPolicyHint,
+            onTap: () => launchUrl(
+              Uri.parse('https://musicstream-ks.web.app/privacy'),
+              mode: LaunchMode.externalApplication,
+            ),
           ),
         ],
       );
