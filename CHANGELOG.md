@@ -2,6 +2,7 @@
 
 ## Modifications récentes
 
+- Écran Lecture teinté par la pochette : `ColorScheme.fromImageProvider` (sur une miniature 96 px, cache de 64 schémas) colore le fond en dégradé et les contrôles, avec une transition de 600 ms entre morceaux. Sans pochette, les couleurs de l’app restent.
 - L’écran Lecture apparaît en glissant vers le haut avec un fondu (380 ms) à chaque ouverture, au lieu d’un changement d’onglet sec.
 - Écran Lecture : tirer vers le bas depuis le haut revient à l’onglet précédent, et glisser la pochette à gauche/droite change de morceau.
 - Retours haptiques : lecture/pause, précédent/suivant et aléatoire (écran Lecture et mini-lecteur), glissement du mini-lecteur, début d’un déplacement dans la file ou une playlist, retrait d’un morceau par glissement.
