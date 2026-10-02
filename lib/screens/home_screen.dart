@@ -87,7 +87,13 @@ class _HomeScreenState extends State<HomeScreen> {
       LibraryScreen(key: _library),
       const ServersScreen(),
       // Hidden, it must not keep the live visualizer running.
-      TickerMode(enabled: _index == 2, child: const NowPlayingScreen()),
+      TickerMode(
+        enabled: _index == 2,
+        child: NowPlayingScreen(onClose: () {
+          // A single pull may report several times; close only once.
+          if (_index == 2) _handleBack();
+        }),
+      ),
       const SettingsScreen(),
     ];
     final dark = Theme.of(context).brightness == Brightness.dark;
