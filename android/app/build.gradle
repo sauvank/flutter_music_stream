@@ -43,15 +43,6 @@ android {
         versionName = flutter.versionName
     }
 
-    // AGP 8.1 cannot zip-align uncompressed native libraries for 16 KiB
-    // page-size devices. Compressed JNI libraries are Android's documented
-    // compatibility path until the Android build toolchain is upgraded.
-    packagingOptions {
-        jniLibs {
-            useLegacyPackaging true
-        }
-    }
-
     signingConfigs {
         release {
             if (keyPropertiesFile.exists()) {
