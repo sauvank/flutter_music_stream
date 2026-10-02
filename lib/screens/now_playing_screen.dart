@@ -33,7 +33,11 @@ class NowPlayingScreen extends StatelessWidget {
     );
     if (track == null) return const _NothingPlaying();
 
-    final maximum = player.duration.inMilliseconds
+    // A restored queue has no player duration until the track loads.
+    final duration = player.duration > Duration.zero
+        ? player.duration
+        : Duration(milliseconds: track.durationMs ?? 0);
+    final maximum = duration.inMilliseconds
         .toDouble()
         .clamp(1, double.infinity)
         .toDouble();
@@ -246,10 +250,12 @@ class NowPlayingScreen extends StatelessWidget {
                               const RoundSliderOverlayShape(overlayRadius: 18),
                         ),
                         child: Slider(
-                          value: position.inMilliseconds
-                              .toDouble()
-                              .clamp(0, maximum)
-                              .toDouble(),
+                          value: duration > Duration.zero
+                              ? position.inMilliseconds
+                                  .toDouble()
+                                  .clamp(0, maximum)
+                                  .toDouble()
+                              : 0,
                           max: maximum,
                           onChanged: (next) =>
                               player.seek(Duration(milliseconds: next.round())),
@@ -266,7 +272,7 @@ class NowPlayingScreen extends StatelessWidget {
                           children: [
                             Text(_time(position)),
                             Text(
-                                '-${_time(_remaining(player.duration, position))}'),
+                                '-${_time(_remaining(duration, position))}'),
                           ],
                         ),
                       ),
