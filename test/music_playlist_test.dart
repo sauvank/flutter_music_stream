@@ -81,6 +81,24 @@ void main() {
         ['c', 'a']);
   });
 
+  test('undoing a removal puts the track back at its place', () async {
+    final playlistService = _MemoryPlaylistService();
+    final provider = LibraryProvider(_MemoryLibraryService(), playlistService);
+    await provider.load();
+    final playlist = await provider.createPlaylist('Mix');
+    for (final id in ['a', 'b', 'c']) {
+      await provider.addTrackToPlaylist(playlist!.id, id);
+    }
+
+    final position = await provider.removeTrackFromPlaylist(playlist!.id, 'b');
+    expect(position, 1);
+    expect(await provider.removeTrackFromPlaylist(playlist.id, 'b'), isNull);
+
+    await provider.restoreTrackToPlaylist(playlist.id, 'b', position!);
+    expect(provider.playlists.single.trackIds, ['a', 'b', 'c']);
+    expect(playlistService.saved.single.trackIds, ['a', 'b', 'c']);
+  });
+
   test('reads playlists saved before descriptions existed', () {
     final decoded = MusicPlaylist.decodeAll(
       '[{"id":"p","name":"Old","trackIds":[],'

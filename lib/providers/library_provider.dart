@@ -459,21 +459,42 @@ class LibraryProvider extends ChangeNotifier {
     return missing.length;
   }
 
-  Future<void> removeTrackFromPlaylist(
+  /// Returns the track's former position so the removal can be undone.
+  Future<int?> removeTrackFromPlaylist(
     String playlistId,
     String trackId,
   ) async {
     final index =
         _playlists.indexWhere((playlist) => playlist.id == playlistId);
-    if (index == -1) return;
+    if (index == -1) return null;
+    final position = _playlists[index].trackIds.indexOf(trackId);
+    if (position == -1) return null;
     _playlists[index] = _playlists[index].copyWith(
       trackIds: _playlists[index]
           .trackIds
           .where((candidate) => candidate != trackId)
           .toList(),
     );
-    await _playlistService.save(_playlists);
+    // Notify first: a swiped row must leave the list in the same frame.
     notifyListeners();
+    await _playlistService.save(_playlists);
+    return position;
+  }
+
+  /// Puts a removed track back at [position] in the stored order.
+  Future<void> restoreTrackToPlaylist(
+    String playlistId,
+    String trackId,
+    int position,
+  ) async {
+    final index =
+        _playlists.indexWhere((playlist) => playlist.id == playlistId);
+    if (index == -1 || _playlists[index].trackIds.contains(trackId)) return;
+    final ids = [..._playlists[index].trackIds];
+    ids.insert(position.clamp(0, ids.length), trackId);
+    _playlists[index] = _playlists[index].copyWith(trackIds: ids);
+    notifyListeners();
+    await _playlistService.save(_playlists);
   }
 
   /// Deletes app-owned tracks with their files. Device media tracks are only

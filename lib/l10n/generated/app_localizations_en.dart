@@ -904,6 +904,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removeFromQueue => 'Remove from queue';
 
   @override
+  String get removedFromPlaylist => 'Removed from playlist.';
+
+  @override
   String get reorder => 'Reorder';
 
   @override
@@ -1242,6 +1245,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get translationUnavailable =>
       'Translation failed (network or service unavailable).';
+
+  @override
+  String get undo => 'Undo';
 
   @override
   String get unknownAlbum => 'Unknown album';

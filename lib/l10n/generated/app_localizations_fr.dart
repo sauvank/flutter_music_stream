@@ -925,6 +925,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get removeFromQueue => 'Retirer de la file';
 
   @override
+  String get removedFromPlaylist => 'Retiré de la playlist.';
+
+  @override
   String get reorder => 'Réorganiser l’ordre';
 
   @override
@@ -1273,6 +1276,9 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get translationUnavailable =>
       'Traduction impossible (réseau ou service indisponible).';
+
+  @override
+  String get undo => 'Annuler';
 
   @override
   String get unknownAlbum => 'Album inconnu';

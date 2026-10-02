@@ -1436,6 +1436,12 @@ abstract class AppLocalizations {
   /// **'Retirer de la file'**
   String get removeFromQueue;
 
+  /// No description provided for @removedFromPlaylist.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retiré de la playlist.'**
+  String get removedFromPlaylist;
+
   /// No description provided for @reorder.
   ///
   /// In fr, this message translates to:
@@ -2011,6 +2017,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Traduction impossible (réseau ou service indisponible).'**
   String get translationUnavailable;
+
+  /// No description provided for @undo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Annuler'**
+  String get undo;
 
   /// No description provided for @unknownAlbum.
   ///

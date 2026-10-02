@@ -1424,7 +1424,7 @@ class _TrackTileState extends State<_TrackTile> {
       (player) => player?.current?.id == track.id,
     );
     final colors = Theme.of(context).colorScheme;
-    return Padding(
+    final tile = Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Material(
         color: selected
@@ -1546,6 +1546,26 @@ class _TrackTileState extends State<_TrackTile> {
         ),
       ),
     );
+    final playlistId = widget.playlistId;
+    if (playlistId == null) return tile;
+    // Swiping a playlist row removes it, with an undo in the snack bar.
+    return Dismissible(
+      key: ValueKey('playlist-$playlistId-${track.id}'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.symmetric(vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        alignment: Alignment.centerRight,
+        decoration: BoxDecoration(
+          color: colors.errorContainer,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Icon(Icons.playlist_remove_rounded,
+            color: colors.onErrorContainer),
+      ),
+      onDismissed: (_) => _removeFromPlaylist(context, playlistId, track),
+      child: tile,
+    );
   }
 
   Future<void> _onAction(BuildContext context, String action) async {
@@ -1567,13 +1587,33 @@ class _TrackTileState extends State<_TrackTile> {
     } else if (action == 'add') {
       await showAddToPlaylistSheet(context, [track]);
     } else if (action == 'remove') {
-      await context
-          .read<LibraryProvider>()
-          .removeTrackFromPlaylist(widget.playlistId!, track.id);
+      await _removeFromPlaylist(context, widget.playlistId!, track);
     } else if (action == 'delete') {
       await _confirmDeleteTracks(context, [track]);
     }
   }
+}
+
+Future<void> _removeFromPlaylist(
+  BuildContext context,
+  String playlistId,
+  MusicTrack track,
+) async {
+  final library = context.read<LibraryProvider>();
+  final messenger = ScaffoldMessenger.of(context);
+  final l10n = context.l10n;
+  final position = await library.removeTrackFromPlaylist(playlistId, track.id);
+  if (position == null) return;
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(
+      content: Text(l10n.removedFromPlaylist),
+      action: SnackBarAction(
+        label: l10n.undo,
+        onPressed: () =>
+            library.restoreTrackToPlaylist(playlistId, track.id, position),
+      ),
+    ));
 }
 
 class _SectionTitle extends StatelessWidget {
