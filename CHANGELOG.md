@@ -2,6 +2,7 @@
 
 ## Modifications récentes
 
+- Identité visuelle : icône adaptive Android (dégradé violet→rose, glyphe égaliseur, variante monochrome pour les icônes à thème), PNG anciens formats et iOS, logo de démarrage, fond du splash Android 12+, et icône blanche dédiée pour la notification de lecture. Tout est généré par `scripts/generate_branding.py` à partir d’une seule géométrie, d’après `assets/branding/reference_sheet.jpg`.
 - Recherche : insensible aux accents (« beyonce » trouve « Beyoncé »), bouton pour effacer, playlists correspondantes affichées au-dessus des morceaux et filtrées dans l’onglet Playlists, et 8 recherches récentes (`recent_searches_v1`) proposées quand le champ vide a le focus. Une recherche est retenue à la validation ou quand on lance un résultat.
 - Écran Lecture teinté par la pochette : `ColorScheme.fromImageProvider` (sur une miniature 96 px, cache de 64 schémas) colore le fond en dégradé et les contrôles, avec une transition de 600 ms entre morceaux. Sans pochette, les couleurs de l’app restent.
 - L’écran Lecture apparaît en glissant vers le haut avec un fondu (380 ms) à chaque ouverture, au lieu d’un changement d’onglet sec.

@@ -43,6 +43,8 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 - Le FTP passif ne place jamais les identifiants dans l’URI. HTTP/WebDAV conservent la lecture directe et la file native en arrière-plan; un morceau FTP doit d’abord être téléchargé et importé dans le stockage privé.
 - `ServerScanService` conserve localement une empreinte SHA-256 des URI distantes sans paramètres ni fragments. Le premier scan crée la référence; les suivants regroupent les ajouts par dossier parent. Le scan reste manuel pour éviter une connexion réseau surprise, notamment en FTP non chiffré.
 
+- Icônes et splash sont générés par `scripts/generate_branding.py` (glyphe défini une fois en unités 108, vecteurs Android + PNG via Pillow); ne pas retoucher les fichiers produits à la main. La planche fournie (`assets/branding/reference_sheet.jpg`) n'est qu'une référence : basse résolution, damier peint dans l'image. `ic_stat_musicstream` est appelée par son nom (`androidNotificationIcon`) et protégée par `res/raw/keep.xml`.
+
 ## Tests sur appareil
 
 - Les écrans vivent dans un `IndexedStack` : un champ focalisé sur un onglet masqué reprend le focus à la fermeture d’un dialogue. `HomeScreen._select` libère le focus à chaque changement d’onglet.

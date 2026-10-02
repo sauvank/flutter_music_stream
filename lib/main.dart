@@ -44,6 +44,8 @@ Future<void> main() async {
     androidNotificationChannelId: 'com.sauvank.musicstream.audio',
     androidNotificationChannelName: localizations().audioChannelName,
     androidNotificationOngoing: true,
+    // A white glyph: the launcher icon would render as a blank square.
+    androidNotificationIcon: 'drawable/ic_stat_musicstream',
   );
   final library = LibraryProvider(LibraryService(), PlaylistService());
   final downloads = DownloadQueueProvider(library);
