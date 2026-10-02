@@ -678,12 +678,22 @@
   "streamFromServer": "Écouter depuis le serveur",
   "supportedFormats": "MP3, M4A, AAC, FLAC, OGG, OPUS et WAV",
   "syncActive": "Active",
+  "syncAuthEmailInUse": "Un compte existe déjà avec cette adresse.",
+  "syncAuthFailed": "Connexion impossible.",
+  "syncAuthInvalidCredentials": "E-mail ou mot de passe incorrect.",
+  "syncAuthInvalidEmail": "Adresse e-mail invalide.",
+  "syncAuthNetwork": "Pas de connexion réseau.",
+  "syncAuthTooManyRequests": "Trop de tentatives. Réessayez plus tard.",
+  "syncAuthWeakPassword": "Mot de passe trop faible (6 caractères minimum).",
   "syncConflict": "Un autre appareil synchronise en même temps. Réessayez.",
+  "syncCreateAccount": "Créer un compte",
   "syncDisable": "Désactiver sur cet appareil",
   "syncDone": "Synchronisation terminée.",
+  "syncEmail": "Adresse e-mail",
   "syncEnable": "Activer et synchroniser",
-  "syncExplanation": "Favoris, écoutes et playlists sont chiffrés sur ce téléphone avec votre phrase secrète, puis déposés dans un fichier sur votre serveur WebDAV. Le serveur ne voit jamais leur contenu, et vos fichiers audio ne sont jamais envoyés.",
-  "syncFailed": "Synchronisation impossible. Vérifiez la connexion au serveur.",
+  "syncExplanation": "Favoris, écoutes et playlists sont chiffrés sur ce téléphone avec votre phrase secrète, puis enregistrés sur votre compte MusicStream. Le serveur ne voit jamais leur contenu, et vos fichiers audio ne sont jamais envoyés.",
+  "syncFailed": "Synchronisation impossible. Vérifiez votre connexion.",
+  "syncForgotPassword": "Mot de passe oublié ?",
   "syncLastRun": "Dernière synchronisation : {date}",
   "@syncLastRun": {
     "placeholders": {
@@ -692,26 +702,31 @@
       }
     }
   },
-  "syncNeedsWebdav": "Ajoutez d’abord un serveur WebDAV dans l’onglet Serveurs.",
   "syncNever": "Jamais synchronisé",
   "syncNow": "Synchroniser maintenant",
+  "syncOr": "ou",
   "syncPassphrase": "Phrase secrète",
   "syncPassphraseConfirm": "Confirmer la phrase secrète",
   "syncPassphraseHint": "Au moins 8 caractères. Utilisez la même sur chaque appareil : elle ne peut pas être récupérée.",
   "syncPassphraseMismatch": "Les deux phrases secrètes ne correspondent pas.",
+  "syncPassphraseStep": "Choisissez la phrase secrète qui chiffre vos données. Elle est distincte du mot de passe du compte et sert sur chaque appareil.",
   "syncPassphraseTooShort": "Utilisez au moins 8 caractères.",
-  "syncServer": "Serveur",
-  "syncServerMissing": "Le serveur de synchronisation n’existe plus. Désactivez puis réactivez la synchronisation.",
-  "syncTitle": "Synchronisation chiffrée",
-  "syncWriteForbidden": "Le serveur refuse d’écrire le fichier de synchronisation (HTTP {status}). Ce compte peut lire mais pas écrire en WebDAV : autorisez l’écriture sur le serveur (AList : permission « Gérer WebDAV ») puis réessayez.",
-  "@syncWriteForbidden": {
+  "syncPassword": "Mot de passe",
+  "syncResetSent": "E-mail de réinitialisation envoyé.",
+  "syncSignIn": "Se connecter",
+  "syncSignInGoogle": "Continuer avec Google",
+  "syncSignOut": "Se déconnecter",
+  "syncSignedInAs": "Connecté : {account}",
+  "@syncSignedInAs": {
     "placeholders": {
-      "status": {
-        "type": "int"
+      "account": {
+        "type": "String"
       }
     }
   },
-  "syncWrongPassphrase": "Cette phrase secrète n’ouvre pas le fichier de synchronisation de ce serveur.",
+  "syncTitle": "Synchronisation chiffrée",
+  "syncUnavailable": "La synchronisation n’est pas configurée dans cette version de l’application.",
+  "syncWrongPassphrase": "Cette phrase secrète n’ouvre pas les données synchronisées de ce compte.",
   "theme": "Thème",
   "themeDark": "Sombre",
   "themeHint": "Suivre l’appareil ou imposer un mode",

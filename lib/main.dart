@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -21,6 +22,8 @@ import 'services/playlist_service.dart';
 import 'services/playback_settings_service.dart';
 import 'services/remote_server_service.dart';
 import 'services/server_profile_service.dart';
+import 'services/sync/sync_account.dart';
+import 'services/sync/sync_remote.dart';
 import 'services/sync/sync_service.dart';
 import 'l10n/l10n.dart';
 
@@ -76,7 +79,13 @@ Future<void> main() async {
     () => downloads.configureNotifications(localizations()),
   );
   await servers.load();
-  final sync = SyncProvider(SyncService(), library, servers);
+  final firebaseReady = await _initializeFirebase();
+  final sync = SyncProvider(
+    SyncService(),
+    firebaseReady ? FirestoreSyncRemote() : const _NoSyncRemote(),
+    firebaseReady ? FirebaseSyncAccount() : const UnavailableSyncAccount(),
+    library,
+  );
   await sync.load();
   runApp(MusicStreamApp(
     library: library,
@@ -215,4 +224,32 @@ class MusicStreamApp extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Builds without the local Firebase config still run, without account
+/// sync. Native config comes from google-services.json / the plist.
+Future<bool> _initializeFirebase() async {
+  try {
+    await Firebase.initializeApp();
+    return true;
+  } catch (error) {
+    debugPrint('Firebase unavailable, sync disabled: $error');
+    return false;
+  }
+}
+
+class _NoSyncRemote implements SyncRemote {
+  const _NoSyncRemote();
+
+  @override
+  Future<RemoteSyncFile?> download(String uid) =>
+      Future.error(StateError('Sync unavailable'));
+
+  @override
+  Future<void> upload(
+    String uid,
+    Map<String, Object?> envelope, {
+    required RemoteSyncFile? replacing,
+  }) =>
+      Future.error(StateError('Sync unavailable'));
 }

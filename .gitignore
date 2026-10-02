@@ -67,3 +67,9 @@ SECURITY_CONTEXT.md
 *.aab
 *.msi
 playstore_bundle/
+
+# Firebase config stays local (see SETUP in CONTEXT.md)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+.firebaserc
+.firebase/

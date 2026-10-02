@@ -1856,11 +1856,59 @@ abstract class AppLocalizations {
   /// **'Active'**
   String get syncActive;
 
+  /// No description provided for @syncAuthEmailInUse.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un compte existe déjà avec cette adresse.'**
+  String get syncAuthEmailInUse;
+
+  /// No description provided for @syncAuthFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion impossible.'**
+  String get syncAuthFailed;
+
+  /// No description provided for @syncAuthInvalidCredentials.
+  ///
+  /// In fr, this message translates to:
+  /// **'E-mail ou mot de passe incorrect.'**
+  String get syncAuthInvalidCredentials;
+
+  /// No description provided for @syncAuthInvalidEmail.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse e-mail invalide.'**
+  String get syncAuthInvalidEmail;
+
+  /// No description provided for @syncAuthNetwork.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pas de connexion réseau.'**
+  String get syncAuthNetwork;
+
+  /// No description provided for @syncAuthTooManyRequests.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trop de tentatives. Réessayez plus tard.'**
+  String get syncAuthTooManyRequests;
+
+  /// No description provided for @syncAuthWeakPassword.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe trop faible (6 caractères minimum).'**
+  String get syncAuthWeakPassword;
+
   /// No description provided for @syncConflict.
   ///
   /// In fr, this message translates to:
   /// **'Un autre appareil synchronise en même temps. Réessayez.'**
   String get syncConflict;
+
+  /// No description provided for @syncCreateAccount.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créer un compte'**
+  String get syncCreateAccount;
 
   /// No description provided for @syncDisable.
   ///
@@ -1874,6 +1922,12 @@ abstract class AppLocalizations {
   /// **'Synchronisation terminée.'**
   String get syncDone;
 
+  /// No description provided for @syncEmail.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse e-mail'**
+  String get syncEmail;
+
   /// No description provided for @syncEnable.
   ///
   /// In fr, this message translates to:
@@ -1883,26 +1937,26 @@ abstract class AppLocalizations {
   /// No description provided for @syncExplanation.
   ///
   /// In fr, this message translates to:
-  /// **'Favoris, écoutes et playlists sont chiffrés sur ce téléphone avec votre phrase secrète, puis déposés dans un fichier sur votre serveur WebDAV. Le serveur ne voit jamais leur contenu, et vos fichiers audio ne sont jamais envoyés.'**
+  /// **'Favoris, écoutes et playlists sont chiffrés sur ce téléphone avec votre phrase secrète, puis enregistrés sur votre compte MusicStream. Le serveur ne voit jamais leur contenu, et vos fichiers audio ne sont jamais envoyés.'**
   String get syncExplanation;
 
   /// No description provided for @syncFailed.
   ///
   /// In fr, this message translates to:
-  /// **'Synchronisation impossible. Vérifiez la connexion au serveur.'**
+  /// **'Synchronisation impossible. Vérifiez votre connexion.'**
   String get syncFailed;
+
+  /// No description provided for @syncForgotPassword.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe oublié ?'**
+  String get syncForgotPassword;
 
   /// No description provided for @syncLastRun.
   ///
   /// In fr, this message translates to:
   /// **'Dernière synchronisation : {date}'**
   String syncLastRun(String date);
-
-  /// No description provided for @syncNeedsWebdav.
-  ///
-  /// In fr, this message translates to:
-  /// **'Ajoutez d’abord un serveur WebDAV dans l’onglet Serveurs.'**
-  String get syncNeedsWebdav;
 
   /// No description provided for @syncNever.
   ///
@@ -1915,6 +1969,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Synchroniser maintenant'**
   String get syncNow;
+
+  /// No description provided for @syncOr.
+  ///
+  /// In fr, this message translates to:
+  /// **'ou'**
+  String get syncOr;
 
   /// No description provided for @syncPassphrase.
   ///
@@ -1940,23 +2000,53 @@ abstract class AppLocalizations {
   /// **'Les deux phrases secrètes ne correspondent pas.'**
   String get syncPassphraseMismatch;
 
+  /// No description provided for @syncPassphraseStep.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez la phrase secrète qui chiffre vos données. Elle est distincte du mot de passe du compte et sert sur chaque appareil.'**
+  String get syncPassphraseStep;
+
   /// No description provided for @syncPassphraseTooShort.
   ///
   /// In fr, this message translates to:
   /// **'Utilisez au moins 8 caractères.'**
   String get syncPassphraseTooShort;
 
-  /// No description provided for @syncServer.
+  /// No description provided for @syncPassword.
   ///
   /// In fr, this message translates to:
-  /// **'Serveur'**
-  String get syncServer;
+  /// **'Mot de passe'**
+  String get syncPassword;
 
-  /// No description provided for @syncServerMissing.
+  /// No description provided for @syncResetSent.
   ///
   /// In fr, this message translates to:
-  /// **'Le serveur de synchronisation n’existe plus. Désactivez puis réactivez la synchronisation.'**
-  String get syncServerMissing;
+  /// **'E-mail de réinitialisation envoyé.'**
+  String get syncResetSent;
+
+  /// No description provided for @syncSignIn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Se connecter'**
+  String get syncSignIn;
+
+  /// No description provided for @syncSignInGoogle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Continuer avec Google'**
+  String get syncSignInGoogle;
+
+  /// No description provided for @syncSignOut.
+  ///
+  /// In fr, this message translates to:
+  /// **'Se déconnecter'**
+  String get syncSignOut;
+
+  /// No description provided for @syncSignedInAs.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecté : {account}'**
+  String syncSignedInAs(String account);
 
   /// No description provided for @syncTitle.
   ///
@@ -1964,16 +2054,16 @@ abstract class AppLocalizations {
   /// **'Synchronisation chiffrée'**
   String get syncTitle;
 
-  /// No description provided for @syncWriteForbidden.
+  /// No description provided for @syncUnavailable.
   ///
   /// In fr, this message translates to:
-  /// **'Le serveur refuse d’écrire le fichier de synchronisation (HTTP {status}). Ce compte peut lire mais pas écrire en WebDAV : autorisez l’écriture sur le serveur (AList : permission « Gérer WebDAV ») puis réessayez.'**
-  String syncWriteForbidden(int status);
+  /// **'La synchronisation n’est pas configurée dans cette version de l’application.'**
+  String get syncUnavailable;
 
   /// No description provided for @syncWrongPassphrase.
   ///
   /// In fr, this message translates to:
-  /// **'Cette phrase secrète n’ouvre pas le fichier de synchronisation de ce serveur.'**
+  /// **'Cette phrase secrète n’ouvre pas les données synchronisées de ce compte.'**
   String get syncWrongPassphrase;
 
   /// No description provided for @theme.

@@ -1145,8 +1145,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncActive => 'On';
 
   @override
+  String get syncAuthEmailInUse => 'An account already uses this email.';
+
+  @override
+  String get syncAuthFailed => 'Sign-in failed.';
+
+  @override
+  String get syncAuthInvalidCredentials => 'Wrong email or password.';
+
+  @override
+  String get syncAuthInvalidEmail => 'Invalid email address.';
+
+  @override
+  String get syncAuthNetwork => 'No network connection.';
+
+  @override
+  String get syncAuthTooManyRequests => 'Too many attempts. Try again later.';
+
+  @override
+  String get syncAuthWeakPassword =>
+      'Password too weak (at least 6 characters).';
+
+  @override
   String get syncConflict =>
       'Another device is syncing at the same time. Try again.';
+
+  @override
+  String get syncCreateAccount => 'Create account';
 
   @override
   String get syncDisable => 'Turn off on this device';
@@ -1155,14 +1180,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncDone => 'Sync complete.';
 
   @override
+  String get syncEmail => 'Email address';
+
+  @override
   String get syncEnable => 'Turn on and sync';
 
   @override
   String get syncExplanation =>
-      'Favorites, plays and playlists are encrypted on this phone with your passphrase, then stored in a file on your WebDAV server. The server never sees their content, and your audio files are never sent.';
+      'Favorites, plays and playlists are encrypted on this phone with your passphrase, then saved to your MusicStream account. The server never sees their content, and your audio files are never sent.';
 
   @override
-  String get syncFailed => 'Sync failed. Check the connection to the server.';
+  String get syncFailed => 'Sync failed. Check your connection.';
+
+  @override
+  String get syncForgotPassword => 'Forgot password?';
 
   @override
   String syncLastRun(String date) {
@@ -1170,13 +1201,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get syncNeedsWebdav => 'Add a WebDAV server in the Servers tab first.';
-
-  @override
   String get syncNever => 'Never synced';
 
   @override
   String get syncNow => 'Sync now';
+
+  @override
+  String get syncOr => 'or';
 
   @override
   String get syncPassphrase => 'Passphrase';
@@ -1192,26 +1223,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncPassphraseMismatch => 'The two passphrases do not match.';
 
   @override
+  String get syncPassphraseStep =>
+      'Choose the passphrase that encrypts your data. It is separate from the account password and is used on every device.';
+
+  @override
   String get syncPassphraseTooShort => 'Use at least 8 characters.';
 
   @override
-  String get syncServer => 'Server';
+  String get syncPassword => 'Password';
 
   @override
-  String get syncServerMissing =>
-      'The sync server no longer exists. Turn sync off and on again.';
+  String get syncResetSent => 'Password reset email sent.';
+
+  @override
+  String get syncSignIn => 'Sign in';
+
+  @override
+  String get syncSignInGoogle => 'Continue with Google';
+
+  @override
+  String get syncSignOut => 'Sign out';
+
+  @override
+  String syncSignedInAs(String account) {
+    return 'Signed in: $account';
+  }
 
   @override
   String get syncTitle => 'Encrypted sync';
 
   @override
-  String syncWriteForbidden(int status) {
-    return 'The server refuses to write the sync file (HTTP $status). This account can read but not write over WebDAV: allow writing on the server (AList: “Webdav manage” permission), then try again.';
-  }
+  String get syncUnavailable => 'Sync is not set up in this build of the app.';
 
   @override
   String get syncWrongPassphrase =>
-      'This passphrase does not open this server’s sync file.';
+      'This passphrase does not open this account\'s synced data.';
 
   @override
   String get theme => 'Theme';

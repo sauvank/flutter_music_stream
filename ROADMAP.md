@@ -34,6 +34,8 @@
 
 ## En cours
 
+- [ ] Vérifier sur Galaxy S24 la connexion Google/e-mail et la synchro Firestore entre deux appareils.
+- [ ] Clé d’envoi Play (keystore hors dépôt, `.aab`) et ajout de ses empreintes SHA à Firebase.
 - [ ] Vérifier sur Galaxy S24 la passe d’ergonomie v0.1.52–v0.1.60 (non installée : débogage sans fil déconnecté pendant le travail).
 
 ## À venir

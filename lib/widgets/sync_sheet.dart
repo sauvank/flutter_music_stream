@@ -1,12 +1,12 @@
-import 'package:dio/dio.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/l10n.dart';
-import '../models/server_profile.dart';
 import '../providers/sync_provider.dart';
+import '../services/sync/sync_account.dart';
 import '../services/sync/sync_crypto.dart';
-import '../services/sync/sync_service.dart';
+import '../services/sync/sync_remote.dart';
 
 Future<void> showSyncSheet(BuildContext context) => showModalBottomSheet<void>(
       context: context,
@@ -36,14 +36,18 @@ class _SyncSheet extends StatefulWidget {
 class _SyncSheetState extends State<_SyncSheet> {
   final _passphrase = TextEditingController();
   final _confirmation = TextEditingController();
-  ServerProfile? _profile;
+  final _email = TextEditingController();
+  final _password = TextEditingController();
   String? _error;
   bool _showPassphrase = false;
+  bool _showPassword = false;
 
   @override
   void dispose() {
     _passphrase.dispose();
     _confirmation.dispose();
+    _email.dispose();
+    _password.dispose();
     super.dispose();
   }
 
@@ -51,8 +55,6 @@ class _SyncSheetState extends State<_SyncSheet> {
   Widget build(BuildContext context) {
     final sync = context.watch<SyncProvider>();
     final l10n = context.l10n;
-    final profiles = sync.eligibleProfiles;
-    _profile ??= profiles.firstOrNull;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         24,
@@ -77,12 +79,18 @@ class _SyncSheetState extends State<_SyncSheet> {
             const SizedBox(height: 10),
             Text(l10n.syncExplanation),
             const SizedBox(height: 18),
-            if (sync.enabled)
-              ..._enabled(context, sync)
-            else if (profiles.isEmpty)
-              Text(l10n.syncNeedsWebdav)
-            else
-              ..._setup(context, sync, profiles),
+            if (!sync.available)
+              Text(l10n.syncUnavailable)
+            else if (sync.user == null)
+              ..._signIn(context, sync)
+            else ...[
+              _account(context, sync),
+              const SizedBox(height: 8),
+              if (sync.enabled)
+                ..._enabled(context, sync)
+              else
+                ..._setup(context, sync),
+            ],
             if (_error != null) ...[
               const SizedBox(height: 12),
               Text(
@@ -102,14 +110,12 @@ class _SyncSheetState extends State<_SyncSheet> {
       ListTile(
         contentPadding: EdgeInsets.zero,
         leading: const Icon(Icons.cloud_done_outlined),
-        title: Text(sync.profile?.name ?? l10n.syncServerMissing),
+        title: Text(l10n.syncActive),
         subtitle: Text(syncStatusText(context, sync)),
       ),
       const SizedBox(height: 8),
       FilledButton.icon(
-        onPressed: sync.busy || sync.profile == null
-            ? null
-            : () => _guard(context, sync.syncNow),
+        onPressed: sync.busy ? null : () => _guard(context, sync.syncNow),
         icon: sync.busy
             ? const SizedBox.square(
                 dimension: 18,
@@ -125,22 +131,122 @@ class _SyncSheetState extends State<_SyncSheet> {
     ];
   }
 
-  List<Widget> _setup(
-    BuildContext context,
-    SyncProvider sync,
-    List<ServerProfile> profiles,
-  ) {
+  Widget _account(BuildContext context, SyncProvider sync) {
+    final user = sync.user!;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.account_circle_outlined),
+      title: Text(context.l10n
+          .syncSignedInAs(user.email ?? user.displayName ?? user.uid)),
+      trailing: TextButton(
+        onPressed: sync.busy ? null : sync.signOut,
+        child: Text(context.l10n.syncSignOut),
+      ),
+    );
+  }
+
+  List<Widget> _signIn(BuildContext context, SyncProvider sync) {
+    final l10n = context.l10n;
+    final busy = sync.busy;
+    return [
+      FilledButton.icon(
+        onPressed: busy
+            ? null
+            : () => _guard(context, sync.signInWithGoogle, signIn: true),
+        icon: const Icon(Icons.account_circle_rounded),
+        label: Text(l10n.syncSignInGoogle),
+      ),
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          children: [
+            const Expanded(child: Divider()),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(l10n.syncOr),
+            ),
+            const Expanded(child: Divider()),
+          ],
+        ),
+      ),
+      TextField(
+        controller: _email,
+        keyboardType: TextInputType.emailAddress,
+        autocorrect: false,
+        autofillHints: const [AutofillHints.email],
+        decoration: InputDecoration(labelText: l10n.syncEmail),
+      ),
+      const SizedBox(height: 8),
+      TextField(
+        controller: _password,
+        obscureText: !_showPassword,
+        autocorrect: false,
+        enableSuggestions: false,
+        autofillHints: const [AutofillHints.password],
+        decoration: InputDecoration(
+          labelText: l10n.syncPassword,
+          suffixIcon: IconButton(
+            tooltip: _showPassword ? l10n.hidePassphrase : l10n.showPassphrase,
+            onPressed: () => setState(() => _showPassword = !_showPassword),
+            icon: Icon(_showPassword
+                ? Icons.visibility_off_outlined
+                : Icons.visibility_outlined),
+          ),
+        ),
+      ),
+      const SizedBox(height: 14),
+      Row(
+        children: [
+          Expanded(
+            child: FilledButton.tonal(
+              onPressed: busy
+                  ? null
+                  : () => _guard(
+                        context,
+                        () => sync.signInWithEmail(_email.text, _password.text),
+                        signIn: true,
+                      ),
+              child: Text(l10n.syncSignIn),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: busy
+                  ? null
+                  : () => _guard(
+                        context,
+                        () => sync.createAccount(_email.text, _password.text),
+                        signIn: true,
+                      ),
+              child: Text(l10n.syncCreateAccount),
+            ),
+          ),
+        ],
+      ),
+      TextButton(
+        onPressed: busy ? null : () => _resetPassword(context, sync),
+        child: Text(l10n.syncForgotPassword),
+      ),
+    ];
+  }
+
+  Future<void> _resetPassword(BuildContext context, SyncProvider sync) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _error = null);
+    try {
+      await sync.sendPasswordReset(_email.text);
+      messenger.showSnackBar(SnackBar(content: Text(l10n.syncResetSent)));
+    } on SyncAuthException catch (error) {
+      if (mounted) setState(() => _error = _authMessage(l10n, error));
+    }
+  }
+
+  List<Widget> _setup(BuildContext context, SyncProvider sync) {
     final l10n = context.l10n;
     return [
-      DropdownButtonFormField<ServerProfile>(
-        value: _profile,
-        decoration: InputDecoration(labelText: l10n.syncServer),
-        items: [
-          for (final profile in profiles)
-            DropdownMenuItem(value: profile, child: Text(profile.name)),
-        ],
-        onChanged: (profile) => setState(() => _profile = profile),
-      ),
+      Text(l10n.syncPassphraseStep),
       const SizedBox(height: 12),
       TextField(
         controller: _passphrase,
@@ -194,30 +300,35 @@ class _SyncSheetState extends State<_SyncSheet> {
       setState(() => _error = l10n.syncPassphraseMismatch);
       return;
     }
-    final profile = _profile;
-    if (profile == null) return;
     FocusScope.of(context).unfocus();
-    await _guard(context, () => sync.enable(profile, passphrase));
+    await _guard(context, () => sync.enable(passphrase));
   }
 
   Future<void> _guard(
     BuildContext context,
-    Future<void> Function() action,
-  ) async {
+    Future<void> Function() action, {
+    bool signIn = false,
+  }) async {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _error = null);
+    FocusScope.of(context).unfocus();
     try {
       await action();
-      messenger.showSnackBar(SnackBar(content: Text(l10n.syncDone)));
+      if (signIn) {
+        _password.clear();
+      } else {
+        messenger.showSnackBar(SnackBar(content: Text(l10n.syncDone)));
+      }
+    } on SyncAuthException catch (error) {
+      debugPrint('Sync sign-in failed: $error');
+      if (mounted && error.error != SyncAuthError.cancelled) {
+        setState(() => _error = _authMessage(l10n, error));
+      }
     } on SyncPassphraseException {
       if (mounted) setState(() => _error = l10n.syncWrongPassphrase);
     } on SyncConflictException {
       if (mounted) setState(() => _error = l10n.syncConflict);
-    } on SyncWriteForbiddenException catch (error) {
-      if (mounted) {
-        setState(() => _error = l10n.syncWriteForbidden(error.statusCode));
-      }
     } catch (error) {
       final detail = _describe(error);
       debugPrint('Sync failed: $detail');
@@ -225,14 +336,20 @@ class _SyncSheetState extends State<_SyncSheet> {
     }
   }
 
-  /// A short cause without URLs or credentials: HTTP status, network error
-  /// kind or exception type.
-  static String _describe(Object error) {
-    if (error is DioException) {
-      final status = error.response?.statusCode;
-      final method = error.requestOptions.method;
-      return status != null ? '$method HTTP $status' : error.type.name;
-    }
-    return error.runtimeType.toString();
-  }
+  static String _authMessage(AppLocalizations l10n, SyncAuthException error) =>
+      switch (error.error) {
+        SyncAuthError.invalidCredentials => l10n.syncAuthInvalidCredentials,
+        SyncAuthError.invalidEmail => l10n.syncAuthInvalidEmail,
+        SyncAuthError.emailInUse => l10n.syncAuthEmailInUse,
+        SyncAuthError.weakPassword => l10n.syncAuthWeakPassword,
+        SyncAuthError.tooManyRequests => l10n.syncAuthTooManyRequests,
+        SyncAuthError.network => l10n.syncAuthNetwork,
+        SyncAuthError.cancelled ||
+        SyncAuthError.unknown =>
+          l10n.syncAuthFailed,
+      };
+
+  /// A short cause without data or credentials: backend code or type.
+  static String _describe(Object error) =>
+      error is FirebaseException ? error.code : error.runtimeType.toString();
 }

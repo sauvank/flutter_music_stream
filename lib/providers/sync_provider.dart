@@ -1,67 +1,90 @@
+import 'dart:async';
 import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 
-import '../models/server_profile.dart';
+import '../services/sync/sync_account.dart';
 import '../services/sync/sync_crypto.dart';
 import '../services/sync/sync_payload.dart';
+import '../services/sync/sync_remote.dart';
 import '../services/sync/sync_service.dart';
 import 'library_provider.dart';
-import 'server_provider.dart';
 
 /// End-to-end encrypted sync of favorites, listening counts and playlists
-/// through a file on one of the user's WebDAV servers. Manual only, so the
-/// app never contacts a server by surprise.
+/// through the user's account (Google or email). The backend only stores
+/// cipher text; the passphrase never leaves the device. Manual only, so the
+/// app never contacts the backend by surprise.
 class SyncProvider extends ChangeNotifier {
   SyncProvider(
     this._service,
-    this._library,
-    this._servers, {
+    this._remote,
+    this._account,
+    this._library, {
     SyncCrypto? crypto,
     int iterations = SyncKdf.defaultIterations,
   })  : _crypto = crypto ?? SyncCrypto(),
         _iterations = iterations;
 
   final SyncService _service;
+  final SyncRemote _remote;
+  final SyncAccount _account;
   final LibraryProvider _library;
-  final ServerProvider _servers;
   final SyncCrypto _crypto;
   final int _iterations;
+  StreamSubscription<SyncUser?>? _accountChanges;
 
   SyncSettings? settings;
   bool busy = false;
 
-  bool get enabled => settings != null;
+  /// False when this build has no sync backend configured.
+  bool get available => _account.available;
+  SyncUser? get user => _account.currentUser;
 
-  ServerProfile? get profile {
-    final id = settings?.profileId;
-    return _servers.profiles.where((profile) => profile.id == id).firstOrNull;
-  }
-
-  /// Profiles that can store the file: WebDAV accepts uploads.
-  List<ServerProfile> get eligibleProfiles => _servers.profiles
-      .where((profile) => profile.type == ServerType.webdav)
-      .toList();
+  /// Encryption is set up for the signed-in account on this device.
+  bool get enabled => settings != null && settings!.uid == user?.uid;
 
   Future<void> load() async {
     settings = await _service.loadSettings();
+    _accountChanges = _account.changes.listen((user) async {
+      // Another account, or none: this device's key belongs to the old one.
+      if (settings != null && settings!.uid != user?.uid) {
+        await _service.clear();
+        settings = null;
+      }
+      notifyListeners();
+    });
     notifyListeners();
   }
 
-  /// Joins the sync file on [profile], or creates it. With an existing file
-  /// the passphrase must open it, so every device shares one key.
-  Future<void> enable(ServerProfile profile, String passphrase) =>
-      _run(() async {
-        final headers = await _headers(profile);
-        final uri = SyncService.fileUri(profile);
-        final remote = await _service.download(uri, headers);
+  Future<void> signInWithGoogle() => _run(_account.signInWithGoogle);
+
+  Future<void> signInWithEmail(String email, String password) =>
+      _run(() => _account.signInWithEmail(email, password));
+
+  Future<void> createAccount(String email, String password) =>
+      _run(() => _account.createAccount(email, password));
+
+  Future<void> sendPasswordReset(String email) =>
+      _account.sendPasswordReset(email);
+
+  Future<void> signOut() => _run(() async {
+        await _service.clear();
+        settings = null;
+        await _account.signOut();
+      });
+
+  /// Joins the account's envelope, or creates it. With an existing one the
+  /// passphrase must open it, so every device shares one key.
+  Future<void> enable(String passphrase) => _run(() async {
+        final uid = _requireUser().uid;
+        final remote = await _remote.download(uid);
         final kdf = remote == null
             ? SyncKdf(salt: SyncCrypto.newSalt(), iterations: _iterations)
             : SyncCrypto.kdfOf(remote.envelope);
         final key = await _deriveKey(passphrase, kdf);
         if (remote != null) await _crypto.open(remote.envelope, key: key);
         await _service.saveKey(key);
-        settings = SyncSettings(profileId: profile.id, kdf: kdf);
+        settings = SyncSettings(uid: uid, kdf: kdf);
         await _service.saveSettings(settings!);
         try {
           await _sync();
@@ -75,24 +98,29 @@ class SyncProvider extends ChangeNotifier {
 
   Future<void> syncNow() => _run(_sync);
 
+  /// Forgets the key on this device and keeps the account signed in.
   Future<void> disable() async {
     await _service.clear();
     settings = null;
     notifyListeners();
   }
 
+  SyncUser _requireUser() {
+    final user = this.user;
+    if (user == null) throw StateError('No sync account signed in');
+    return user;
+  }
+
   Future<void> _sync() async {
     final current = settings;
-    final profile = this.profile;
     final key = await _service.loadKey();
-    if (current == null || profile == null || key == null) {
+    final uid = _requireUser().uid;
+    if (current == null || key == null || current.uid != uid) {
       throw StateError('Sync is not configured');
     }
-    final headers = await _headers(profile);
-    final uri = SyncService.fileUri(profile);
     // One retry covers a device uploading between our download and upload.
     for (var attempt = 0;; attempt++) {
-      final remote = await _service.download(uri, headers);
+      final remote = await _remote.download(uid);
       var kdf = current.kdf;
       var remotePayload = const SyncPayload();
       if (remote != null) {
@@ -104,7 +132,7 @@ class SyncProvider extends ChangeNotifier {
       final merged = SyncPayload.merge(remotePayload, _library.syncSnapshot());
       final envelope = await _crypto.seal(merged.toJson(), key: key, kdf: kdf);
       try {
-        await _service.upload(uri, headers, envelope, replacing: remote);
+        await _remote.upload(uid, envelope, replacing: remote);
       } on SyncConflictException {
         if (attempt == 0) continue;
         rethrow;
@@ -118,12 +146,6 @@ class SyncProvider extends ChangeNotifier {
       return;
     }
   }
-
-  Future<Map<String, String>> _headers(ServerProfile profile) async =>
-      _servers.remoteService.authorizationHeaders(
-        profile,
-        await _servers.passwordFor(profile),
-      );
 
   /// PBKDF2 takes seconds on a phone: keep it off the UI isolate.
   Future<List<int>> _deriveKey(String passphrase, SyncKdf kdf) {
@@ -143,5 +165,11 @@ class SyncProvider extends ChangeNotifier {
       busy = false;
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _accountChanges?.cancel();
+    super.dispose();
   }
 }

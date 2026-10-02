@@ -1173,8 +1173,34 @@ class AppLocalizationsFr extends AppLocalizations {
   String get syncActive => 'Active';
 
   @override
+  String get syncAuthEmailInUse => 'Un compte existe déjà avec cette adresse.';
+
+  @override
+  String get syncAuthFailed => 'Connexion impossible.';
+
+  @override
+  String get syncAuthInvalidCredentials => 'E-mail ou mot de passe incorrect.';
+
+  @override
+  String get syncAuthInvalidEmail => 'Adresse e-mail invalide.';
+
+  @override
+  String get syncAuthNetwork => 'Pas de connexion réseau.';
+
+  @override
+  String get syncAuthTooManyRequests =>
+      'Trop de tentatives. Réessayez plus tard.';
+
+  @override
+  String get syncAuthWeakPassword =>
+      'Mot de passe trop faible (6 caractères minimum).';
+
+  @override
   String get syncConflict =>
       'Un autre appareil synchronise en même temps. Réessayez.';
+
+  @override
+  String get syncCreateAccount => 'Créer un compte';
 
   @override
   String get syncDisable => 'Désactiver sur cet appareil';
@@ -1183,15 +1209,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get syncDone => 'Synchronisation terminée.';
 
   @override
+  String get syncEmail => 'Adresse e-mail';
+
+  @override
   String get syncEnable => 'Activer et synchroniser';
 
   @override
   String get syncExplanation =>
-      'Favoris, écoutes et playlists sont chiffrés sur ce téléphone avec votre phrase secrète, puis déposés dans un fichier sur votre serveur WebDAV. Le serveur ne voit jamais leur contenu, et vos fichiers audio ne sont jamais envoyés.';
+      'Favoris, écoutes et playlists sont chiffrés sur ce téléphone avec votre phrase secrète, puis enregistrés sur votre compte MusicStream. Le serveur ne voit jamais leur contenu, et vos fichiers audio ne sont jamais envoyés.';
 
   @override
   String get syncFailed =>
-      'Synchronisation impossible. Vérifiez la connexion au serveur.';
+      'Synchronisation impossible. Vérifiez votre connexion.';
+
+  @override
+  String get syncForgotPassword => 'Mot de passe oublié ?';
 
   @override
   String syncLastRun(String date) {
@@ -1199,14 +1231,13 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get syncNeedsWebdav =>
-      'Ajoutez d’abord un serveur WebDAV dans l’onglet Serveurs.';
-
-  @override
   String get syncNever => 'Jamais synchronisé';
 
   @override
   String get syncNow => 'Synchroniser maintenant';
+
+  @override
+  String get syncOr => 'ou';
 
   @override
   String get syncPassphrase => 'Phrase secrète';
@@ -1223,26 +1254,42 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les deux phrases secrètes ne correspondent pas.';
 
   @override
+  String get syncPassphraseStep =>
+      'Choisissez la phrase secrète qui chiffre vos données. Elle est distincte du mot de passe du compte et sert sur chaque appareil.';
+
+  @override
   String get syncPassphraseTooShort => 'Utilisez au moins 8 caractères.';
 
   @override
-  String get syncServer => 'Serveur';
+  String get syncPassword => 'Mot de passe';
 
   @override
-  String get syncServerMissing =>
-      'Le serveur de synchronisation n’existe plus. Désactivez puis réactivez la synchronisation.';
+  String get syncResetSent => 'E-mail de réinitialisation envoyé.';
+
+  @override
+  String get syncSignIn => 'Se connecter';
+
+  @override
+  String get syncSignInGoogle => 'Continuer avec Google';
+
+  @override
+  String get syncSignOut => 'Se déconnecter';
+
+  @override
+  String syncSignedInAs(String account) {
+    return 'Connecté : $account';
+  }
 
   @override
   String get syncTitle => 'Synchronisation chiffrée';
 
   @override
-  String syncWriteForbidden(int status) {
-    return 'Le serveur refuse d’écrire le fichier de synchronisation (HTTP $status). Ce compte peut lire mais pas écrire en WebDAV : autorisez l’écriture sur le serveur (AList : permission « Gérer WebDAV ») puis réessayez.';
-  }
+  String get syncUnavailable =>
+      'La synchronisation n’est pas configurée dans cette version de l’application.';
 
   @override
   String get syncWrongPassphrase =>
-      'Cette phrase secrète n’ouvre pas le fichier de synchronisation de ce serveur.';
+      'Cette phrase secrète n’ouvre pas les données synchronisées de ce compte.';
 
   @override
   String get theme => 'Thème';

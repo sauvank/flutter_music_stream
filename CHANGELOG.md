@@ -2,6 +2,7 @@
 
 ## Modifications récentes
 
+- Synchronisation par compte Firebase (projet dédié) : connexion Google ou e-mail/mot de passe (création de compte, mot de passe oublié), enveloppe AES-256-GCM inchangée stockée dans Firestore `users/{uid}` avec contrôle de révision transactionnel, règles limitant chaque compte à son document (vérifiées par REST : 403 sur un autre document, un champ en clair ou sans authentification). Remplace la synchronisation WebDAV. Config Firebase hors dépôt (`docs/SETUP.md`). FlutterFire fixé à la génération compatible Kotlin 1.9.
 - Identité visuelle : icône adaptive Android (dégradé violet→rose, glyphe égaliseur, variante monochrome pour les icônes à thème), PNG anciens formats et iOS, logo de démarrage, fond du splash Android 12+, et icône blanche dédiée pour la notification de lecture. Tout est généré par `scripts/generate_branding.py` à partir d’une seule géométrie, d’après `assets/branding/reference_sheet.jpg`.
 - Recherche : insensible aux accents (« beyonce » trouve « Beyoncé »), bouton pour effacer, playlists correspondantes affichées au-dessus des morceaux et filtrées dans l’onglet Playlists, et 8 recherches récentes (`recent_searches_v1`) proposées quand le champ vide a le focus. Une recherche est retenue à la validation ou quand on lance un résultat.
 - Écran Lecture teinté par la pochette : `ColorScheme.fromImageProvider` (sur une miniature 96 px, cache de 64 schémas) colore le fond en dégradé et les contrôles, avec une transition de 600 ms entre morceaux. Sans pochette, les couleurs de l’app restent.
