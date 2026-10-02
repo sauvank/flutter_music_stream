@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -43,13 +44,17 @@ Future<void> main() async {
               AppLocalizations.supportedLocales,
             ),
       );
-  await JustAudioBackground.init(
-    androidNotificationChannelId: 'com.sauvank.musicstream.audio',
-    androidNotificationChannelName: localizations().audioChannelName,
-    androidNotificationOngoing: true,
-    // A white glyph: the launcher icon would render as a blank square.
-    androidNotificationIcon: 'drawable/ic_stat_musicstream',
-  );
+  // just_audio_background only exists on mobile and macOS; Windows plays
+  // through just_audio_windows without system media controls.
+  if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS) {
+    await JustAudioBackground.init(
+      androidNotificationChannelId: 'com.sauvank.musicstream.audio',
+      androidNotificationChannelName: localizations().audioChannelName,
+      androidNotificationOngoing: true,
+      // A white glyph: the launcher icon would render as a blank square.
+      androidNotificationIcon: 'drawable/ic_stat_musicstream',
+    );
+  }
   final library = LibraryProvider(LibraryService(), PlaylistService());
   final downloads = DownloadQueueProvider(library);
   final servers = ServerProvider(
