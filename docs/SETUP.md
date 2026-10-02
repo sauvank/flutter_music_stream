@@ -24,3 +24,25 @@ firebase apps:sdkconfig IOS <appId iOS> -o ios/Runner/GoogleService-Info.plist
 - iOS (non testé) : ajouter le `REVERSED_CLIENT_ID` du plist comme URL scheme
   dans `Info.plist` pour Google Sign-In, et une cible iOS 13 minimum pour
   `cloud_firestore`.
+
+## Publication Google Play automatique
+
+`.github/workflows/release.yml` construit l’`.aab` signé et l’envoie à Google
+Play à chaque tag `v*` (créé par `scripts/bump_and_push.sh`), sur la piste
+**internal**. Lancer le workflow à la main (« Run workflow ») permet de choisir
+une autre piste (`alpha`, `beta`, `production`).
+
+Secrets GitHub du dépôt :
+
+- `UPLOAD_KEYSTORE_BASE64`, `UPLOAD_KEYSTORE_PASSWORD` : clé d’envoi (alias
+  `upload`, mot de passe de stockage = mot de passe de clé), gardée hors dépôt
+  dans `~/.musicstream-keys/`.
+- `GOOGLE_SERVICES_JSON_BASE64` : `android/app/google-services.json`.
+- `PLAY_SERVICE_ACCOUNT_JSON` : clé JSON d’un compte de service Google Cloud
+  invité dans la Play Console (Utilisateurs et autorisations) avec le droit de
+  publier des versions. À créer une fois.
+
+Le premier `.aab` d’une nouvelle application doit être envoyé à la main dans la
+Play Console. Google Sign-In depuis Play exige aussi l’empreinte **SHA-1** de la
+clé de signature Play (page « Intégrité de l’appli ») dans Firebase :
+`firebase apps:android:sha:create <appId> <sha1>`.

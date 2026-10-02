@@ -40,6 +40,8 @@
 
 ## À venir
 
+- [ ] Publication automatique : workflow prêt (`release.yml`), reste à créer le compte de service Play et le secret `PLAY_SERVICE_ACCOUNT_JSON` (voir `docs/SETUP.md`), puis à ajouter le SHA-1 de la clé de signature Play à Firebase.
+
 
 ## Différé
 
