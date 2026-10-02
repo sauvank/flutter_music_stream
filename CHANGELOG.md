@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- Écran Lecture : le nom de l’artiste (en couleur) ouvre la liste de tous ses morceaux de la bibliothèque, avec lecture d’un titre, « tout lire » et aléatoire (`showArtistTracks`).
+- Version Windows : le service audio d’arrière-plan n’est initialisé que sur Android, iOS et macOS, `just_audio_windows` fournit le moteur audio; le workflow `build_and_release.yml` joint APK signés et zip Windows à la release GitHub de chaque tag. Build Windows non testé sur machine.
 - v0.1.63 : la reprise de session recharge bien le morceau en cours (le premier événement d’index 0 émis au chargement de la file écrasait le morceau sauvegardé ; ignoré via `_restoreIndex`). Passe d’ergonomie vérifiée sur Galaxy S24.
 - Synchronisation par compte Firebase (projet dédié) : connexion Google ou e-mail/mot de passe (création de compte, mot de passe oublié), enveloppe AES-256-GCM inchangée stockée dans Firestore `users/{uid}` avec contrôle de révision transactionnel, règles limitant chaque compte à son document (vérifiées par REST : 403 sur un autre document, un champ en clair ou sans authentification). Remplace la synchronisation WebDAV. Config Firebase hors dépôt (`docs/SETUP.md`). FlutterFire fixé à la génération compatible Kotlin 1.9.
 - Identité visuelle : icône adaptive Android (dégradé violet→rose, glyphe égaliseur, variante monochrome pour les icônes à thème), PNG anciens formats et iOS, logo de démarrage, fond du splash Android 12+, et icône blanche dédiée pour la notification de lecture. Tout est généré par `scripts/generate_branding.py` à partir d’une seule géométrie, d’après `assets/branding/reference_sheet.jpg`.

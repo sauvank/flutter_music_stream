@@ -710,6 +710,18 @@ class _CollectionCard extends StatelessWidget {
       );
 }
 
+/// Opens the list of every library track by [artist], ready to play.
+void showArtistTracks(BuildContext context, String artist) {
+  final tracks = context
+      .read<LibraryProvider>()
+      .allTracks
+      .where((track) => track.artist == artist)
+      .toList();
+  Navigator.of(context).push(MaterialPageRoute<void>(
+    builder: (_) => _CollectionScreen(title: artist, tracks: tracks),
+  ));
+}
+
 class _CollectionScreen extends StatelessWidget {
   const _CollectionScreen({required this.title, required this.tracks});
   final String title;

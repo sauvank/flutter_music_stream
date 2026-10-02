@@ -12,9 +12,9 @@ import '../providers/player_provider.dart';
 import '../services/audio_output_service.dart';
 import '../widgets/audio_visualizer.dart';
 import '../widgets/track_artwork.dart';
-import 'library_screen.dart' show showAddToPlaylistSheet;
 import 'lyrics_sheet.dart';
 import '../l10n/l10n.dart';
+import 'library_screen.dart';
 
 class NowPlayingScreen extends StatelessWidget {
   const NowPlayingScreen({super.key, this.onClose});
@@ -193,20 +193,7 @@ class NowPlayingScreen extends StatelessWidget {
                             style: _titleStyle(context),
                           ),
                           const SizedBox(height: 5),
-                          Text(
-                            '${context.l10n.metadata(track.artist)}  •  '
-                            '${context.l10n.metadata(track.album)}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
-                          ),
+                          _ArtistAlbumLine(track: track),
                         ],
                       ),
                     ),
@@ -836,4 +823,48 @@ class _NothingPlaying extends StatelessWidget {
 void _tap(Future<void> Function() action) {
   HapticFeedback.lightImpact();
   action();
+}
+
+/// "Artist • Album"; tapping the artist lists all of their tracks.
+class _ArtistAlbumLine extends StatelessWidget {
+  const _ArtistAlbumLine({required this.track});
+  final MusicTrack track;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.titleMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        );
+    final known = track.artist != MusicTrack.unknownArtist;
+    return Row(
+      children: [
+        Flexible(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: known ? () => showArtistTracks(context, track.artist) : null,
+            child: Text(
+              context.l10n.metadata(track.artist),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: known
+                  ? style?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    )
+                  : style,
+            ),
+          ),
+        ),
+        Text('  •  ', style: style),
+        Flexible(
+          child: Text(
+            context.l10n.metadata(track.album),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: style,
+          ),
+        ),
+      ],
+    );
+  }
 }
