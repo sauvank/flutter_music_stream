@@ -1626,10 +1626,9 @@ class _TrackTileState extends State<_TrackTile> {
                 ),
                 const SizedBox(width: 13),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final title = Row(
                         children: [
                           if (current) ...[
                             Icon(Icons.graphic_eq_rounded,
@@ -1646,15 +1645,47 @@ class _TrackTileState extends State<_TrackTile> {
                                 )),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                          '${context.l10n.metadata(track.artist)}  •  '
-                          '${context.l10n.metadata(track.album)}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall),
-                    ],
+                      );
+                      final detail = Theme.of(context).textTheme.bodySmall;
+                      // Wide rows lay title, artist and album out as columns
+                      // instead of stretching one "artist • album" line.
+                      if (constraints.maxWidth >= 620) {
+                        return Row(
+                          children: [
+                            Expanded(flex: 5, child: title),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 3,
+                              child: Text(context.l10n.metadata(track.artist),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: detail),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 3,
+                              child: Text(context.l10n.metadata(track.album),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: detail),
+                            ),
+                          ],
+                        );
+                      }
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          title,
+                          const SizedBox(height: 3),
+                          Text(
+                              '${context.l10n.metadata(track.artist)}  •  '
+                              '${context.l10n.metadata(track.album)}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: detail),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 if (track.durationMs != null)

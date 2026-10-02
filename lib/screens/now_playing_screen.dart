@@ -64,7 +64,11 @@ class NowPlayingScreen extends StatelessWidget {
               parent: AlwaysScrollableScrollPhysics(),
             ),
             padding: const EdgeInsets.fromLTRB(22, 18, 22, 190),
-            child: Column(
+            // Keep the controls a readable width on desktop-sized windows.
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Column(
               children: [
                 Row(
                   children: [
@@ -435,6 +439,8 @@ class NowPlayingScreen extends StatelessWidget {
                   ],
                 ),
               ],
+            ),
+              ),
             ),
           ),
         ),

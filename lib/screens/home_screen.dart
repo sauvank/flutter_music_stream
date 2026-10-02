@@ -207,7 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
     List<Widget> screens,
     bool dark,
   ) =>
-      Scaffold(
+      _DesktopShortcuts(child: Scaffold(
         backgroundColor: Colors.transparent,
         body: _Background(
           dark: dark,
@@ -267,7 +267,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: Stack(
                     children: [
-                      IndexedStack(index: _index, children: screens),
+                      IndexedStack(index: _index, children: [
+                        for (final (i, screen) in screens.indexed)
+                          Align(
+                            alignment: Alignment.topCenter,
+                            child: ConstrainedBox(
+                              // Settings and server cards stay readable instead
+                              // of stretching across the whole window.
+                              constraints: BoxConstraints(
+                                maxWidth: switch (i) {
+                                  1 => 1000,
+                                  3 => 760,
+                                  _ => double.infinity,
+                                },
+                              ),
+                              child: screen,
+                            ),
+                          ),
+                      ]),
                       Align(
                         alignment: Alignment.bottomCenter,
                         child: ConstrainedBox(
@@ -287,7 +304,52 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-      );
+      ));
+}
+
+/// Keyboard control for desktop windows: space plays or pauses, the arrows
+/// seek by 10 seconds, and Ctrl+arrows change track. Text fields keep their
+/// own keys because shortcuts only fire when nothing editable has focus.
+class _DesktopShortcuts extends StatelessWidget {
+  const _DesktopShortcuts({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final player = context.read<PlayerProvider>();
+    bool typing() =>
+        FocusManager.instance.primaryFocus?.context
+            ?.findAncestorWidgetOfExactType<EditableText>() !=
+        null;
+    void seekBy(int seconds) {
+      final target = player.position + Duration(seconds: seconds);
+      player.seek(target < Duration.zero ? Duration.zero : target);
+    }
+
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.space): () {
+          if (!typing()) player.toggle();
+        },
+        const SingleActivator(LogicalKeyboardKey.arrowRight): () {
+          if (!typing()) seekBy(10);
+        },
+        const SingleActivator(LogicalKeyboardKey.arrowLeft): () {
+          if (!typing()) seekBy(-10);
+        },
+        const SingleActivator(LogicalKeyboardKey.arrowRight, control: true):
+            player.next,
+        const SingleActivator(LogicalKeyboardKey.arrowLeft, control: true):
+            player.previous,
+        const SingleActivator(LogicalKeyboardKey.mediaPlayPause):
+            player.toggle,
+        const SingleActivator(LogicalKeyboardKey.mediaTrackNext): player.next,
+        const SingleActivator(LogicalKeyboardKey.mediaTrackPrevious):
+            player.previous,
+      },
+      child: Focus(autofocus: true, child: child),
+    );
+  }
 }
 
 class _Background extends StatelessWidget {

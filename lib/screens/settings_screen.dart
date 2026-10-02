@@ -83,8 +83,10 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 22),
           _SectionLabel(context.l10n.sectionLibrary),
           const SizedBox(height: 8),
-          const _DeviceMediaTile(),
-          const SizedBox(height: 14),
+          if (Platform.isAndroid) ...[
+            const _DeviceMediaTile(),
+            const SizedBox(height: 14),
+          ],
           _ActionCard(
             icon: Icons.library_add_rounded,
             colors: const [Color(0xFF7C4DFF), Color(0xFFEC407A)],
