@@ -89,10 +89,13 @@ class _HomeScreenState extends State<HomeScreen> {
       // Hidden, it must not keep the live visualizer running.
       TickerMode(
         enabled: _index == 2,
-        child: NowPlayingScreen(onClose: () {
-          // A single pull may report several times; close only once.
-          if (_index == 2) _handleBack();
-        }),
+        child: _RiseOnShow(
+          visible: _index == 2,
+          child: NowPlayingScreen(onClose: () {
+            // A single pull may report several times; close only once.
+            if (_index == 2) _handleBack();
+          }),
+        ),
       ),
       const SettingsScreen(),
     ];
@@ -443,6 +446,49 @@ class _MiniPlayer extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Slides its child up into place each time its tab becomes visible, so
+/// Now Playing seems to rise from the mini player.
+class _RiseOnShow extends StatefulWidget {
+  const _RiseOnShow({required this.visible, required this.child});
+  final bool visible;
+  final Widget child;
+
+  @override
+  State<_RiseOnShow> createState() => _RiseOnShowState();
+}
+
+class _RiseOnShowState extends State<_RiseOnShow>
+    with SingleTickerProviderStateMixin {
+  late final _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 380),
+    value: widget.visible ? 1 : 0,
+  );
+  late final _curve =
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+  late final _offset =
+      Tween(begin: const Offset(0, .12), end: Offset.zero).animate(_curve);
+
+  @override
+  void didUpdateWidget(_RiseOnShow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.visible && !oldWidget.visible) _controller.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _curve.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => FadeTransition(
+        opacity: _curve,
+        child: SlideTransition(position: _offset, child: widget.child),
+      );
 }
 
 /// Playback buttons answer with a light tap, like system media controls.

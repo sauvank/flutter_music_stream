@@ -2,6 +2,7 @@
 
 ## Modifications récentes
 
+- L’écran Lecture apparaît en glissant vers le haut avec un fondu (380 ms) à chaque ouverture, au lieu d’un changement d’onglet sec.
 - Écran Lecture : tirer vers le bas depuis le haut revient à l’onglet précédent, et glisser la pochette à gauche/droite change de morceau.
 - Retours haptiques : lecture/pause, précédent/suivant et aléatoire (écran Lecture et mini-lecteur), glissement du mini-lecteur, début d’un déplacement dans la file ou une playlist, retrait d’un morceau par glissement.
 - Reprise de session : la file et le morceau en cours sont mémorisés (`playback_queue_v1`) et rechargés en pause au lancement, à la dernière position connue. Seuls les morceaux encore dans la bibliothèque reviennent (les flux serveur exigent leurs identifiants).
