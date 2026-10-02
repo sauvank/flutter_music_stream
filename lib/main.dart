@@ -54,6 +54,7 @@ Future<void> main() async {
   final playbackSettings = PlaybackSettingsService();
   final fadeDuration = await playbackSettings.loadFadeDuration();
   final volume = await playbackSettings.loadVolume();
+  final savedQueue = await playbackSettings.loadQueue();
   await library.load();
   // The native downloader takes up to a second to start; keep it off the
   // first frame. Orphan cleanup runs first so resumed downloads cannot race
@@ -85,6 +86,7 @@ Future<void> main() async {
     playbackSettings: playbackSettings,
     fadeDuration: fadeDuration,
     volume: volume,
+    savedQueue: savedQueue,
   ));
 }
 
@@ -100,6 +102,7 @@ class MusicStreamApp extends StatelessWidget {
     required this.playbackSettings,
     required this.fadeDuration,
     required this.volume,
+    this.savedQueue,
   });
   final LibraryProvider library;
   final DownloadQueueProvider downloads;
@@ -110,6 +113,21 @@ class MusicStreamApp extends StatelessWidget {
   final PlaybackSettingsService playbackSettings;
   final Duration fadeDuration;
   final double volume;
+  final ({List<String> trackIds, String? currentId})? savedQueue;
+
+  /// Reloads the last session paused. Streams from servers need their
+  /// credentials, so only tracks still in the library come back.
+  PlayerProvider _restoreQueue(PlayerProvider player) {
+    final saved = savedQueue;
+    if (saved != null) {
+      unawaited(player
+          .restoreQueue(library.tracksByIds(saved.trackIds), saved.currentId)
+          .catchError((Object error) {
+        debugPrint('Queue restore failed: $error');
+      }));
+    }
+    return player;
+  }
 
   @override
   Widget build(BuildContext context) => MultiProvider(
@@ -120,7 +138,7 @@ class MusicStreamApp extends StatelessWidget {
           ChangeNotifierProvider.value(value: sync),
           ChangeNotifierProvider.value(value: appearance),
           ChangeNotifierProvider(
-            create: (_) => PlayerProvider(
+            create: (_) => _restoreQueue(PlayerProvider(
               onPositionChanged: library.savePosition,
               onTrackListened: library.recordPlayed,
               onCurrentTrackChanged: (track) async {
@@ -148,7 +166,9 @@ class MusicStreamApp extends StatelessWidget {
               volume: volume,
               onFadeDurationChanged: playbackSettings.saveFadeDuration,
               onVolumeChanged: playbackSettings.saveVolume,
-            ),
+              onQueueChanged: (ids, currentId) => unawaited(
+                  playbackSettings.saveQueue(ids, currentId)),
+            )),
           ),
         ],
         child: Builder(

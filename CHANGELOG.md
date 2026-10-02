@@ -2,6 +2,7 @@
 
 ## Modifications récentes
 
+- Reprise de session : la file et le morceau en cours sont mémorisés (`playback_queue_v1`) et rechargés en pause au lancement, à la dernière position connue. Seuls les morceaux encore dans la bibliothèque reviennent (les flux serveur exigent leurs identifiants).
 - Minuterie de sommeil (icône lune de l’écran Lecture) : 15 à 90 min avec un fondu de 8 s avant la pause, ou pause à la fin naturelle du morceau (un saut manuel ne la déclenche pas). Le compte à rebours s’affiche sous « Lecture en cours ».
 - Vignettes de playlist : bouton de lecture aléatoire directement sur la pochette.
 - Playlist : glisser un morceau vers la gauche le retire, et un message « Annuler » le remet à sa place (`LibraryProvider.restoreTrackToPlaylist`). Le retrait par le menu propose aussi l’annulation.

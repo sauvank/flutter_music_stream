@@ -226,6 +226,35 @@ void main() {
     player.dispose();
   });
 
+  test('saves the queue and restores it paused at the current track',
+      () async {
+    final saved = <({List<String> ids, String? current})>[];
+    final audioPlayer = _FakeAudioPlayer();
+    final player = PlayerProvider(
+      audioPlayer: audioPlayer,
+      fadeDuration: Duration.zero,
+      onQueueChanged: (ids, current) => saved.add((ids: ids, current: current)),
+    );
+    final tracks = [_track('1'), _track('2'), _track('3')];
+    await player.playTrack(tracks[1], tracks);
+    await Future<void>.delayed(Duration.zero);
+    expect(saved.last.ids, ['1', '2', '3']);
+    expect(saved.last.current, '2');
+    player.dispose();
+
+    final restoredPlayer = _FakeAudioPlayer();
+    final restored = PlayerProvider(
+      audioPlayer: restoredPlayer,
+      fadeDuration: Duration.zero,
+    );
+    await restored.restoreQueue(tracks, '2');
+    expect(restored.queue.map((track) => track.id), ['1', '2', '3']);
+    expect(restored.current?.id, '2');
+    expect(restoredPlayer.index, 1);
+    expect(restoredPlayer.playing, isFalse);
+    restored.dispose();
+  });
+
   test('announces the current track once for automatic enrichment', () async {
     final announced = <String>[];
     final player = PlayerProvider(

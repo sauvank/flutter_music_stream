@@ -16,6 +16,7 @@ class PlayerProvider extends ChangeNotifier {
     this.onCurrentTrackChanged,
     this.displayMetadata,
     this.onNowPlayingChanged,
+    this.onQueueChanged,
     Duration fadeDuration = const Duration(milliseconds: 500),
     double volume = 1,
     AudioPlayer? audioPlayer,
@@ -77,9 +78,21 @@ class PlayerProvider extends ChangeNotifier {
   final void Function(MusicTrack? track, bool playing)? onNowPlayingChanged;
   String? _nowPlayingKey;
 
+  /// Called when the queue or its current track changes, so the session
+  /// can be restored on the next launch.
+  final void Function(List<String> trackIds, String? currentId)? onQueueChanged;
+  int _queueRevision = 0;
+  String? _queueKey;
+
   @override
   void notifyListeners() {
     super.notifyListeners();
+    final queueCallback = onQueueChanged;
+    final queueKey = '$_queueRevision|${_current?.id}';
+    if (queueCallback != null && queueKey != _queueKey) {
+      _queueKey = queueKey;
+      queueCallback([for (final track in _queue) track.id], _current?.id);
+    }
     final callback = onNowPlayingChanged;
     if (callback == null) return;
     final key = '${_current?.id}|${_player.playing}';
@@ -165,9 +178,29 @@ class PlayerProvider extends ChangeNotifier {
     }
   }
 
+  /// Loads a saved queue paused, ready to resume where it stopped.
+  Future<void> restoreQueue(List<MusicTrack> tracks, String? currentId) async {
+    if (tracks.isEmpty || _queue.isNotEmpty) return;
+    final index =
+        tracks.indexWhere((track) => track.id == currentId).clamp(0, 1 << 30);
+    final track = tracks[index];
+    _queue = List.of(tracks);
+    _queueRevision++;
+    _current = track;
+    _resetListeningSession(track, force: true);
+    await _player.setAudioSources(
+      tracks.map(_audioSource).toList(),
+      initialIndex: index,
+      initialPosition: Duration(milliseconds: track.lastPositionMs),
+      preload: false,
+    );
+    notifyListeners();
+  }
+
   Future<void> playTrack(MusicTrack track, List<MusicTrack> library) async {
     final startIndex = library.indexWhere((item) => item.id == track.id);
     _queue = List.of(library);
+    _queueRevision++;
     final sources = library.map(_audioSource).toList();
     await _player.setAudioSources(
       sources,
@@ -238,6 +271,7 @@ class PlayerProvider extends ChangeNotifier {
     if (tracks.isEmpty) return;
     final index = startIndex.clamp(0, tracks.length - 1);
     _queue = List.of(tracks);
+    _queueRevision++;
     _current = _queue[index];
     _resetListeningSession(_current, force: true);
     _announceTrack();
@@ -281,6 +315,7 @@ class PlayerProvider extends ChangeNotifier {
     final insertionIndex = (index + 1).clamp(0, _queue.length);
     await _player.insertAudioSource(insertionIndex, _audioSource(track));
     _queue.insert(insertionIndex, track);
+    _queueRevision++;
     notifyListeners();
   }
 
@@ -291,18 +326,21 @@ class PlayerProvider extends ChangeNotifier {
     }
     await _player.addAudioSource(_audioSource(track));
     _queue.add(track);
+    _queueRevision++;
     notifyListeners();
   }
 
   Future<void> removeFromQueue(int index) async {
     if (index < 0 || index >= _queue.length) return;
     final removed = _queue.removeAt(index);
+    _queueRevision++;
     if (_queue.isEmpty) _current = null;
     notifyListeners();
     try {
       await _player.removeAudioSourceAt(index);
     } catch (_) {
       _queue.insert(index, removed);
+      _queueRevision++;
       _syncCurrentTrack();
       notifyListeners();
       rethrow;
@@ -330,12 +368,14 @@ class PlayerProvider extends ChangeNotifier {
     }
     final track = _queue.removeAt(oldIndex);
     _queue.insert(newIndex, track);
+    _queueRevision++;
     notifyListeners();
     try {
       await _player.moveAudioSource(oldIndex, newIndex);
     } catch (_) {
       _queue.removeAt(newIndex);
       _queue.insert(oldIndex, track);
+      _queueRevision++;
       _syncCurrentTrack();
       notifyListeners();
       rethrow;

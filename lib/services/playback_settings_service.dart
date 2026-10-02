@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PlaybackSettingsService {
   static const _fadeDurationKey = 'playback_fade_duration_ms';
   static const _volumeKey = 'playback_volume';
+  static const _queueKey = 'playback_queue_v1';
   static const defaultFadeDuration = Duration(milliseconds: 500);
   static const defaultVolume = 1.0;
   static const supportedFadeDurations = [
@@ -49,5 +52,27 @@ class PlaybackSettingsService {
       throw ArgumentError.value(volume, 'volume', 'Volume must be from 0 to 1');
     }
     await (await SharedPreferences.getInstance()).setDouble(_volumeKey, volume);
+  }
+
+  /// The last queue as track ids, with the track that was playing.
+  Future<({List<String> trackIds, String? currentId})?> loadQueue() async {
+    final value = (await SharedPreferences.getInstance()).getString(_queueKey);
+    if (value == null) return null;
+    try {
+      final json = (jsonDecode(value) as Map).cast<String, Object?>();
+      return (
+        trackIds: (json['trackIds']! as List<Object?>).cast<String>(),
+        currentId: json['currentId'] as String?,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveQueue(List<String> trackIds, String? currentId) async {
+    await (await SharedPreferences.getInstance()).setString(
+      _queueKey,
+      jsonEncode({'trackIds': trackIds, 'currentId': currentId}),
+    );
   }
 }
