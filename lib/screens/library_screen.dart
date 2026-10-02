@@ -775,23 +775,40 @@ class _PlaylistCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF7C4DFF), Color(0xFFE43F83)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: tracks.isEmpty
-                      ? const Icon(Icons.queue_music_rounded,
-                          size: 56, color: Colors.white)
-                      : ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: TrackArtwork(track: tracks.first),
+                child: Stack(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF7C4DFF), Color(0xFFE43F83)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: tracks.isEmpty
+                          ? const Icon(Icons.queue_music_rounded,
+                              size: 56, color: Colors.white)
+                          : ClipRRect(
+                              borderRadius: BorderRadius.circular(24),
+                              child: TrackArtwork(track: tracks.first),
+                            ),
+                    ),
+                    if (tracks.isNotEmpty)
+                      Positioned(
+                        right: 8,
+                        bottom: 8,
+                        child: IconButton.filled(
+                          tooltip: context.l10n.shuffle,
+                          onPressed: () => context
+                              .read<PlayerProvider>()
+                              .playShuffled(tracks),
+                          icon: const Icon(Icons.shuffle_rounded),
+                        ),
+                      ),
+                  ],
                 ),
               ),
               const SizedBox(height: 10),
