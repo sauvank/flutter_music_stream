@@ -308,6 +308,18 @@ abstract class AppLocalizations {
   /// **'Effacer les terminés'**
   String get clearFinished;
 
+  /// No description provided for @clearRecentSearches.
+  ///
+  /// In fr, this message translates to:
+  /// **'Effacer'**
+  String get clearRecentSearches;
+
+  /// No description provided for @clearSearch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Effacer la recherche'**
+  String get clearSearch;
+
   /// No description provided for @clearSelection.
   ///
   /// In fr, this message translates to:
@@ -1405,6 +1417,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'{count, plural, one{Ajout de {count} morceau à la file…} other{Ajout de {count} morceaux à la file…}}'**
   String queueingTracks(int count);
+
+  /// No description provided for @recentSearches.
+  ///
+  /// In fr, this message translates to:
+  /// **'Recherches récentes'**
+  String get recentSearches;
 
   /// No description provided for @recentlyAdded.
   ///

@@ -54,6 +54,22 @@ class LibraryScreen extends StatefulWidget {
 class LibraryScreenState extends State<LibraryScreen> {
   _LibraryMode _mode = _LibraryMode.tracks;
   final _TrackSelection _selection = _TrackSelection();
+  late final _search =
+      TextEditingController(text: context.read<LibraryProvider>().query);
+  final _searchFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // Recent searches only show while the empty field has focus.
+    _searchFocus.addListener(() => setState(() {}));
+  }
+
+  void _applySearch(String value) {
+    _search.text = value;
+    final library = context.read<LibraryProvider>()..setQuery(value);
+    if (value.isNotEmpty) library.rememberSearch(value);
+  }
 
   /// Consumes a system back press to leave selection mode.
   bool handleBack() {
@@ -64,6 +80,8 @@ class LibraryScreenState extends State<LibraryScreen> {
 
   @override
   void dispose() {
+    _search.dispose();
+    _searchFocus.dispose();
     _selection.dispose();
     super.dispose();
   }
@@ -138,12 +156,36 @@ class LibraryScreenState extends State<LibraryScreen> {
               padding: const WidgetStatePropertyAll(
                 EdgeInsets.symmetric(horizontal: 18),
               ),
+              controller: _search,
+              focusNode: _searchFocus,
               hintText: context.l10n.searchHint,
               leading: const Icon(Icons.search_rounded),
+              trailing: [
+                if (library.query.isNotEmpty)
+                  IconButton(
+                    tooltip: context.l10n.clearSearch,
+                    onPressed: () => _applySearch(''),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+              ],
               onChanged: library.setQuery,
+              onSubmitted: library.rememberSearch,
             ),
           ),
         ),
+        if (_searchFocus.hasFocus &&
+            library.query.isEmpty &&
+            library.recentSearches.isNotEmpty)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            sliver: SliverToBoxAdapter(
+              child: _RecentSearches(
+                searches: library.recentSearches,
+                onSelected: _applySearch,
+                onClear: library.clearRecentSearches,
+              ),
+            ),
+          ),
         SliverToBoxAdapter(
           child: SizedBox(
             height: 54,
@@ -188,8 +230,13 @@ class LibraryScreenState extends State<LibraryScreen> {
               hasScrollBody: false,
               child: _EmptyPlaylists(onCreate: () => _createPlaylist(context)),
             )
+          else if (library.matchingPlaylists.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: _NoResults(),
+            )
           else
-            _PlaylistGrid(playlists: library.playlists),
+            _PlaylistGrid(playlists: library.matchingPlaylists),
           const SliverToBoxAdapter(child: SizedBox(height: 190)),
         ] else if (library.trackCount == 0)
           SliverFillRemaining(
@@ -236,6 +283,11 @@ class LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
         ] else if (_mode == _LibraryMode.tracks) ...[
+          if (library.query.trim().isNotEmpty &&
+              library.matchingPlaylists.isNotEmpty)
+            SliverToBoxAdapter(
+              child: _PlaylistResults(playlists: library.matchingPlaylists),
+            ),
           SliverToBoxAdapter(child: _RecentTracks(tracks: tracks)),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 26, 20, 10),
@@ -753,6 +805,81 @@ class _PlaylistGrid extends StatelessWidget {
             ),
           );
         },
+      );
+}
+
+class _RecentSearches extends StatelessWidget {
+  const _RecentSearches({
+    required this.searches,
+    required this.onSelected,
+    required this.onClear,
+  });
+  final List<String> searches;
+  final ValueChanged<String> onSelected;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(context.l10n.recentSearches,
+                    style: Theme.of(context).textTheme.labelLarge),
+              ),
+              TextButton(
+                onPressed: onClear,
+                child: Text(context.l10n.clearRecentSearches),
+              ),
+            ],
+          ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final search in searches)
+                ActionChip(
+                  avatar: const Icon(Icons.history_rounded, size: 18),
+                  label: Text(search),
+                  onPressed: () => onSelected(search),
+                ),
+            ],
+          ),
+        ],
+      );
+}
+
+/// Playlists matching the search, above the matching tracks.
+class _PlaylistResults extends StatelessWidget {
+  const _PlaylistResults({required this.playlists});
+  final List<MusicPlaylist> playlists;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+            child: _SectionTitle(
+              title: context.l10n.modePlaylists,
+              detail: context.l10n.playlistCount(playlists.length),
+            ),
+          ),
+          SizedBox(
+            height: 200,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              scrollDirection: Axis.horizontal,
+              itemCount: playlists.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 6),
+              itemBuilder: (context, index) => SizedBox(
+                width: 160,
+                child: _PlaylistCard(playlist: playlists[index]),
+              ),
+            ),
+          ),
+        ],
       );
 }
 
@@ -1430,6 +1557,9 @@ class _TrackTileState extends State<_TrackTile> {
 
   /// Inside a playlist, starting a track also opens Now Playing.
   void _play(BuildContext context) {
+    final library = context.read<LibraryProvider>();
+    // A search that led to playback is worth suggesting again.
+    if (library.query.trim().isNotEmpty) library.rememberSearch(library.query);
     context.read<PlayerProvider>().playTrack(widget.track, widget.queue);
     if (widget.playlistId != null) HomeScreen.openNowPlaying(context);
   }

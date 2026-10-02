@@ -151,6 +151,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearFinished => 'Clear finished';
 
   @override
+  String get clearRecentSearches => 'Clear';
+
+  @override
+  String get clearSearch => 'Clear search';
+
+  @override
   String get clearSelection => 'Clear selection';
 
   @override
@@ -887,6 +893,9 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get recentSearches => 'Recent searches';
 
   @override
   String get recentlyAdded => 'Recently added';

@@ -164,6 +164,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get clearFinished => 'Effacer les terminés';
 
   @override
+  String get clearRecentSearches => 'Effacer';
+
+  @override
+  String get clearSearch => 'Effacer la recherche';
+
+  @override
   String get clearSelection => 'Annuler la sélection';
 
   @override
@@ -908,6 +914,9 @@ class AppLocalizationsFr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get recentSearches => 'Recherches récentes';
 
   @override
   String get recentlyAdded => 'Ajoutés récemment';

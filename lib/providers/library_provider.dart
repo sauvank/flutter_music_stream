@@ -37,6 +37,7 @@ class LibraryProvider extends ChangeNotifier {
   bool isImporting = false;
   bool isDeleting = false;
   String query = '';
+  List<String> _recentSearches = const [];
   bool favoritesOnly = false;
   TrackSort sort = TrackSort.title;
 
@@ -67,13 +68,13 @@ class LibraryProvider extends ChangeNotifier {
   List<MusicTrack> get tracks {
     final cached = _tracksCache;
     if (cached != null) return cached;
-    final needle = query.trim().toLowerCase();
+    final needle = _fold(query);
     final filtered = _tracks.where((track) {
       if (favoritesOnly && !track.favorite) return false;
       return needle.isEmpty ||
-          track.title.toLowerCase().contains(needle) ||
-          track.artist.toLowerCase().contains(needle) ||
-          track.album.toLowerCase().contains(needle);
+          _fold(track.title).contains(needle) ||
+          _fold(track.artist).contains(needle) ||
+          _fold(track.album).contains(needle);
     });
     return _tracksCache = List.unmodifiable(sortTracks(filtered, sort));
   }
@@ -159,6 +160,7 @@ class LibraryProvider extends ChangeNotifier {
   Future<void> load() async {
     final playlists = await _playlistService.load();
     final savedSort = await _service.loadSort();
+    _recentSearches = await _service.loadRecentSearches();
     sort = TrackSort.values
             .where((value) => value.name == savedSort)
             .firstOrNull ??
@@ -549,6 +551,39 @@ class LibraryProvider extends ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  /// Latest searches first, used as suggestions when the field is empty.
+  List<String> get recentSearches => List.unmodifiable(_recentSearches);
+
+  /// Playlists whose name or description matches the search, ignoring
+  /// case and accents.
+  List<MusicPlaylist> get matchingPlaylists {
+    final needle = _fold(query);
+    if (needle.isEmpty) return playlists;
+    return _playlists
+        .where((playlist) =>
+            _fold(playlist.name).contains(needle) ||
+            _fold(playlist.description).contains(needle))
+        .toList();
+  }
+
+  Future<void> rememberSearch(String value) async {
+    final search = value.trim();
+    if (search.length < 2) return;
+    final folded = _fold(search);
+    _recentSearches = [
+      search,
+      ..._recentSearches.where((item) => _fold(item) != folded),
+    ].take(8).toList();
+    notifyListeners();
+    await _service.saveRecentSearches(_recentSearches);
+  }
+
+  Future<void> clearRecentSearches() async {
+    _recentSearches = const [];
+    notifyListeners();
+    await _service.saveRecentSearches(const []);
   }
 
   void setQuery(String value) {

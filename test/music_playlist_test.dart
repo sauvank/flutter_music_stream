@@ -99,6 +99,42 @@ void main() {
     expect(playlistService.saved.single.trackIds, ['a', 'b', 'c']);
   });
 
+  test('search ignores accents, finds playlists and remembers queries',
+      () async {
+    final provider = LibraryProvider(
+      _MemoryLibraryService([
+        MusicTrack(
+          id: 'a',
+          title: 'Déjà vu',
+          artist: 'Beyoncé',
+          uri: 'file:///media/music/a.mp3',
+          addedAt: DateTime.utc(2026),
+          metadataRead: true,
+        ),
+      ]),
+      _MemoryPlaylistService(),
+    );
+    await provider.load();
+    await provider.createPlaylist('Soirée');
+    await provider.createPlaylist('Sport');
+
+    provider.setQuery('beyonce');
+    expect(provider.tracks.single.id, 'a');
+    provider.setQuery('SOIREE');
+    expect(provider.matchingPlaylists.map((p) => p.name), ['Soirée']);
+
+    await provider.rememberSearch('deja');
+    await provider.rememberSearch('Sport');
+    await provider.rememberSearch('  Déjà ');
+    await provider.rememberSearch('x');
+    expect(provider.recentSearches, ['Déjà', 'Sport']);
+
+    final reloaded =
+        LibraryProvider(_MemoryLibraryService(), _MemoryPlaylistService());
+    await reloaded.load();
+    expect(reloaded.recentSearches, ['Déjà', 'Sport']);
+  });
+
   test('reads playlists saved before descriptions existed', () {
     final decoded = MusicPlaylist.decodeAll(
       '[{"id":"p","name":"Old","trackIds":[],'

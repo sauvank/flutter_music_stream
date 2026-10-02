@@ -29,6 +29,7 @@ class LibraryService {
   static const _libraryKey = 'music_library_v1';
   static const _positionsKey = 'music_positions_v1';
   static const _sortKey = 'library_sort_v1';
+  static const _recentSearchesKey = 'recent_searches_v1';
   static const _deviceMediaKey = 'device_media_enabled_v1';
   static const _hiddenDeviceMediaKey = 'device_media_hidden_v1';
   static const supportedExtensions = <String>[
@@ -185,6 +186,15 @@ class LibraryService {
 
   Future<void> saveSort(String value) async =>
       (await SharedPreferences.getInstance()).setString(_sortKey, value);
+
+  Future<List<String>> loadRecentSearches() async =>
+      (await SharedPreferences.getInstance())
+          .getStringList(_recentSearchesKey) ??
+      const [];
+
+  Future<void> saveRecentSearches(List<String> values) async =>
+      (await SharedPreferences.getInstance())
+          .setStringList(_recentSearchesKey, values);
 
   Future<void> save(List<MusicTrack> tracks) {
     final snapshot = List<MusicTrack>.of(tracks);

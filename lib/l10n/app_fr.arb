@@ -94,6 +94,8 @@
   "chooseJsonFile": "Choisir un fichier JSON",
   "clearFilter": "Effacer le filtre",
   "clearFinished": "Effacer les terminés",
+  "clearRecentSearches": "Effacer",
+  "clearSearch": "Effacer la recherche",
   "clearSelection": "Annuler la sélection",
   "close": "Fermer",
   "collectionCount": "{count, plural, one{{count} collection} other{{count} collections}}",
@@ -540,6 +542,7 @@
       }
     }
   },
+  "recentSearches": "Recherches récentes",
   "recentlyAdded": "Ajoutés récemment",
   "recentlyPlayed": "Écoutés récemment",
   "removeFavorite": "Retirer des favoris",
