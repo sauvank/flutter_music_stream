@@ -1,5 +1,6 @@
 package com.sauvank.musicstream
 
+import android.media.MediaCodecList
 import androidx.mediarouter.app.SystemOutputSwitcherDialogController
 import com.ryanheise.audioservice.AudioServiceActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -50,11 +51,19 @@ class MainActivity : AudioServiceActivity() {
                     // Falls back to Bluetooth settings where the system
                     // switcher is unavailable.
                     result.success(SystemOutputSwitcherDialogController.showDialog(this))
+                } else if (call.method == "canDecode") {
+                    result.success(canDecode(call.argument<String>("mime") ?: ""))
                 } else {
                     result.notImplemented()
                 }
             }
     }
+
+    /** Whether a platform decoder exists for [mime] (not just an encoder). */
+    private fun canDecode(mime: String): Boolean =
+        MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any { info ->
+            !info.isEncoder && info.supportedTypes.any { it.equals(mime, ignoreCase = true) }
+        }
 
     companion object {
         private const val WIDGET_CHANNEL = "com.sauvank.musicstream/widget"

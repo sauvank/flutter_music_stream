@@ -2431,6 +2431,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Tester et enregistrer'**
   String get saveAndTest;
+
+  /// No description provided for @unsupportedFlac.
+  ///
+  /// In fr, this message translates to:
+  /// **'FLAC non lisible sur cet appareil : « {title} » a été mis en pause. Essayez un fichier MP3, AAC ou Opus.'**
+  String unsupportedFlac(String title);
 }
 
 class _AppLocalizationsDelegate

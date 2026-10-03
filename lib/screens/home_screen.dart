@@ -41,6 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     HomeScreen._nowPlayingRequests.addListener(_showNowPlaying);
+    _player = context.read<PlayerProvider>()
+      ..unsupportedFormat.addListener(_explainUnsupportedFormat);
     if (Platform.isAndroid) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _offerUpdate());
     }
@@ -77,8 +79,22 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  late final PlayerProvider _player;
+
+  void _explainUnsupportedFormat() {
+    final track = _player.unsupportedFormat.value;
+    if (track == null || !mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(context.l10n.unsupportedFlac(track.title)),
+        duration: const Duration(seconds: 8),
+      ));
+  }
+
   @override
   void dispose() {
+    _player.unsupportedFormat.removeListener(_explainUnsupportedFormat);
     HomeScreen._nowPlayingRequests.removeListener(_showNowPlaying);
     super.dispose();
   }

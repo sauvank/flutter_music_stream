@@ -819,5 +819,7 @@
   "updateAction": "Mettre à jour",
   "updateLater": "Plus tard",
   "addServerHint": "Connectez un serveur WebDAV, HTTP ou FTP. La connexion est testée avant l’enregistrement.",
-  "saveAndTest": "Tester et enregistrer"
+  "saveAndTest": "Tester et enregistrer",
+  "unsupportedFlac": "FLAC non lisible sur cet appareil : « {title} » a été mis en pause. Essayez un fichier MP3, AAC ou Opus.",
+  "@unsupportedFlac": {"placeholders": {"title": {"type": "String"}}}
 }

@@ -1470,4 +1470,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get saveAndTest => 'Test and save';
+
+  @override
+  String unsupportedFlac(String title) {
+    return 'FLAC can’t be played on this device: “$title” was paused. Try an MP3, AAC or Opus file instead.';
+  }
 }

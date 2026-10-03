@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:music_reader_app/models/music_track.dart';
 import 'package:music_reader_app/providers/player_provider.dart';
+import 'package:music_reader_app/services/audio_codec_support.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +26,34 @@ void main() {
 
     expect(player.queue.map((track) => track.id), ['1', '3', '2']);
     expect(audioPlayer.shuffleEnabled, isFalse);
+    player.dispose();
+  });
+
+  test('a FLAC track on a device without a FLAC decoder is paused and reported',
+      () async {
+    final audioPlayer = _FakeAudioPlayer();
+    final player = PlayerProvider(
+      audioPlayer: audioPlayer,
+      fadeDuration: Duration.zero,
+      codecSupport: const _NoFlacDecoder(),
+    );
+    final flac = MusicTrack(
+      id: 'f',
+      title: 'Lossless',
+      uri: 'file:///music/f.FLAC',
+      addedAt: DateTime.utc(2026),
+    );
+
+    await player.playTrack(flac, [flac]);
+
+    expect(player.unsupportedFormat.value?.id, 'f');
+    expect(audioPlayer.isPlaying, isFalse);
+
+    // Other formats are never blocked.
+    final mp3 = _track('1');
+    player.unsupportedFormat.value = null;
+    await player.playTrack(mp3, [mp3]);
+    expect(player.unsupportedFormat.value, isNull);
     player.dispose();
   });
 
@@ -226,8 +255,7 @@ void main() {
     player.dispose();
   });
 
-  test('saves the queue and restores it paused at the current track',
-      () async {
+  test('saves the queue and restores it paused at the current track', () async {
     final saved = <({List<String> ids, String? current})>[];
     final audioPlayer = _FakeAudioPlayer();
     final player = PlayerProvider(
@@ -447,4 +475,11 @@ class _FakeAudioPlayer extends AudioPlayer {
       _currentIndex.close(),
     ]);
   }
+}
+
+class _NoFlacDecoder extends AudioCodecSupport {
+  const _NoFlacDecoder();
+
+  @override
+  Future<bool> canDecodeFlac() async => false;
 }

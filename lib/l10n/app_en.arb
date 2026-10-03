@@ -389,5 +389,7 @@
   "updateAction": "Update",
   "updateLater": "Later",
   "addServerHint": "Connect a WebDAV, HTTP or FTP server. The connection is tested before the server is saved.",
-  "saveAndTest": "Test and save"
+  "saveAndTest": "Test and save",
+  "unsupportedFlac": "FLAC can’t be played on this device: “{title}” was paused. Try an MP3, AAC or Opus file instead.",
+  "@unsupportedFlac": {"placeholders": {"title": {"type": "String"}}}
 }

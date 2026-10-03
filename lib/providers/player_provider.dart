@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 
 import '../models/music_track.dart';
+import '../services/audio_codec_support.dart';
 
 class PlayerProvider extends ChangeNotifier {
   PlayerProvider({
@@ -20,7 +21,9 @@ class PlayerProvider extends ChangeNotifier {
     Duration fadeDuration = const Duration(milliseconds: 500),
     double volume = 1,
     AudioPlayer? audioPlayer,
-  })  : _fadeDuration = fadeDuration,
+    AudioCodecSupport codecSupport = const AudioCodecSupport(),
+  })  : _codecSupport = codecSupport,
+        _fadeDuration = fadeDuration,
         _volume = volume.clamp(0, 1),
         _player = audioPlayer ?? AudioPlayer() {
     unawaited(_player.setVolume(_volume));
@@ -61,10 +64,32 @@ class PlayerProvider extends ChangeNotifier {
       _resetListeningSession(_current);
       _announceTrack();
       notifyListeners();
+      final track = _current;
+      if (track != null && _player.playing) unawaited(_guardFormat(track));
     }));
   }
 
+  static bool _isFlac(MusicTrack track) =>
+      Uri.parse(track.uri).path.toLowerCase().endsWith('.flac');
+
+  /// Pauses and reports [track] when this device has no decoder for it.
+  /// Returns whether playback may go on.
+  Future<bool> _guardFormat(MusicTrack track) async {
+    if (!_isFlac(track) || await _codecSupport.canDecodeFlac()) return true;
+    if (_isDisposed) return false;
+    _fadeOperation++;
+    await _player.pause();
+    await _player.setVolume(_volume);
+    unsupportedFormat.value = track;
+    return false;
+  }
+
   final AudioPlayer _player;
+  final AudioCodecSupport _codecSupport;
+
+  /// Set when the current track is in a format this device cannot decode, so
+  /// the UI can explain the silence. Playback is paused instead of pretending.
+  final ValueNotifier<MusicTrack?> unsupportedFormat = ValueNotifier(null);
   final ValueNotifier<Duration> _position = ValueNotifier(Duration.zero);
   final List<StreamSubscription<Object?>> _subscriptions = [];
   final Future<void> Function(String id, Duration position)? onPositionChanged;
@@ -444,10 +469,13 @@ class PlayerProvider extends ChangeNotifier {
     _reachedTrackEnd = false;
     return _player.seek(position);
   }
+
   Future<void> next() => _changeTrack(_player.seekToNext);
   Future<void> previous() => _changeTrack(_player.seekToPrevious);
 
   Future<void> _playWithFade() async {
+    final track = _current;
+    if (track != null && !await _guardFormat(track)) return;
     _fadeOperation++;
     if (_fadeDuration == Duration.zero) {
       await _player.setVolume(_volume);
@@ -576,6 +604,7 @@ class PlayerProvider extends ChangeNotifier {
     }
     unawaited(_player.dispose());
     _position.dispose();
+    unsupportedFormat.dispose();
     super.dispose();
   }
 }
