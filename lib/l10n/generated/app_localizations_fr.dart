@@ -1451,4 +1451,56 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get yourSources => 'VOS SOURCES';
+
+  @override
+  String get serverNameRequired => 'Saisissez un nom pour ce serveur';
+
+  @override
+  String get serverAddressInvalidHttp =>
+      'Saisissez une adresse commençant par http:// ou https://, sans utilisateur ni mot de passe';
+
+  @override
+  String get serverAddressInvalidFtp =>
+      'Saisissez une adresse commençant par ftp://, sans utilisateur ni mot de passe';
+
+  @override
+  String get showPassword => 'Afficher le mot de passe';
+
+  @override
+  String get hidePassword => 'Masquer le mot de passe';
+
+  @override
+  String get testingConnection => 'Test de la connexion…';
+
+  @override
+  String get connectionTestFailed =>
+      'Serveur injoignable. Vérifiez l’adresse et les identifiants, ou enregistrez quand même.';
+
+  @override
+  String connectionTestFailedStatus(int status) {
+    return 'Le serveur a répondu HTTP $status. Vérifiez l’adresse et les identifiants, ou enregistrez quand même.';
+  }
+
+  @override
+  String get saveAnyway => 'Enregistrer quand même';
+
+  @override
+  String get updateAvailableTitle => 'Mise à jour disponible';
+
+  @override
+  String get updateAvailableBody =>
+      'Une nouvelle version de MusicStream est disponible sur Google Play. Mettez à jour pour profiter des dernières corrections et nouveautés.';
+
+  @override
+  String get updateAction => 'Mettre à jour';
+
+  @override
+  String get updateLater => 'Plus tard';
+
+  @override
+  String get addServerHint =>
+      'Connectez un serveur WebDAV, HTTP ou FTP. La connexion est testée avant l’enregistrement.';
+
+  @override
+  String get saveAndTest => 'Tester et enregistrer';
 }

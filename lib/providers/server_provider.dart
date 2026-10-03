@@ -272,6 +272,22 @@ class ServerProvider extends ChangeNotifier {
     }
   }
 
+  /// Lists the profile's root without saving it. Returns null on success,
+  /// otherwise the exception raised while connecting.
+  Future<Object?> testConnection(ServerProfile profile, String password) async {
+    try {
+      await remoteService.list(
+        profile,
+        _normalizedRoot(profile.baseUrl),
+        password,
+      );
+      return null;
+    } catch (exception) {
+      debugPrint('Server test failed: ${exception.runtimeType}');
+      return exception;
+    }
+  }
+
   Uri _normalizedRoot(String value) {
     final uri = Uri.parse(value.trim());
     return uri.path.endsWith('/') ? uri : uri.replace(path: '${uri.path}/');

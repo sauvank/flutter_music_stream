@@ -1418,4 +1418,56 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yourSources => 'YOUR SOURCES';
+
+  @override
+  String get serverNameRequired => 'Enter a name for this server';
+
+  @override
+  String get serverAddressInvalidHttp =>
+      'Enter an address starting with http:// or https://, without a username or password';
+
+  @override
+  String get serverAddressInvalidFtp =>
+      'Enter an address starting with ftp://, without a username or password';
+
+  @override
+  String get showPassword => 'Show password';
+
+  @override
+  String get hidePassword => 'Hide password';
+
+  @override
+  String get testingConnection => 'Testing connection…';
+
+  @override
+  String get connectionTestFailed =>
+      'Could not reach the server. Check the address and credentials, or save anyway.';
+
+  @override
+  String connectionTestFailedStatus(int status) {
+    return 'The server answered with HTTP $status. Check the address and credentials, or save anyway.';
+  }
+
+  @override
+  String get saveAnyway => 'Save anyway';
+
+  @override
+  String get updateAvailableTitle => 'Update available';
+
+  @override
+  String get updateAvailableBody =>
+      'A new version of MusicStream is available on Google Play. Update to get the latest fixes and features.';
+
+  @override
+  String get updateAction => 'Update';
+
+  @override
+  String get updateLater => 'Later';
+
+  @override
+  String get addServerHint =>
+      'Connect a WebDAV, HTTP or FTP server. The connection is tested before the server is saved.';
+
+  @override
+  String get saveAndTest => 'Test and save';
 }

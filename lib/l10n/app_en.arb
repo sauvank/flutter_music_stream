@@ -373,5 +373,21 @@
   "yourFavorites": "Your favorites",
   "yourLibrary": "YOUR LIBRARY",
   "yourPlaylists": "Your playlists",
-  "yourSources": "YOUR SOURCES"
+  "yourSources": "YOUR SOURCES",
+  "serverNameRequired": "Enter a name for this server",
+  "serverAddressInvalidHttp": "Enter an address starting with http:// or https://, without a username or password",
+  "serverAddressInvalidFtp": "Enter an address starting with ftp://, without a username or password",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
+  "testingConnection": "Testing connection…",
+  "connectionTestFailed": "Could not reach the server. Check the address and credentials, or save anyway.",
+  "connectionTestFailedStatus": "The server answered with HTTP {status}. Check the address and credentials, or save anyway.",
+  "@connectionTestFailedStatus": {"placeholders": {"status": {"type": "int"}}},
+  "saveAnyway": "Save anyway",
+  "updateAvailableTitle": "Update available",
+  "updateAvailableBody": "A new version of MusicStream is available on Google Play. Update to get the latest fixes and features.",
+  "updateAction": "Update",
+  "updateLater": "Later",
+  "addServerHint": "Connect a WebDAV, HTTP or FTP server. The connection is tested before the server is saved.",
+  "saveAndTest": "Test and save"
 }

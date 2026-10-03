@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/download_queue_provider.dart';
 import '../providers/player_provider.dart';
@@ -11,6 +14,7 @@ import 'now_playing_screen.dart';
 import 'servers_screen.dart';
 import 'settings_screen.dart';
 import '../l10n/l10n.dart';
+import '../services/update_check_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -37,6 +41,40 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     HomeScreen._nowPlayingRequests.addListener(_showNowPlaying);
+    if (Platform.isAndroid) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _offerUpdate());
+    }
+  }
+
+  Future<void> _offerUpdate() async {
+    final service = UpdateCheckService();
+    final build = await service.pendingUpdate();
+    if (build == null || !mounted) return;
+    final update = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.l10n.updateAvailableTitle),
+        content: Text(context.l10n.updateAvailableBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(context.l10n.updateLater),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(context.l10n.updateAction),
+          ),
+        ],
+      ),
+    );
+    if (update == true) {
+      await launchUrl(
+        Uri.parse(UpdateCheckService.storeUrl),
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      await service.dismiss(build);
+    }
   }
 
   @override
@@ -207,7 +245,8 @@ class _HomeScreenState extends State<HomeScreen> {
     List<Widget> screens,
     bool dark,
   ) =>
-      _DesktopShortcuts(child: Scaffold(
+      _DesktopShortcuts(
+          child: Scaffold(
         backgroundColor: Colors.transparent,
         body: _Background(
           dark: dark,
@@ -341,8 +380,7 @@ class _DesktopShortcuts extends StatelessWidget {
             player.next,
         const SingleActivator(LogicalKeyboardKey.arrowLeft, control: true):
             player.previous,
-        const SingleActivator(LogicalKeyboardKey.mediaPlayPause):
-            player.toggle,
+        const SingleActivator(LogicalKeyboardKey.mediaPlayPause): player.toggle,
         const SingleActivator(LogicalKeyboardKey.mediaTrackNext): player.next,
         const SingleActivator(LogicalKeyboardKey.mediaTrackPrevious):
             player.previous,

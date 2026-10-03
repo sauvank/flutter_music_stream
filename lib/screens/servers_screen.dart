@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
 
 import '../models/remote_audio_entry.dart';
 import '../models/remote_audio_metadata.dart';
@@ -21,6 +20,7 @@ import '../providers/player_provider.dart';
 import '../providers/server_provider.dart';
 import '../l10n/l10n.dart';
 import '../services/server_scan_service.dart';
+import '../widgets/add_server_sheet.dart';
 
 class ServersScreen extends StatelessWidget {
   const ServersScreen({super.key});
@@ -105,123 +105,9 @@ class ServersScreen extends StatelessWidget {
   }
 
   Future<void> _showAddProfile(BuildContext context) async {
-    final name = TextEditingController();
-    final url = TextEditingController(text: 'https://');
-    final username = TextEditingController();
-    final password = TextEditingController();
-    var type = ServerType.webdav;
-    final result = await showDialog<(ServerProfile, String)>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Text(context.l10n.addServer),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                    controller: name,
-                    decoration: InputDecoration(labelText: context.l10n.name)),
-                const SizedBox(height: 12),
-                SegmentedButton<ServerType>(
-                  showSelectedIcon: false,
-                  // The dialog is narrow: keep "WebDAV" on one line.
-                  style: const ButtonStyle(
-                    visualDensity: VisualDensity.compact,
-                    padding: WidgetStatePropertyAll(
-                      EdgeInsets.symmetric(horizontal: 4),
-                    ),
-                  ),
-                  segments: const [
-                    ButtonSegment(
-                        value: ServerType.webdav, label: Text('WebDAV')),
-                    ButtonSegment(value: ServerType.http, label: Text('HTTP')),
-                    ButtonSegment(value: ServerType.ftp, label: Text('FTP')),
-                  ],
-                  selected: {type},
-                  onSelectionChanged: (value) => setState(() {
-                    type = value.single;
-                    if (url.text == 'https://' || url.text == 'ftp://') {
-                      url.text = type == ServerType.ftp ? 'ftp://' : 'https://';
-                    }
-                  }),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: url,
-                  keyboardType: TextInputType.url,
-                  decoration: InputDecoration(
-                    labelText: type == ServerType.ftp
-                        ? context.l10n.ftpAddress
-                        : context.l10n.httpAddress,
-                  ),
-                ),
-                if (type == ServerType.ftp)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      context.l10n.ftpUnencrypted,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                    ),
-                  ),
-                TextField(
-                    controller: username,
-                    decoration: InputDecoration(
-                        labelText: context.l10n.usernameOptional)),
-                TextField(
-                    controller: password,
-                    obscureText: true,
-                    decoration:
-                        InputDecoration(labelText: context.l10n.password)),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(context.l10n.cancel)),
-            FilledButton(
-              onPressed: () {
-                final uri = Uri.tryParse(url.text.trim());
-                final validScheme = type == ServerType.ftp
-                    ? uri?.scheme == 'ftp'
-                    : {'http', 'https'}.contains(uri?.scheme);
-                if (name.text.trim().isEmpty ||
-                    uri == null ||
-                    !validScheme ||
-                    uri.host.isEmpty ||
-                    uri.userInfo.isNotEmpty) {
-                  return;
-                }
-                Navigator.pop(
-                  context,
-                  (
-                    ServerProfile(
-                      id: const Uuid().v4(),
-                      name: name.text.trim(),
-                      baseUrl: uri.toString(),
-                      type: type,
-                      username: username.text.trim(),
-                    ),
-                    password.text,
-                  ),
-                );
-              },
-              child: Text(context.l10n.save),
-            ),
-          ],
-        ),
-      ),
-    );
-    name.dispose();
-    url.dispose();
-    username.dispose();
-    password.dispose();
-    if (result != null && context.mounted) {
-      await context.read<ServerProvider>().addProfile(result.$1, result.$2);
-    }
+    final servers = context.read<ServerProvider>();
+    final result = await showAddServerSheet(context);
+    if (result != null) await servers.addProfile(result.$1, result.$2);
   }
 
   Future<void> _scanForNewAlbums(

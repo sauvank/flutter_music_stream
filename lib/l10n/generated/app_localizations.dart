@@ -2341,6 +2341,96 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'VOS SOURCES'**
   String get yourSources;
+
+  /// No description provided for @serverNameRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisissez un nom pour ce serveur'**
+  String get serverNameRequired;
+
+  /// No description provided for @serverAddressInvalidHttp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisissez une adresse commençant par http:// ou https://, sans utilisateur ni mot de passe'**
+  String get serverAddressInvalidHttp;
+
+  /// No description provided for @serverAddressInvalidFtp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisissez une adresse commençant par ftp://, sans utilisateur ni mot de passe'**
+  String get serverAddressInvalidFtp;
+
+  /// No description provided for @showPassword.
+  ///
+  /// In fr, this message translates to:
+  /// **'Afficher le mot de passe'**
+  String get showPassword;
+
+  /// No description provided for @hidePassword.
+  ///
+  /// In fr, this message translates to:
+  /// **'Masquer le mot de passe'**
+  String get hidePassword;
+
+  /// No description provided for @testingConnection.
+  ///
+  /// In fr, this message translates to:
+  /// **'Test de la connexion…'**
+  String get testingConnection;
+
+  /// No description provided for @connectionTestFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Serveur injoignable. Vérifiez l’adresse et les identifiants, ou enregistrez quand même.'**
+  String get connectionTestFailed;
+
+  /// No description provided for @connectionTestFailedStatus.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le serveur a répondu HTTP {status}. Vérifiez l’adresse et les identifiants, ou enregistrez quand même.'**
+  String connectionTestFailedStatus(int status);
+
+  /// No description provided for @saveAnyway.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrer quand même'**
+  String get saveAnyway;
+
+  /// No description provided for @updateAvailableTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mise à jour disponible'**
+  String get updateAvailableTitle;
+
+  /// No description provided for @updateAvailableBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Une nouvelle version de MusicStream est disponible sur Google Play. Mettez à jour pour profiter des dernières corrections et nouveautés.'**
+  String get updateAvailableBody;
+
+  /// No description provided for @updateAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mettre à jour'**
+  String get updateAction;
+
+  /// No description provided for @updateLater.
+  ///
+  /// In fr, this message translates to:
+  /// **'Plus tard'**
+  String get updateLater;
+
+  /// No description provided for @addServerHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connectez un serveur WebDAV, HTTP ou FTP. La connexion est testée avant l’enregistrement.'**
+  String get addServerHint;
+
+  /// No description provided for @saveAndTest.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tester et enregistrer'**
+  String get saveAndTest;
 }
 
 class _AppLocalizationsDelegate
