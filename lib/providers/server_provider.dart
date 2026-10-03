@@ -10,6 +10,8 @@ import '../services/remote_audio_metadata_service.dart';
 import '../services/remote_server_service.dart';
 import '../services/server_profile_service.dart';
 import '../services/server_scan_service.dart';
+import '../services/sync/server_sync_journal.dart';
+import '../services/sync/sync_payload.dart';
 import '../models/music_track.dart';
 
 class ServerProvider extends ChangeNotifier {
@@ -18,13 +20,16 @@ class ServerProvider extends ChangeNotifier {
     this.remoteService, {
     RemoteAudioMetadataService? metadataService,
     ServerScanService? scanService,
+    ServerSyncJournal? journal,
   })  : _metadataService = metadataService ?? RemoteAudioMetadataService(),
-        _scanService = scanService ?? ServerScanService();
+        _scanService = scanService ?? ServerScanService(),
+        _journal = journal ?? ServerSyncJournal();
 
   final ServerProfileService _profilesService;
   final RemoteServerService remoteService;
   final RemoteAudioMetadataService _metadataService;
   final ServerScanService _scanService;
+  final ServerSyncJournal _journal;
   final List<ServerProfile> profiles = [];
   final List<RemoteAudioEntry> entries = [];
   final List<Uri> _history = [];
@@ -87,11 +92,88 @@ class ServerProvider extends ChangeNotifier {
     profiles
       ..clear()
       ..addAll(await _profilesService.load());
+    await _journal.load();
     notifyListeners();
+  }
+
+  String _keyOf(ServerProfile profile) =>
+      serverSyncKey(profile.type, profile.baseUrl, profile.username);
+
+  /// Servers and their passwords for sync, with when each was added here.
+  /// Servers that predate sync get the current time the first time.
+  Future<SyncPayload> syncSnapshot() async {
+    final servers = <String, SyncServer>{};
+    var journalChanged = false;
+    for (final profile in profiles) {
+      final key = _keyOf(profile);
+      final addedAt = _journal.added.putIfAbsent(key, () {
+        journalChanged = true;
+        return DateTime.now().toUtc();
+      });
+      servers[key] = SyncServer(
+        id: profile.id,
+        name: profile.name,
+        baseUrl: profile.baseUrl,
+        type: profile.type,
+        username: profile.username,
+        password: await _profilesService.readPassword(profile.id),
+        addedAt: addedAt,
+      );
+    }
+    if (journalChanged) await _journal.save();
+    return SyncPayload(
+      servers: servers,
+      deletedServers: Map.of(_journal.deleted),
+    );
+  }
+
+  /// Adopts the merged server list: removes servers deleted elsewhere and
+  /// adds the ones this device lacks. A server already here is kept, only
+  /// receiving a password it was missing.
+  Future<void> applySync(SyncPayload merged) async {
+    var changed = false;
+    final removed = profiles.where((profile) {
+      final deletedAt = merged.deletedServers[_keyOf(profile)];
+      final addedAt = _journal.added[_keyOf(profile)];
+      return deletedAt != null &&
+          (addedAt == null || !addedAt.isAfter(deletedAt));
+    }).toList();
+    for (final profile in removed) {
+      profiles.removeWhere((item) => item.id == profile.id);
+      if (selected?.id == profile.id) disconnect();
+      await _profilesService.deletePassword(profile.id);
+      await _scanService.forget(profile.id);
+      _journal.added.remove(_keyOf(profile));
+      changed = true;
+    }
+    for (final server in merged.servers.values) {
+      final local = profiles
+          .where((profile) => _keyOf(profile) == server.key)
+          .firstOrNull;
+      if (local == null) {
+        profiles.add(server.profile);
+        await _profilesService.writePassword(server.id, server.password);
+        _journal.added[server.key] = server.addedAt;
+        changed = true;
+      } else if (server.password.isNotEmpty &&
+          await _profilesService.readPassword(local.id) == '') {
+        await _profilesService.writePassword(local.id, server.password);
+      }
+    }
+    _journal.deleted
+      ..clear()
+      ..addAll(merged.deletedServers);
+    await _journal.save();
+    if (changed) {
+      await _profilesService.save(profiles);
+      notifyListeners();
+    }
   }
 
   Future<void> addProfile(ServerProfile profile, String password) async {
     profiles.add(profile);
+    _journal.added[_keyOf(profile)] = DateTime.now().toUtc();
+    await _journal.save();
     await _profilesService.save(profiles);
     await _profilesService.writePassword(profile.id, password);
     notifyListeners();
@@ -152,10 +234,14 @@ class ServerProvider extends ChangeNotifier {
         username: username,
       );
       profiles.add(profile);
+      _journal.added[_keyOf(profile)] = DateTime.now().toUtc();
       await _profilesService.writePassword(profile.id, importedPassword);
       imported++;
     }
-    if (imported > 0) await _profilesService.save(profiles);
+    if (imported > 0) {
+      await _journal.save();
+      await _profilesService.save(profiles);
+    }
     notifyListeners();
     return imported;
   }
@@ -197,6 +283,9 @@ class ServerProvider extends ChangeNotifier {
   Future<void> deleteProfile(ServerProfile profile) async {
     profiles.removeWhere((item) => item.id == profile.id);
     if (selected?.id == profile.id) disconnect();
+    _journal.added.remove(_keyOf(profile));
+    _journal.deleted[_keyOf(profile)] = DateTime.now().toUtc();
+    await _journal.save();
     await _profilesService.save(profiles);
     await _profilesService.deletePassword(profile.id);
     await _scanService.forget(profile.id);

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// The shared encrypted envelope, with the revision needed to replace it
@@ -46,19 +48,45 @@ class FirestoreSyncRemote implements SyncRemote {
     String uid,
     Map<String, Object?> envelope, {
     required RemoteSyncFile? replacing,
-  }) =>
-      _firestore.runTransaction((transaction) async {
-        final document = _document(uid);
-        final current = _read(await transaction.get(document));
-        if (current?.revision != replacing?.revision) {
-          throw const SyncConflictException();
-        }
-        transaction.set(document, {
-          'envelope': envelope,
-          'revision': (current?.revision ?? 0) + 1,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+  }) async {
+    if (Platform.isWindows) {
+      return _uploadWithoutTransaction(uid, envelope, replacing);
+    }
+    return _firestore.runTransaction((transaction) async {
+      final document = _document(uid);
+      final current = _read(await transaction.get(document));
+      if (current?.revision != replacing?.revision) {
+        throw const SyncConflictException();
+      }
+      transaction.set(document, {
+        'envelope': envelope,
+        'revision': (current?.revision ?? 0) + 1,
+        'updatedAt': FieldValue.serverTimestamp(),
       });
+    });
+  }
+
+  /// The Windows Firestore plugin delivers transaction callbacks from a
+  /// non-platform thread, which can crash the app. Sync is manual and merges
+  /// what was just downloaded, so a plain read-check-write is enough there.
+  Future<void> _uploadWithoutTransaction(
+    String uid,
+    Map<String, Object?> envelope,
+    RemoteSyncFile? replacing,
+  ) async {
+    final document = _document(uid);
+    final current = _read(
+      await document.get(const GetOptions(source: Source.server)),
+    );
+    if (current?.revision != replacing?.revision) {
+      throw const SyncConflictException();
+    }
+    await document.set({
+      'envelope': envelope,
+      'revision': (current?.revision ?? 0) + 1,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
 
   static RemoteSyncFile? _read(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();

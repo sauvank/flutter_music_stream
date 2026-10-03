@@ -48,7 +48,7 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 
 - Revue Google Play : source HTTP publique `hosting/demo/` (Firebase Hosting), instructions dans [docs/PLAY_REVIEW.md](docs/PLAY_REVIEW.md); aucun compte n’existe dans l’app.
 
-- Mise à jour : `UpdateCheckService` lit `https://musicstream-ks.web.app/version.json`; relever `latestBuild` (puis `firebase deploy --only hosting`) uniquement quand le build est disponible sur Google Play, sinon les utilisateurs verraient un lien vers une version absente. La synchro ne transporte que favoris, écoutes et playlists, pas les serveurs.
+- Mise à jour : `UpdateCheckService` lit `https://musicstream-ks.web.app/version.json`; relever `latestBuild` (puis `firebase deploy --only hosting`) uniquement quand le build est disponible sur Google Play, sinon les utilisateurs verraient un lien vers une version absente. La synchro transporte favoris, écoutes, playlists et serveurs (mots de passe chiffrés dans l’enveloppe); une ancienne version de l’app (≤ 0.1.76) qui synchronise efface les serveurs de l’enveloppe, car elle ignore ce champ.
 
 ## Tests sur appareil
 

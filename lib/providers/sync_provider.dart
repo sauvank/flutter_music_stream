@@ -9,8 +9,10 @@ import '../services/sync/sync_payload.dart';
 import '../services/sync/sync_remote.dart';
 import '../services/sync/sync_service.dart';
 import 'library_provider.dart';
+import 'server_provider.dart';
 
-/// End-to-end encrypted sync of favorites, listening counts and playlists
+/// End-to-end encrypted sync of favorites, listening counts, playlists and
+/// servers (with their passwords)
 /// through the user's account (Google or email). The backend only stores
 /// cipher text; the passphrase never leaves the device. Manual only, so the
 /// app never contacts the backend by surprise.
@@ -20,15 +22,18 @@ class SyncProvider extends ChangeNotifier {
     this._remote,
     this._account,
     this._library, {
+    ServerProvider? servers,
     SyncCrypto? crypto,
     int iterations = SyncKdf.defaultIterations,
-  })  : _crypto = crypto ?? SyncCrypto(),
+  })  : _servers = servers,
+        _crypto = crypto ?? SyncCrypto(),
         _iterations = iterations;
 
   final SyncService _service;
   final SyncRemote _remote;
   final SyncAccount _account;
   final LibraryProvider _library;
+  final ServerProvider? _servers;
   final SyncCrypto _crypto;
   final int _iterations;
   StreamSubscription<SyncUser?>? _accountChanges;
@@ -129,7 +134,11 @@ class SyncProvider extends ChangeNotifier {
           await _crypto.open(remote.envelope, key: key),
         );
       }
-      final merged = SyncPayload.merge(remotePayload, _library.syncSnapshot());
+      var merged = SyncPayload.merge(remotePayload, _library.syncSnapshot());
+      final servers = _servers;
+      if (servers != null) {
+        merged = SyncPayload.merge(merged, await servers.syncSnapshot());
+      }
       final envelope = await _crypto.seal(merged.toJson(), key: key, kdf: kdf);
       try {
         await _remote.upload(uid, envelope, replacing: remote);
@@ -138,6 +147,7 @@ class SyncProvider extends ChangeNotifier {
         rethrow;
       }
       await _library.applySync(merged);
+      await _servers?.applySync(merged);
       settings = current.copyWith(
         kdf: kdf,
         lastSyncAt: DateTime.now().toUtc(),

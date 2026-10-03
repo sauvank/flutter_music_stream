@@ -1272,7 +1272,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get syncExplanation =>
-      'Favoris, écoutes et playlists sont chiffrés sur ce téléphone avec votre phrase secrète, puis enregistrés sur votre compte MusicStream. Le serveur ne voit jamais leur contenu, et vos fichiers audio ne sont jamais envoyés.';
+      'Favoris, écoutes, playlists et serveurs (avec leurs mots de passe) sont chiffrés sur cet appareil avec votre phrase secrète, puis enregistrés sur votre compte MusicStream. Le serveur ne voit jamais leur contenu, et vos fichiers audio ne sont jamais envoyés.';
 
   @override
   String get syncFailed =>

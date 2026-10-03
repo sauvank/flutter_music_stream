@@ -1242,7 +1242,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncExplanation =>
-      'Favorites, plays and playlists are encrypted on this phone with your passphrase, then saved to your MusicStream account. The server never sees their content, and your audio files are never sent.';
+      'Favorites, plays, playlists and servers (with their passwords) are encrypted on this phone with your passphrase, then saved to your MusicStream account. The server never sees their content, and your audio files are never sent.';
 
   @override
   String get syncFailed => 'Sync failed. Check your connection.';

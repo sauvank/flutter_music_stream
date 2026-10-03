@@ -91,6 +91,7 @@ Future<void> main() async {
     firebaseReady ? FirestoreSyncRemote() : const _NoSyncRemote(),
     firebaseReady ? FirebaseSyncAccount() : const UnavailableSyncAccount(),
     library,
+    servers: servers,
   );
   await sync.load();
   runApp(MusicStreamApp(
@@ -183,8 +184,8 @@ class MusicStreamApp extends StatelessWidget {
               volume: volume,
               onFadeDurationChanged: playbackSettings.saveFadeDuration,
               onVolumeChanged: playbackSettings.saveVolume,
-              onQueueChanged: (ids, currentId) => unawaited(
-                  playbackSettings.saveQueue(ids, currentId)),
+              onQueueChanged: (ids, currentId) =>
+                  unawaited(playbackSettings.saveQueue(ids, currentId)),
             )),
           ),
         ],
