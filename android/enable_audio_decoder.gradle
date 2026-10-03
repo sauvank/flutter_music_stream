@@ -1,0 +1,26 @@
+// just_audio 0.10.6 doesn't expose Media3's extension renderer switch.
+// Compile a generated copy with this one explicit change; never edit pub cache.
+def audioProject = project(':just_audio')
+audioProject.afterEvaluate {
+        def original = audioProject.file('src/main/java')
+        def generated = audioProject.layout.buildDirectory.dir('generated/softwareAudio')
+        def prepare = audioProject.tasks.register('prepareSoftwareAudio', Copy) {
+            inputs.dir original
+            outputs.dir generated
+            from original
+            into generated
+            doFirst {
+                def source = new File(original, 'com/ryanheise/just_audio/AudioPlayer.java').text
+                def marker = 'new DefaultRenderersFactory(context)'
+                if (source.count(marker) != 1) {
+                    throw new GradleException('Review the Media3 decoder patch after upgrading just_audio.')
+                }
+            }
+            filter { line ->
+                line.replace('new DefaultRenderersFactory(context)',
+                    'new DefaultRenderersFactory(context).setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON).setEnableDecoderFallback(true)')
+            }
+        }
+        audioProject.android.sourceSets.main.java.setSrcDirs([generated])
+        audioProject.tasks.named('preBuild').configure { dependsOn prepare }
+}

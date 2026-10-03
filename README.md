@@ -69,6 +69,8 @@ flutter test
 
 Android 6 (API 23) ou plus récent et iOS sont les cibles prioritaires. Linux, macOS et Windows disposent du même socle Flutter. Le Web nécessitera un stockage d’import spécifique avant d’être considéré comme pris en charge.
 
+Sur Android, un décodeur logiciel embarqué complète le lecteur natif pour les M4A ALAC et les formats AAC/FLAC absents des décodeurs de l’appareil. Il fonctionne aussi pour la lecture HTTP/WebDAV, sans conversion préalable des fichiers. Les autres plateformes conservent leur lecteur existant. Compilation et tests natifs : [décodeur Android](android/audio_decoder/README.md).
+
 ## Sécurité
 
 Le dépôt est privé, mais il reste maintenu comme s'il pouvait devenir public : aucun mot de passe, jeton, certificat, configuration Firebase réelle ou clé de signature n’y est stocké. Consultez [docs/SECRETS.md](docs/SECRETS.md) avant de configurer une CI ou un backend.
@@ -76,3 +78,5 @@ Le dépôt est privé, mais il reste maintenu comme s'il pouvait devenir public 
 ## Licence
 
 Le projet est distribué sous licence MIT.
+
+L’extension Android Media3 est sous Apache 2.0 et sa bibliothèque FFmpeg sous LGPL 2.1 ou ultérieure ; leurs licences et les instructions de reconstruction sont fournies dans [android/audio_decoder](android/audio_decoder/README.md).

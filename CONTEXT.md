@@ -50,7 +50,7 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 
 - Mise à jour : `UpdateCheckService` lit `https://musicstream-ks.web.app/version.json`; relever `latestBuild` (puis `firebase deploy --only hosting`) uniquement quand le build est disponible sur Google Play, sinon les utilisateurs verraient un lien vers une version absente. La synchro transporte favoris, écoutes, playlists et serveurs (mots de passe chiffrés dans l’enveloppe); une ancienne version de l’app (≤ 0.1.76) qui synchronise efface les serveurs de l’enveloppe, car elle ignore ce champ.
 
-- FLAC : `just_audio` s’appuie sur le décodeur système. Android ≤ 9 n’en a souvent pas (tablette de test Huawei BAH2-W19, Android 8.0, signée Play : on ne peut pas y installer un APK local). Le lecteur se met en pause et affiche un message au lieu de simuler la lecture. Piste pour vraiment lire ces fichiers : décodeur logiciel (extension FFmpeg), non fait.
+- Audio Android : extension officielle Media3 1.4.1 + FFmpeg 6.1.5 embarquée pour AAC/ALAC/FLAC en complément de MediaCodec. Le contrôle FLAC consulte aussi le décodeur logiciel. `android/enable_audio_decoder.gradle` active les extensions dans une copie de compilation de just_audio 0.10.6 (cache Pub intact) ; réévaluer ce patch avec toute mise à jour du lecteur. ARMv7/ARM64/x86_64, API 23+, alignement 16 Ko, NDK 27.0.12077973. Sources et tests natifs : [android/audio_decoder/README.md](android/audio_decoder/README.md). Validation physique M4A encore à faire ; autres plateformes inchangées.
 
 ## Tests sur appareil
 

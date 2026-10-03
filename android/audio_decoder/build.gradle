@@ -1,0 +1,39 @@
+apply plugin: 'com.android.library'
+
+android {
+    namespace 'com.sauvank.musicstream.audio_decoder'
+    compileSdk 36
+    ndkVersion '27.0.12077973'
+    defaultConfig {
+        minSdk 23
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    sourceSets.main.jniLibs.srcDir layout.buildDirectory.dir('native/jniLibs')
+    defaultConfig.consumerProguardFiles 'consumer-rules.pro'
+}
+
+def buildDecoder = tasks.register('buildAudioDecoder', Exec) {
+    inputs.file rootProject.file('../scripts/build_android_audio_decoder.sh')
+    inputs.file 'src/main/jni/ffmpeg_jni.cc'
+    inputs.property 'ndkVersion', android.ndkVersion
+    outputs.dir layout.buildDirectory.dir('native/jniLibs')
+    doFirst {
+        commandLine 'bash', rootProject.file('../scripts/build_android_audio_decoder.sh'),
+            android.ndkDirectory, layout.buildDirectory.dir('native').get().asFile
+    }
+}
+tasks.named('preBuild').configure { dependsOn buildDecoder }
+
+dependencies {
+    implementation 'androidx.media3:media3-exoplayer:1.4.1'
+    implementation 'androidx.media3:media3-decoder:1.4.1'
+    implementation 'androidx.annotation:annotation:1.8.0'
+    compileOnly 'org.checkerframework:checker-qual:3.33.0'
+    compileOnly 'org.jetbrains.kotlin:kotlin-annotations-jvm:1.9.20'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+}

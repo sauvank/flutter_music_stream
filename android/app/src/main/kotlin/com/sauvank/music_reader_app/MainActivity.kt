@@ -1,6 +1,7 @@
 package com.sauvank.musicstream
 
 import android.media.MediaCodecList
+import androidx.media3.decoder.ffmpeg.FfmpegLibrary
 import androidx.mediarouter.app.SystemOutputSwitcherDialogController
 import com.ryanheise.audioservice.AudioServiceActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -59,8 +60,9 @@ class MainActivity : AudioServiceActivity() {
             }
     }
 
-    /** Whether a platform decoder exists for [mime] (not just an encoder). */
+    /** Whether the software extension or a platform decoder supports [mime]. */
     private fun canDecode(mime: String): Boolean =
+        FfmpegLibrary.supportsFormat(mime) ||
         MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any { info ->
             !info.isEncoder && info.supportedTypes.any { it.equals(mime, ignoreCase = true) }
         }

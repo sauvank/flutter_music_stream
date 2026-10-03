@@ -1,5 +1,7 @@
 # Architecture
 
+Le lecteur Android conserve `just_audio`/Media3 et ses commandes système. Le module `android/audio_decoder` ajoute le décodeur logiciel FFmpeg AAC/ALAC/FLAC lorsque MediaCodec ne prend pas en charge le format. L’activation des extensions se fait dans une copie de compilation de just_audio, sans modifier le cache Pub. Sources, versions, licences et tests : [décodeur Android](../android/audio_decoder/README.md).
+
 ```text
 lib/
 ├── main.dart

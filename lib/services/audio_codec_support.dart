@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
-/// Asks Android whether the device can decode a format. Android 9 and older
-/// often have no FLAC decoder: the player then looks busy but stays silent.
+/// Asks Android whether a bundled software or system decoder is available.
+/// Keeps playback from appearing active when neither can handle the format.
 class AudioCodecSupport {
   const AudioCodecSupport();
 

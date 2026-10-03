@@ -2,6 +2,8 @@
 
 ## Livré
 
+- [x] Décodeur logiciel Android pour étendre la compatibilité M4A ALAC et AAC/FLAC sans décodeur système.
+
 - [x] Bibliothèque locale, tags, pochettes, favoris, playlists et déduplication SHA-256.
 - [x] Lecture mobile en arrière-plan avec commandes système.
 - [x] Profils WebDAV/HTTP et import JSON MusicStream/ComicStream sécurisé.
@@ -33,6 +35,8 @@
 - [x] Passe d’ergonomie : annulation du retrait en playlist, aléatoire depuis la vignette, minuterie de sommeil, reprise de la file au lancement, retours haptiques, gestes et animation de l’écran Lecture, teinte issue de la pochette, recherche sans accents avec historique et playlists.
 
 ## En cours
+
+- [ ] Valider les M4A ALAC sur la tablette Android et un téléphone physique ; les autres plateformes conservent leur moteur actuel.
 
 - [ ] Vérifier sur Galaxy S24 la connexion Google/e-mail et la synchro Firestore entre deux appareils.
 - [ ] Clé d’envoi Play : keystore créé hors dépôt (`~/.musicstream-keys/`, à sauvegarder), `.aab` signé généré (`flutter build appbundle --release`) ; reste à l’envoyer dans la Play Console et à ajouter l’empreinte SHA-1/SHA-256 de la clé (ou celle de la signature Play) à Firebase.

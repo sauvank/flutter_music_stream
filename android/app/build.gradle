@@ -22,7 +22,7 @@ if (keyPropertiesFile.exists()) {
 android {
     namespace = "com.sauvank.musicstream"
     compileSdk = 36
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = '27.0.12077973'
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -68,6 +68,7 @@ flutter {
 }
 
 dependencies {
+    implementation project(':audio_decoder')
     // Opens Android's output switcher (Bluetooth, speakers, cast devices).
     implementation("androidx.mediarouter:mediarouter:1.7.0")
 }
