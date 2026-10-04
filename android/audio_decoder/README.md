@@ -14,6 +14,12 @@ script and source archive allow rebuilding/relinking the shared library.
 
 Builds require Linux/macOS, Bash, curl, make, tar, shasum and Android NDK
 27.0.12077973. Gradle invokes the script automatically, including in release CI.
+All three Android CI jobs (debug, APK release, Play bundle) explicitly install
+the pinned NDK with `sdkmanager --install "ndk;27.0.12077973"` before building.
+Local builds need the same installation. Gradle resolves `ndk/<ndkVersion>`
+inside `androidComponents.sdkComponents.sdkDirectory` and checks the installation.
+The legacy `android.ndkDirectory` getter can select the wrong NDK, and AGP's
+NDK provider can be empty for this custom Exec build without CMake/ndk-build.
 The first build takes longer; subsequent builds reuse Gradle outputs. Outputs
 cover Android API 23+, ARMv7, ARM64 and x86_64, with 16 KB ELF segment alignment.
 

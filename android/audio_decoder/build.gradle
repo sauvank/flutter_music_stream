@@ -16,14 +16,21 @@ android {
     defaultConfig.consumerProguardFiles 'consumer-rules.pro'
 }
 
+// This Exec task isn't a CMake build: AGP's NDK provider may be unset.
+// Resolve the explicitly installed side-by-side version from the SDK instead.
+def decoderSdkDirectory = androidComponents.sdkComponents.sdkDirectory
 def buildDecoder = tasks.register('buildAudioDecoder', Exec) {
     inputs.file rootProject.file('../scripts/build_android_audio_decoder.sh')
     inputs.file 'src/main/jni/ffmpeg_jni.cc'
     inputs.property 'ndkVersion', android.ndkVersion
     outputs.dir layout.buildDirectory.dir('native/jniLibs')
     doFirst {
+        def ndkDirectory = decoderSdkDirectory.get().dir("ndk/${android.ndkVersion}").asFile
+        if (!new File(ndkDirectory, 'source.properties').isFile()) {
+            throw new GradleException("Install the audio decoder NDK with: sdkmanager --install \"ndk;${android.ndkVersion}\"")
+        }
         commandLine 'bash', rootProject.file('../scripts/build_android_audio_decoder.sh'),
-            android.ndkDirectory, layout.buildDirectory.dir('native').get().asFile
+            ndkDirectory, layout.buildDirectory.dir('native').get().asFile
     }
 }
 tasks.named('preBuild').configure { dependsOn buildDecoder }

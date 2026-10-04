@@ -37,5 +37,7 @@ jobs:
           flutter-version: '3.27.4'
           channel: stable
           cache: true
+      - name: Install Android NDK
+        run: sdkmanager --install "ndk;27.0.12077973"
       - run: flutter pub get
       - run: flutter build apk --debug

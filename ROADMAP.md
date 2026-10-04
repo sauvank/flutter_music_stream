@@ -2,7 +2,7 @@
 
 ## Livré
 
-- [x] Décodeur logiciel Android pour étendre la compatibilité M4A ALAC et AAC/FLAC sans décodeur système.
+- [x] Décodeur logiciel Android pour étendre la compatibilité M4A ALAC et AAC/FLAC sans décodeur système ; installation du NDK explicite dans les builds CI.
 
 - [x] Bibliothèque locale, tags, pochettes, favoris, playlists et déduplication SHA-256.
 - [x] Lecture mobile en arrière-plan avec commandes système.

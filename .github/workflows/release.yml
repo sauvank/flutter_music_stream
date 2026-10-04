@@ -36,6 +36,9 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Install Android NDK
+        run: sdkmanager --install "ndk;27.0.12077973"
+
       - name: Restore signing and Firebase files
         env:
           UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
