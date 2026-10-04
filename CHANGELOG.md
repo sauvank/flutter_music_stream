@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- CI Android : initialisation des outils SDK avec `android-actions/setup-android@v3` avant l’installation du NDK dans les trois workflows, pour corriger `sdkmanager: command not found` sur les runners GitHub.
+
 - Mise à jour Android : remplacement du manifeste Firebase par la disponibilité fournie par Google Play via un canal natif. Conservation du dialogue et du refus par build; échecs et délai maximal de 5 s silencieux. Tests du service couvrant disponibilité, refus, réponses invalides, erreurs et expiration. Ancien manifeste conservé pour les versions déjà installées.
 
 - CI Android : installation explicite du NDK 27.0.12077973 avant les builds APK/AAB dans les trois workflows. Le décodeur résout désormais `ndk/<ndkVersion>` dans le SDK configuré et signale la commande d’installation si nécessaire, à la place du getter historique qui échouait sur les runners GitHub avec « NDK is not installed ».

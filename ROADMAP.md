@@ -4,7 +4,7 @@
 
 - [x] Détection des mises à jour Android directement via Google Play, sans manifeste Firebase à maintenir.
 
-- [x] Décodeur logiciel Android pour étendre la compatibilité M4A ALAC et AAC/FLAC sans décodeur système ; installation du NDK explicite dans les builds CI.
+- [x] Décodeur logiciel Android pour étendre la compatibilité M4A ALAC et AAC/FLAC sans décodeur système ; initialisation des outils SDK et installation du NDK explicites dans les builds CI.
 
 - [x] Bibliothèque locale, tags, pochettes, favoris, playlists et déduplication SHA-256.
 - [x] Lecture mobile en arrière-plan avec commandes système.
