@@ -32,6 +32,7 @@ MusicStream est un lecteur de musique personnel construit avec Flutter. Il trans
 - suppression des téléchargements serveur depuis le menu d’un morceau ou globalement depuis la bibliothèque ;
 - détection à la demande des nouveaux albums d’un serveur, après création d’une référence locale ;
 - écoute directe d’un morceau ou d’un dossier distant (récursif, dans l’ordre des chemins) avant son téléchargement ; les morceaux déjà importés sont lus depuis le téléphone ;
+- proposition de mise à jour Android au lancement selon la disponibilité signalée par Google Play, avec lien vers la boutique et choix « Plus tard » ;
 - thèmes clair et sombre Material 3.
 
 La synchronisation chiffrée multi-appareils est documentée dans la feuille de route et n’est pas présentée comme déjà livrée.

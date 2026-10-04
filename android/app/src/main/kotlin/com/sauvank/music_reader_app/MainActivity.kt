@@ -3,6 +3,8 @@ package com.sauvank.musicstream
 import android.media.MediaCodecList
 import androidx.media3.decoder.ffmpeg.FfmpegLibrary
 import androidx.mediarouter.app.SystemOutputSwitcherDialogController
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.install.model.UpdateAvailability
 import com.ryanheise.audioservice.AudioServiceActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -23,6 +25,28 @@ class MainActivity : AudioServiceActivity() {
         // audio_service caches the engine beyond this activity, so the flag
         // only resets when the process dies.
         engineReady = true
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, UPDATE_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                if (call.method != "check") {
+                    result.notImplemented()
+                    return@setMethodCallHandler
+                }
+                // Play resolves track, rollout and account eligibility for this install.
+                // An uploaded or pending-review build must not trigger an announcement.
+                try {
+                    AppUpdateManagerFactory.create(applicationContext).appUpdateInfo
+                        .addOnSuccessListener { info ->
+                            result.success(
+                                if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE)
+                                    info.availableVersionCode() else null
+                            )
+                        }
+                        .addOnFailureListener { result.success(null) }
+                } catch (_: Exception) {
+                    // No Play Store, offline, or an unsupported installation.
+                    result.success(null)
+                }
+            }
         PlayerWidgetProvider.refreshAll(this)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, WIDGET_CHANNEL)
             .setMethodCallHandler { call, result ->
@@ -68,6 +92,7 @@ class MainActivity : AudioServiceActivity() {
         }
 
     companion object {
+        private const val UPDATE_CHANNEL = "com.sauvank.musicstream/updates"
         private const val WIDGET_CHANNEL = "com.sauvank.musicstream/widget"
         private const val OUTPUT_CHANNEL = "com.sauvank.musicstream/output"
 

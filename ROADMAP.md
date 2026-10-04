@@ -2,6 +2,8 @@
 
 ## Livré
 
+- [x] Détection des mises à jour Android directement via Google Play, sans manifeste Firebase à maintenir.
+
 - [x] Décodeur logiciel Android pour étendre la compatibilité M4A ALAC et AAC/FLAC sans décodeur système ; installation du NDK explicite dans les builds CI.
 
 - [x] Bibliothèque locale, tags, pochettes, favoris, playlists et déduplication SHA-256.
@@ -35,6 +37,8 @@
 - [x] Passe d’ergonomie : annulation du retrait en playlist, aléatoire depuis la vignette, minuterie de sommeil, reprise de la file au lancement, retours haptiques, gestes et animation de l’écran Lecture, teinte issue de la pochette, recherche sans accents avec historique et playlists.
 
 ## En cours
+
+- [ ] Valider le dialogue de mise à jour sur une installation Play avec une version supérieure accessible au compte testeur.
 
 - [ ] Valider les M4A ALAC sur la tablette Android et un téléphone physique ; les autres plateformes conservent leur moteur actuel.
 

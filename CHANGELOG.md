@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- Mise à jour Android : remplacement du manifeste Firebase par la disponibilité fournie par Google Play via un canal natif. Conservation du dialogue et du refus par build; échecs et délai maximal de 5 s silencieux. Tests du service couvrant disponibilité, refus, réponses invalides, erreurs et expiration. Ancien manifeste conservé pour les versions déjà installées.
+
 - CI Android : installation explicite du NDK 27.0.12077973 avant les builds APK/AAB dans les trois workflows. Le décodeur résout désormais `ndk/<ndkVersion>` dans le SDK configuré et signale la commande d’installation si nécessaire, à la place du getter historique qui échouait sur les runners GitHub avec « NDK is not installed ».
 
 - Android : ajout du décodage logiciel M4A ALAC, AAC et FLAC avec l’extension officielle Media3/FFmpeg, en complément des décodeurs système. Conservation du lecteur, des files et des commandes en arrière-plan. Compilation reproductible pour ARMv7, ARM64 et x86_64, avec alignement 16 Ko ; le contrôle préalable FLAC tient désormais compte du décodeur embarqué. Tests natifs AAC/ALAC ajoutés avec des sons synthétiques.
