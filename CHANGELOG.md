@@ -102,4 +102,6 @@ Les versions publiées restent décrites par les tags Git.
 
 - Change: audiobook sync positions are no longer applied silently by a sync. Opening an audiobook (`playWithPositionCheck`, `lib/widgets/audiobook_position_gate.dart`) compares with the synced position and asks: ignore / keep here (publishes local as newest) / resume from sync. Same flow as Comics Stream's `SyncedReaderGate`.
 
-- Feat: audiobook sync now automatic like Comics Stream: position published when the app is left (HomeScreen lifecycle) or an audiobook is paused (`SyncProvider.publishPosition`); on resume with an idle audiobook the position is compared and the keep/resume dialog shown. Other data (favorites, playlists) still sync manually.
+- Feat: audiobook sync now automatic like Comics Stream: position published when the app is left (HomeScreen lifecycle) or an audiobook is paused (`SyncProvider.publishPosition`); on resume with an idle audiobook the position is compared and the keep/resume dialog shown. Superseded: everything now syncs automatically (see next entry).
+
+- Feat: full automatic sync (`SyncProvider.startAutoSync/autoSync`): at launch, 3 s after any change to favorites/playlists/servers/play counts/audiobook positions (signature compare, no network when idle), on leaving or resuming the app, and on audiobook pause. Add-to-playlist sheet now has a "Nouvelle playlist" row.

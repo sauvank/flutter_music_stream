@@ -56,18 +56,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final player = context.read<PlayerProvider>();
+    final sync = context.read<SyncProvider>();
     if (state == AppLifecycleState.resumed) {
-      _checkAudiobookPosition(player);
+      // Resolve a position conflict first: syncing would hide it.
+      unawaited(_checkAudiobookPosition(player).then((_) => sync.autoSync()));
     } else if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
       final track = player.current;
-      if (track == null || !track.isAudiobook) return;
       final library = context.read<LibraryProvider>();
-      final sync = context.read<SyncProvider>();
       unawaited(() async {
-        await library.savePosition(track.id, player.position);
-        await sync.publishPosition(track);
+        if (track != null && track.isAudiobook) {
+          await library.savePosition(track.id, player.position);
+        }
+        await sync.autoSync();
       }());
     }
   }

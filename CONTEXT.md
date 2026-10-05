@@ -71,3 +71,5 @@ La lecture distante authentifiée, le téléchargement HTTP en arrière-plan, l�
 Architecture détaillée : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Travaux futurs : [ROADMAP.md](ROADMAP.md).
 
 - Mode livre audio : `MusicTrack.isAudiobook` (extension `.m4b` ou genre audiobook) active chapitres, vitesse et sauts ±30 s dans `now_playing_screen.dart`. Les chapitres ne sont lus qu'à l'import/téléchargement (pistes déjà importées sans chapitres, flux distants sans). La vitesse n'est pas persistée.
+
+- Sync auto : `SyncProvider.startAutoSync` (main.dart) écoute library+servers, debounce 3 s, compare `_signature()` à la dernière synchro. Un sync n'adopte jamais une position d'audiobook distante : le choix se fait à l'ouverture (`audiobook_position_gate.dart`).

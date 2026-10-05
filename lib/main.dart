@@ -94,6 +94,7 @@ Future<void> main() async {
     servers: servers,
   );
   await sync.load();
+  sync.startAutoSync();
   runApp(MusicStreamApp(
     library: library,
     downloads: downloads,
@@ -171,7 +172,10 @@ class MusicStreamApp extends StatelessWidget {
               },
               displayMetadata: (value) => localizations().metadata(value),
               onNowPlayingChanged: (track, playing) {
-                if (!playing) unawaited(sync.publishPosition(track));
+                if (!playing && track?.isAudiobook == true) {
+                  unawaited(
+                      sync.autoSync(delay: const Duration(milliseconds: 500)));
+                }
                 final l10n = localizations();
                 const HomeWidgetService().update(
                   title: track?.title,

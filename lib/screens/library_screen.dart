@@ -2239,6 +2239,21 @@ Future<bool> showAddToPlaylistSheet(
               child: ListView(
                 shrinkWrap: true,
                 children: [
+                  ListTile(
+                    leading: const Icon(Icons.add_rounded),
+                    title: Text(l10n.newPlaylist),
+                    onTap: () async {
+                      final name = await _askForName(sheetContext,
+                          title: l10n.newPlaylist);
+                      if (name == null || !sheetContext.mounted) return;
+                      final playlist = await library.createPlaylist(name);
+                      if (playlist == null) return;
+                      await addTo(playlist);
+                      if (sheetContext.mounted) {
+                        Navigator.pop(sheetContext, true);
+                      }
+                    },
+                  ),
                   for (final playlist in library.playlists)
                     Builder(builder: (_) {
                       final complete = ids.every(playlist.trackIds.contains);

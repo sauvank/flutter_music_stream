@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 
 import '../models/music_track.dart';
+import '../models/server_profile.dart';
 import '../services/sync/sync_account.dart';
 import '../services/sync/sync_crypto.dart';
 import '../services/sync/sync_payload.dart';
@@ -152,16 +154,48 @@ class SyncProvider extends ChangeNotifier {
     }
   }
 
-  /// Publishes the audiobook being listened to, quietly: leaving the app or
-  /// pausing is the moment another device will want to continue from.
-  Future<void> publishPosition(MusicTrack? track) async {
-    if (!enabled || busy || track == null || !track.isAudiobook) return;
+  Timer? _autoTimer;
+  String? _syncedSignature;
+  bool _autoStarted = false;
+
+  /// Starts automatic sync: once now, then whenever favorites, playlists,
+  /// servers or audiobook positions change, and when the app is left.
+  void startAutoSync() {
+    if (_autoStarted) return;
+    _autoStarted = true;
+    _library.addListener(_scheduleAuto);
+    _servers?.addListener(_scheduleAuto);
+    _scheduleAuto();
+  }
+
+  void _scheduleAuto() {
+    if (!enabled) return;
+    _autoTimer?.cancel();
+    _autoTimer = Timer(const Duration(seconds: 3), () {
+      if (_signature() != _syncedSignature) unawaited(autoSync());
+    });
+  }
+
+  /// What sync would send, without passwords: cheap enough to compare after
+  /// each burst of changes so idle screens never touch the network.
+  String _signature() => jsonEncode([
+        _library.syncSnapshot().toJson(),
+        [
+          for (final profile in _servers?.profiles ?? const <ServerProfile>[])
+            [profile.id, profile.name, profile.baseUrl, profile.username],
+        ],
+      ]);
+
+  /// Quiet sync: leaving the app, pausing or a local change is the moment
+  /// another device will want to continue from. Failures retry next time.
+  Future<void> autoSync({Duration delay = Duration.zero}) async {
+    if (!enabled || busy) return;
     // Let the player persist its latest position first.
-    await Future<void>.delayed(const Duration(milliseconds: 500));
+    if (delay > Duration.zero) await Future<void>.delayed(delay);
     try {
       await syncNow();
     } catch (_) {
-      // The next manual or automatic attempt retries.
+      // Offline or backend unavailable; the next change retries.
     }
   }
 
@@ -228,6 +262,7 @@ class SyncProvider extends ChangeNotifier {
         lastSyncAt: DateTime.now().toUtc(),
       );
       await _service.saveSettings(settings!);
+      _syncedSignature = _signature();
       return;
     }
   }
@@ -254,6 +289,9 @@ class SyncProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _autoTimer?.cancel();
+    _library.removeListener(_scheduleAuto);
+    _servers?.removeListener(_scheduleAuto);
     _accountChanges?.cancel();
     super.dispose();
   }
