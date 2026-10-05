@@ -1949,7 +1949,7 @@ abstract class AppLocalizations {
   /// No description provided for @supportedFormats.
   ///
   /// In fr, this message translates to:
-  /// **'MP3, M4A, AAC, FLAC, OGG, OPUS et WAV'**
+  /// **'MP3, M4A, M4B, AAC, FLAC, OGG, OPUS et WAV'**
   String get supportedFormats;
 
   /// No description provided for @syncActive.

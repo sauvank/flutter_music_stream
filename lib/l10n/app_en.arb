@@ -308,7 +308,7 @@
   "statusWaitingToRetry": "Waiting to retry",
   "streamFailed": "Unable to play from the server.",
   "streamFromServer": "Stream from the server",
-  "supportedFormats": "MP3, M4A, AAC, FLAC, OGG, OPUS and WAV",
+  "supportedFormats": "MP3, M4A, M4B, AAC, FLAC, OGG, OPUS and WAV",
   "syncActive": "On",
   "syncAuthEmailInUse": "An account already uses this email.",
   "syncAuthFailed": "Sign-in failed.",

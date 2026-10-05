@@ -693,7 +693,7 @@
   "statusWaitingToRetry": "Nouvelle tentative en attente",
   "streamFailed": "Lecture depuis le serveur impossible.",
   "streamFromServer": "Écouter depuis le serveur",
-  "supportedFormats": "MP3, M4A, AAC, FLAC, OGG, OPUS et WAV",
+  "supportedFormats": "MP3, M4A, M4B, AAC, FLAC, OGG, OPUS et WAV",
   "syncActive": "Active",
   "syncAuthEmailInUse": "Un compte existe déjà avec cette adresse.",
   "syncAuthFailed": "Connexion impossible.",

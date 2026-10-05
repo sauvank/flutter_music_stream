@@ -91,3 +91,5 @@
 - Ajout des commandes de lecture aléatoire et de répétition désactivée/file/morceau, validées sur Android physique.
 
 Les versions publiées restent décrites par les tags Git.
+
+- Fix: `.m4b` (audiobooks) added to `LibraryService.supportedExtensions`, so WebDAV/HTTP/FTP listings, imports and device scan now include them.

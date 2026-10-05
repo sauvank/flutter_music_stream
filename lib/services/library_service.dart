@@ -35,6 +35,7 @@ class LibraryService {
   static const supportedExtensions = <String>[
     'mp3',
     'm4a',
+    'm4b',
     'aac',
     'flac',
     'ogg',

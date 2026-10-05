@@ -1194,7 +1194,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get streamFromServer => 'Stream from the server';
 
   @override
-  String get supportedFormats => 'MP3, M4A, AAC, FLAC, OGG, OPUS and WAV';
+  String get supportedFormats => 'MP3, M4A, M4B, AAC, FLAC, OGG, OPUS and WAV';
 
   @override
   String get syncActive => 'On';

@@ -1223,7 +1223,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get streamFromServer => 'Écouter depuis le serveur';
 
   @override
-  String get supportedFormats => 'MP3, M4A, AAC, FLAC, OGG, OPUS et WAV';
+  String get supportedFormats => 'MP3, M4A, M4B, AAC, FLAC, OGG, OPUS et WAV';
 
   @override
   String get syncActive => 'Active';
