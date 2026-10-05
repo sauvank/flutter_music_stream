@@ -37,10 +37,8 @@ class NowPlayingScreen extends StatelessWidget {
     final duration = player.duration > Duration.zero
         ? player.duration
         : Duration(milliseconds: track.durationMs ?? 0);
-    final maximum = duration.inMilliseconds
-        .toDouble()
-        .clamp(1, double.infinity)
-        .toDouble();
+    final maximum =
+        duration.inMilliseconds.toDouble().clamp(1, double.infinity).toDouble();
     final screenHeight = MediaQuery.sizeOf(context).height;
     final compactHeight = screenHeight < 760;
     return _ArtworkTint(
@@ -69,445 +67,454 @@ class NowPlayingScreen extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
                 child: Column(
-              children: [
-                Row(
                   children: [
-                    Container(
-                      width: 38,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: .18),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    const Spacer(),
-                    Column(
+                    Row(
                       children: [
-                        Text(
-                          context.l10n.nowPlayingLabel,
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                        Container(
+                          width: 38,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: .18),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        const Spacer(),
+                        Column(
+                          children: [
+                            Text(
+                              context.l10n.nowPlayingLabel,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
                                     letterSpacing: 1.6,
                                     fontWeight: FontWeight.w800,
                                   ),
-                        ),
-                        if (player.sleepTimerActive) const _SleepTimerLabel(),
-                      ],
-                    ),
-                    const Spacer(),
-                    SizedBox(
-                      width: 38,
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        tooltip: context.l10n.sleepTimer,
-                        color: player.sleepTimerActive
-                            ? Theme.of(context).colorScheme.primary
-                            : null,
-                        onPressed: () => showModalBottomSheet<void>(
-                          context: context,
-                          showDragHandle: true,
-                          builder: (_) => const _SleepTimerSheet(),
-                        ),
-                        icon: Icon(player.sleepTimerActive
-                            ? Icons.bedtime_rounded
-                            : Icons.bedtime_outlined),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: compactHeight ? 14 : 24),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final widthLimit = constraints.maxWidth.clamp(180.0, 460.0);
-                    // A title wrapping to a second line takes that height from
-                    // the artwork, so the controls stay above the navigation.
-                    final title = TextPainter(
-                      text: TextSpan(
-                          text: track.title, style: _titleStyle(context)),
-                      maxLines: 1,
-                      textDirection: Directionality.of(context),
-                      textScaler: MediaQuery.textScalerOf(context),
-                    )..layout(maxWidth: constraints.maxWidth - 156);
-                    final extraTitleLine =
-                        title.didExceedMaxLines ? title.height : 0.0;
-                    title.dispose();
-                    final heightLimit = (screenHeight - 500 - extraTitleLine)
-                        .clamp(180.0, 460.0);
-                    final artworkSize =
-                        widthLimit < heightLimit ? widthLimit : heightLimit;
-                    // Swiping the artwork changes track, like the mini player.
-                    return GestureDetector(
-                      onHorizontalDragEnd: (details) {
-                        final velocity = details.primaryVelocity ?? 0;
-                        if (velocity < -300 && player.hasNext) {
-                          _tap(player.next);
-                        } else if (velocity > 300 && player.hasPrevious) {
-                          _tap(player.previous);
-                        }
-                      },
-                      child: Container(
-                        width: artworkSize,
-                        height: artworkSize,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(42),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withValues(alpha: .28),
-                              blurRadius: 52,
-                              spreadRadius: -8,
-                              offset: const Offset(0, 24),
                             ),
+                            if (player.sleepTimerActive)
+                              const _SleepTimerLabel(),
                           ],
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(42),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              TrackArtwork(
-                                track: track,
-                                size: artworkSize,
-                                borderRadius: BorderRadius.circular(42),
+                        const Spacer(),
+                        SizedBox(
+                          width: 38,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            tooltip: context.l10n.sleepTimer,
+                            color: player.sleepTimerActive
+                                ? Theme.of(context).colorScheme.primary
+                                : null,
+                            onPressed: () => showModalBottomSheet<void>(
+                              context: context,
+                              showDragHandle: true,
+                              builder: (_) => const _SleepTimerSheet(),
+                            ),
+                            icon: Icon(player.sleepTimerActive
+                                ? Icons.bedtime_rounded
+                                : Icons.bedtime_outlined),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: compactHeight ? 14 : 24),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final widthLimit =
+                            constraints.maxWidth.clamp(180.0, 460.0);
+                        // A title wrapping to a second line takes that height from
+                        // the artwork, so the controls stay above the navigation.
+                        final title = TextPainter(
+                          text: TextSpan(
+                              text: track.title, style: _titleStyle(context)),
+                          maxLines: 1,
+                          textDirection: Directionality.of(context),
+                          textScaler: MediaQuery.textScalerOf(context),
+                        )..layout(maxWidth: constraints.maxWidth - 156);
+                        final extraTitleLine =
+                            title.didExceedMaxLines ? title.height : 0.0;
+                        title.dispose();
+                        final heightLimit =
+                            (screenHeight - 500 - extraTitleLine)
+                                .clamp(180.0, 460.0);
+                        final artworkSize =
+                            widthLimit < heightLimit ? widthLimit : heightLimit;
+                        // Swiping the artwork changes track, like the mini player.
+                        return GestureDetector(
+                          onHorizontalDragEnd: (details) {
+                            final velocity = details.primaryVelocity ?? 0;
+                            if (velocity < -300 && player.hasNext) {
+                              _tap(player.next);
+                            } else if (velocity > 300 && player.hasPrevious) {
+                              _tap(player.previous);
+                            }
+                          },
+                          child: Container(
+                            width: artworkSize,
+                            height: artworkSize,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(42),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withValues(alpha: .28),
+                                  blurRadius: 52,
+                                  spreadRadius: -8,
+                                  offset: const Offset(0, 24),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(42),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  TrackArtwork(
+                                    track: track,
+                                    size: artworkSize,
+                                    borderRadius: BorderRadius.circular(42),
+                                  ),
+                                  AudioVisualizer(height: artworkSize * .2),
+                                ],
                               ),
-                              AudioVisualizer(height: artworkSize * .2),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    SizedBox(height: compactHeight ? 18 : 34),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                track.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: _titleStyle(context),
+                              ),
+                              const SizedBox(height: 5),
+                              _ArtistAlbumLine(track: track),
                             ],
                           ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-                SizedBox(height: compactHeight ? 18 : 34),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            track.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: _titleStyle(context),
-                          ),
-                          const SizedBox(height: 5),
-                          _ArtistAlbumLine(track: track),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: context.l10n.addToPlaylist,
-                      onPressed: () => showAddToPlaylistSheet(context, [track]),
-                      icon: const Icon(Icons.playlist_add_rounded),
-                    ),
-                    if (const AudioOutputService().supported) ...[
-                      IconButton(
-                        tooltip: context.l10n.audioOutput,
-                        onPressed: () => _showOutputSwitcher(context),
-                        icon: const Icon(Icons.speaker_group_outlined),
-                      ),
-                      const SizedBox(width: 4),
-                    ],
-                    IconButton.filledTonal(
-                      tooltip: favorite
-                          ? context.l10n.removeFavorite
-                          : context.l10n.addFavorite,
-                      onPressed: () => context
-                          .read<LibraryProvider>()
-                          .toggleFavorite(track.id),
-                      icon: Icon(favorite
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded),
-                    ),
-                  ],
-                ),
-                SizedBox(height: compactHeight ? 12 : 22),
-                ValueListenableBuilder<Duration>(
-                  valueListenable: player.positionListenable,
-                  builder: (context, position, _) => Column(
-                    children: [
-                      SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          trackHeight: 6,
-                          thumbShape: const RoundSliderThumbShape(
-                              enabledThumbRadius: 7),
-                          overlayShape:
-                              const RoundSliderOverlayShape(overlayRadius: 18),
+                        IconButton(
+                          tooltip: context.l10n.addToPlaylist,
+                          onPressed: () =>
+                              showAddToPlaylistSheet(context, [track]),
+                          icon: const Icon(Icons.playlist_add_rounded),
                         ),
-                        child: Slider(
-                          value: duration > Duration.zero
-                              ? position.inMilliseconds
-                                  .toDouble()
-                                  .clamp(0, maximum)
-                                  .toDouble()
-                              : 0,
-                          max: maximum,
-                          onChanged: (next) =>
-                              player.seek(Duration(milliseconds: next.round())),
-                          onChangeEnd: (next) => context
+                        if (const AudioOutputService().supported) ...[
+                          IconButton(
+                            tooltip: context.l10n.audioOutput,
+                            onPressed: () => _showOutputSwitcher(context),
+                            icon: const Icon(Icons.speaker_group_outlined),
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        IconButton.filledTonal(
+                          tooltip: favorite
+                              ? context.l10n.removeFavorite
+                              : context.l10n.addFavorite,
+                          onPressed: () => context
                               .read<LibraryProvider>()
-                              .savePosition(track.id,
-                                  Duration(milliseconds: next.round())),
+                              .toggleFavorite(track.id),
+                          icon: Icon(favorite
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_border_rounded),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(_time(position)),
-                            Text(
-                                '-${_time(_remaining(duration, position))}'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (track.isAudiobook && track.chapters.isNotEmpty)
-                  ValueListenableBuilder<Duration>(
-                    valueListenable: player.positionListenable,
-                    builder: (context, position, _) {
-                      final index = player.chapterIndexAt(position);
-                      if (index < 0) return const SizedBox.shrink();
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: TextButton(
-                          onPressed: () => _showChapters(context),
-                          child: Text(
-                            context.l10n.chapterLabel(
-                              index + 1,
-                              track.chapters.length,
-                              track.chapters[index].title,
+                      ],
+                    ),
+                    SizedBox(height: compactHeight ? 12 : 22),
+                    ValueListenableBuilder<Duration>(
+                      valueListenable: player.positionListenable,
+                      builder: (context, position, _) => Column(
+                        children: [
+                          SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              trackHeight: 6,
+                              thumbShape: const RoundSliderThumbShape(
+                                  enabledThumbRadius: 7),
+                              overlayShape: const RoundSliderOverlayShape(
+                                  overlayRadius: 18),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            child: Slider(
+                              value: duration > Duration.zero
+                                  ? position.inMilliseconds
+                                      .toDouble()
+                                      .clamp(0, maximum)
+                                      .toDouble()
+                                  : 0,
+                              max: maximum,
+                              onChanged: (next) => player
+                                  .seek(Duration(milliseconds: next.round())),
+                              onChangeEnd: (next) => context
+                                  .read<LibraryProvider>()
+                                  .savePosition(track.id,
+                                      Duration(milliseconds: next.round())),
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                SizedBox(height: compactHeight ? 12 : 22),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (track.isAudiobook)
-                      _SpeedButton(player: player)
-                    else
-                      IconButton(
-                      tooltip: player.shuffleEnabled
-                          ? context.l10n.shuffleDisable
-                          : context.l10n.shuffleEnable,
-                      color: player.shuffleEnabled
-                          ? Theme.of(context).colorScheme.primary
-                          : null,
-                      onPressed: () => _tap(player.toggleShuffle),
-                      icon: const Icon(Icons.shuffle_rounded),
-                    ),
-                    IconButton(
-                      iconSize: track.isAudiobook ? 30 : 38,
-                      padding: track.isAudiobook ? EdgeInsets.zero : null,
-                      constraints:
-                          track.isAudiobook ? _audiobookButtonSize : null,
-                      tooltip: context.l10n.actionPrevious,
-                      onPressed: track.isAudiobook
-                          ? () => _tap(player.previousChapter)
-                          : player.hasPrevious
-                              ? () => _tap(player.previous)
-                              : null,
-                      icon: const Icon(Icons.skip_previous_rounded),
-                    ),
-                    if (track.isAudiobook)
-                      IconButton(
-                        iconSize: 28,
-                        padding: EdgeInsets.zero,
-                        constraints: _audiobookButtonSize,
-                        tooltip: context.l10n.rewind30,
-                        onPressed: () =>
-                            player.skipBy(const Duration(seconds: -30)),
-                        icon: const Icon(Icons.replay_30_rounded),
-                      ),
-                    SizedBox(width: track.isAudiobook ? 4 : 8),
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Theme.of(context).colorScheme.primary,
-                            Theme.of(context).colorScheme.tertiary,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withValues(alpha: .34),
-                            blurRadius: player.playing ? 30 : 18,
-                            offset: const Offset(0, 12),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(_time(position)),
+                                Text(
+                                    '-${_time(_remaining(duration, position))}'),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                      child: IconButton(
-                        iconSize: 40,
-                        color: Colors.white,
-                        tooltip: player.playing
-                            ? context.l10n.actionPause
-                            : context.l10n.actionPlay,
-                        onPressed: () => _tap(player.toggle),
-                        icon: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 180),
-                          transitionBuilder: (child, animation) =>
-                              ScaleTransition(scale: animation, child: child),
-                          child: Icon(
-                            player.playing
-                                ? Icons.pause_rounded
-                                : Icons.play_arrow_rounded,
-                            key: ValueKey(player.playing),
+                    ),
+                    if (track.isAudiobook && track.chapters.isNotEmpty)
+                      ValueListenableBuilder<Duration>(
+                        valueListenable: player.positionListenable,
+                        builder: (context, position, _) {
+                          final index = player.chapterIndexAt(position);
+                          if (index < 0) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: TextButton(
+                              onPressed: () => _showChapters(context),
+                              child: Text(
+                                context.l10n.chapterLabel(
+                                  index + 1,
+                                  track.chapters.length,
+                                  track.chapters[index].title,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    SizedBox(height: compactHeight ? 12 : 22),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (track.isAudiobook)
+                          _SpeedButton(player: player)
+                        else
+                          IconButton(
+                            tooltip: player.shuffleEnabled
+                                ? context.l10n.shuffleDisable
+                                : context.l10n.shuffleEnable,
+                            color: player.shuffleEnabled
+                                ? Theme.of(context).colorScheme.primary
+                                : null,
+                            onPressed: () => _tap(player.toggleShuffle),
+                            icon: const Icon(Icons.shuffle_rounded),
+                          ),
+                        IconButton(
+                          iconSize: track.isAudiobook ? 30 : 38,
+                          padding: track.isAudiobook ? EdgeInsets.zero : null,
+                          constraints:
+                              track.isAudiobook ? _audiobookButtonSize : null,
+                          tooltip: context.l10n.actionPrevious,
+                          onPressed: track.isAudiobook
+                              ? () => _tap(player.previousChapter)
+                              : player.hasPrevious
+                                  ? () => _tap(player.previous)
+                                  : null,
+                          icon: const Icon(Icons.skip_previous_rounded),
+                        ),
+                        if (track.isAudiobook)
+                          IconButton(
+                            iconSize: 28,
+                            padding: EdgeInsets.zero,
+                            constraints: _audiobookButtonSize,
+                            tooltip: context.l10n.rewind30,
+                            onPressed: () =>
+                                player.skipBy(const Duration(seconds: -30)),
+                            icon: const Icon(Icons.replay_30_rounded),
+                          ),
+                        SizedBox(width: track.isAudiobook ? 4 : 8),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Theme.of(context).colorScheme.primary,
+                                Theme.of(context).colorScheme.tertiary,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withValues(alpha: .34),
+                                blurRadius: player.playing ? 30 : 18,
+                                offset: const Offset(0, 12),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            iconSize: 40,
+                            color: Colors.white,
+                            tooltip: player.playing
+                                ? context.l10n.actionPause
+                                : context.l10n.actionPlay,
+                            onPressed: () => _tap(player.toggle),
+                            icon: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 180),
+                              transitionBuilder: (child, animation) =>
+                                  ScaleTransition(
+                                      scale: animation, child: child),
+                              child: Icon(
+                                player.playing
+                                    ? Icons.pause_rounded
+                                    : Icons.play_arrow_rounded,
+                                key: ValueKey(player.playing),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: track.isAudiobook ? 4 : 8),
+                        if (track.isAudiobook)
+                          IconButton(
+                            iconSize: 28,
+                            padding: EdgeInsets.zero,
+                            constraints: _audiobookButtonSize,
+                            tooltip: context.l10n.forward30,
+                            onPressed: () =>
+                                player.skipBy(const Duration(seconds: 30)),
+                            icon: const Icon(Icons.forward_30_rounded),
+                          ),
+                        IconButton(
+                          iconSize: track.isAudiobook ? 30 : 38,
+                          padding: track.isAudiobook ? EdgeInsets.zero : null,
+                          constraints:
+                              track.isAudiobook ? _audiobookButtonSize : null,
+                          tooltip: context.l10n.actionNext,
+                          onPressed: track.isAudiobook
+                              ? () => _tap(player.nextChapter)
+                              : player.hasNext
+                                  ? () => _tap(player.next)
+                                  : null,
+                          icon: const Icon(Icons.skip_next_rounded),
+                        ),
+                        if (track.isAudiobook)
+                          IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: _audiobookButtonSize,
+                            tooltip: context.l10n.chapters,
+                            onPressed: track.chapters.isEmpty
+                                ? null
+                                : () => _showChapters(context),
+                            icon: const Icon(Icons.list_rounded),
+                          )
+                        else
+                          IconButton(
+                            tooltip: switch (player.loopMode) {
+                              LoopMode.off => context.l10n.repeatQueue,
+                              LoopMode.all => context.l10n.repeatTrack,
+                              LoopMode.one => context.l10n.repeatOff,
+                            },
+                            color: player.loopMode == LoopMode.off
+                                ? null
+                                : Theme.of(context).colorScheme.primary,
+                            onPressed: player.cycleLoopMode,
+                            icon: Icon(player.loopMode == LoopMode.one
+                                ? Icons.repeat_one_rounded
+                                : Icons.repeat_rounded),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Icon(
+                          player.volume == 0
+                              ? Icons.volume_off_rounded
+                              : Icons.volume_down_rounded,
+                          size: 22,
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: player.volume,
+                            onChanged: player.setVolume,
+                          ),
+                        ),
+                        const Icon(Icons.volume_up_rounded, size: 22),
+                        SizedBox(
+                          width: 44,
+                          child: Text(
+                            context.l10n
+                                .volumePercent((player.volume * 100).round()),
+                            textAlign: TextAlign.end,
+                            style: Theme.of(context).textTheme.labelMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    OutlinedButton.icon(
+                      onPressed: () => _showQueue(context),
+                      icon: const Icon(Icons.queue_music_rounded),
+                      label: Text(
+                        context.l10n.queueButton(player.queue.length),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    FilledButton.tonalIcon(
+                      onPressed: () => showModalBottomSheet<void>(
+                        context: context,
+                        isScrollControlled: true,
+                        showDragHandle: true,
+                        builder: (_) => Consumer<PlayerProvider>(
+                          builder: (context, currentPlayer, _) =>
+                              FractionallySizedBox(
+                            heightFactor: .78,
+                            child: currentPlayer.current == null
+                                ? Center(
+                                    child: Text(context.l10n.nothingPlaying))
+                                : LyricsSheet(
+                                    key: ValueKey(currentPlayer.current!.id),
+                                    track: currentPlayer.current!,
+                                  ),
                           ),
                         ),
                       ),
+                      icon: const Icon(Icons.lyrics_rounded),
+                      label: Text(context.l10n.lyrics),
                     ),
-                    SizedBox(width: track.isAudiobook ? 4 : 8),
-                    if (track.isAudiobook)
-                      IconButton(
-                        iconSize: 28,
-                        padding: EdgeInsets.zero,
-                        constraints: _audiobookButtonSize,
-                        tooltip: context.l10n.forward30,
-                        onPressed: () =>
-                            player.skipBy(const Duration(seconds: 30)),
-                        icon: const Icon(Icons.forward_30_rounded),
-                      ),
-                    IconButton(
-                      iconSize: track.isAudiobook ? 30 : 38,
-                      padding: track.isAudiobook ? EdgeInsets.zero : null,
-                      constraints:
-                          track.isAudiobook ? _audiobookButtonSize : null,
-                      tooltip: context.l10n.actionNext,
-                      onPressed: track.isAudiobook
-                          ? () => _tap(player.nextChapter)
-                          : player.hasNext
-                              ? () => _tap(player.next)
-                              : null,
-                      icon: const Icon(Icons.skip_next_rounded),
-                    ),
-                    if (track.isAudiobook)
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: _audiobookButtonSize,
-                        tooltip: context.l10n.chapters,
-                        onPressed: track.chapters.isEmpty
-                            ? null
-                            : () => _showChapters(context),
-                        icon: const Icon(Icons.list_rounded),
-                      )
-                    else
-                    IconButton(
-                      tooltip: switch (player.loopMode) {
-                        LoopMode.off => context.l10n.repeatQueue,
-                        LoopMode.all => context.l10n.repeatTrack,
-                        LoopMode.one => context.l10n.repeatOff,
-                      },
-                      color: player.loopMode == LoopMode.off
-                          ? null
-                          : Theme.of(context).colorScheme.primary,
-                      onPressed: player.cycleLoopMode,
-                      icon: Icon(player.loopMode == LoopMode.one
-                          ? Icons.repeat_one_rounded
-                          : Icons.repeat_rounded),
+                    const SizedBox(height: 18),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MetadataPill(
+                            icon: Icons.album_rounded,
+                            label: context.l10n.metadata(track.album)),
+                        _MetadataPill(
+                            icon: Icons.auto_awesome_rounded,
+                            label: context.l10n.metadata(track.genre)),
+                        if (track.durationMs != null)
+                          _MetadataPill(
+                            icon: Icons.schedule_rounded,
+                            label: _time(
+                                Duration(milliseconds: track.durationMs!)),
+                          ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Icon(
-                      player.volume == 0
-                          ? Icons.volume_off_rounded
-                          : Icons.volume_down_rounded,
-                      size: 22,
-                    ),
-                    Expanded(
-                      child: Slider(
-                        value: player.volume,
-                        onChanged: player.setVolume,
-                      ),
-                    ),
-                    const Icon(Icons.volume_up_rounded, size: 22),
-                    SizedBox(
-                      width: 44,
-                      child: Text(
-                        context.l10n
-                            .volumePercent((player.volume * 100).round()),
-                        textAlign: TextAlign.end,
-                        style: Theme.of(context).textTheme.labelMedium,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                OutlinedButton.icon(
-                  onPressed: () => _showQueue(context),
-                  icon: const Icon(Icons.queue_music_rounded),
-                  label: Text(
-                    context.l10n.queueButton(player.queue.length),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                FilledButton.tonalIcon(
-                  onPressed: () => showModalBottomSheet<void>(
-                    context: context,
-                    isScrollControlled: true,
-                    showDragHandle: true,
-                    builder: (_) => Consumer<PlayerProvider>(
-                      builder: (context, currentPlayer, _) =>
-                          FractionallySizedBox(
-                        heightFactor: .78,
-                        child: currentPlayer.current == null
-                            ? Center(child: Text(context.l10n.nothingPlaying))
-                            : LyricsSheet(
-                                key: ValueKey(currentPlayer.current!.id),
-                                track: currentPlayer.current!,
-                              ),
-                      ),
-                    ),
-                  ),
-                  icon: const Icon(Icons.lyrics_rounded),
-                  label: Text(context.l10n.lyrics),
-                ),
-                const SizedBox(height: 18),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _MetadataPill(
-                        icon: Icons.album_rounded,
-                        label: context.l10n.metadata(track.album)),
-                    _MetadataPill(
-                        icon: Icons.auto_awesome_rounded,
-                        label: context.l10n.metadata(track.genre)),
-                    if (track.durationMs != null)
-                      _MetadataPill(
-                        icon: Icons.schedule_rounded,
-                        label: _time(Duration(milliseconds: track.durationMs!)),
-                      ),
-                  ],
-                ),
-              ],
-            ),
               ),
             ),
           ),

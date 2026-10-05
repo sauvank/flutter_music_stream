@@ -8,6 +8,7 @@ import '../models/music_playlist.dart';
 import '../models/music_track.dart';
 import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
+import '../widgets/audiobook_position_gate.dart';
 import '../widgets/track_artwork.dart';
 import 'home_screen.dart';
 import '../widgets/import_music_sheet.dart';
@@ -631,9 +632,7 @@ class _RecentTracks extends StatelessWidget {
                 child: InkWell(
                   onTap: () => selection.active
                       ? selection.toggle(track.id)
-                      : context
-                          .read<PlayerProvider>()
-                          .playTrack(track, visible),
+                      : playWithPositionCheck(context, track, visible),
                   onLongPress: () => selection.toggle(track.id),
                   borderRadius: BorderRadius.circular(24),
                   child: Column(
@@ -1640,7 +1639,7 @@ class _TrackTileState extends State<_TrackTile> {
     final library = context.read<LibraryProvider>();
     // A search that led to playback is worth suggesting again.
     if (library.query.trim().isNotEmpty) library.rememberSearch(library.query);
-    context.read<PlayerProvider>().playTrack(widget.track, widget.queue);
+    playWithPositionCheck(context, widget.track, widget.queue);
     if (widget.playlistId != null) HomeScreen.openNowPlaying(context);
   }
 
@@ -1828,8 +1827,8 @@ class _TrackTileState extends State<_TrackTile> {
           color: colors.errorContainer,
           borderRadius: BorderRadius.circular(22),
         ),
-        child: Icon(Icons.playlist_remove_rounded,
-            color: colors.onErrorContainer),
+        child:
+            Icon(Icons.playlist_remove_rounded, color: colors.onErrorContainer),
       ),
       onDismissed: (_) {
         HapticFeedback.mediumImpact();

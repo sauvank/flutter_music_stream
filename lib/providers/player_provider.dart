@@ -27,8 +27,7 @@ class PlayerProvider extends ChangeNotifier {
         _volume = volume.clamp(0, 1),
         _player = audioPlayer ?? AudioPlayer() {
     unawaited(_player.setVolume(_volume));
-    _subscriptions
-        .add(_player.playerStateStream.listen((state) {
+    _subscriptions.add(_player.playerStateStream.listen((state) {
       notifyListeners();
       // Audiobooks are resumed days later, so pausing or finishing must not
       // wait for the next 5-second tick to remember the position.
@@ -202,6 +201,7 @@ class PlayerProvider extends ChangeNotifier {
     if (index + 1 >= _current!.chapters.length) return next();
     return seekToChapter(index + 1);
   }
+
   bool get playing => _player.playing;
 
   /// Android audio session of the player, which the visualizer attaches to.

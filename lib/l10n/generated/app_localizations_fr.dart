@@ -1537,4 +1537,34 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get audiobooksEmpty =>
       'Aucun livre audio. Les fichiers M4B et les genres « Audiobook » apparaissent ici.';
+
+  @override
+  String get syncPositionTitle => 'Progression trouvée sur un autre appareil';
+
+  @override
+  String syncPositionBody(String title) {
+    return '« $title » a une autre position dans la synchronisation.';
+  }
+
+  @override
+  String syncPositionRemote(String position, String date) {
+    return 'Synchronisation : $position\n$date';
+  }
+
+  @override
+  String syncPositionLocal(String position, String date) {
+    return 'Cet appareil : $position\n$date';
+  }
+
+  @override
+  String get syncPositionNoDate => 'date inconnue';
+
+  @override
+  String get syncPositionIgnore => 'Ignorer';
+
+  @override
+  String get syncPositionKeepLocal => 'Garder ici';
+
+  @override
+  String get syncPositionUseRemote => 'Reprendre depuis la synchro';
 }

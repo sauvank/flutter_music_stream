@@ -3,6 +3,7 @@ import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 
+import '../models/music_track.dart';
 import '../services/sync/sync_account.dart';
 import '../services/sync/sync_crypto.dart';
 import '../services/sync/sync_payload.dart';
@@ -10,6 +11,21 @@ import '../services/sync/sync_remote.dart';
 import '../services/sync/sync_service.dart';
 import 'library_provider.dart';
 import 'server_provider.dart';
+
+/// An audiobook position saved more recently on another device.
+class PositionProposal {
+  const PositionProposal({
+    required this.remoteMs,
+    required this.remoteAt,
+    required this.localMs,
+    this.localAt,
+  });
+
+  final int remoteMs;
+  final DateTime remoteAt;
+  final int localMs;
+  final DateTime? localAt;
+}
 
 /// End-to-end encrypted sync of favorites, listening counts, playlists and
 /// servers (with their passwords)
@@ -102,6 +118,52 @@ class SyncProvider extends ChangeNotifier {
       });
 
   Future<void> syncNow() => _run(_sync);
+
+  /// Compares an audiobook's local resume point with the synced one when it
+  /// is opened. Returns null when sync is off, offline, or nothing newer and
+  /// meaningfully different exists, so playback is never blocked.
+  Future<PositionProposal?> positionProposal(MusicTrack track) async {
+    if (!enabled || !track.isAudiobook || busy) return null;
+    try {
+      final key = await _service.loadKey();
+      if (key == null) return null;
+      final remote = await _remote
+          .download(_requireUser().uid)
+          .timeout(const Duration(seconds: 5));
+      if (remote == null) return null;
+      final payload = SyncPayload.fromJson(
+        await _crypto.open(remote.envelope, key: key),
+      );
+      final state = payload.tracks[track.id];
+      final remoteAt = state?.positionAt;
+      final remoteMs = state?.positionMs;
+      if (remoteAt == null || remoteMs == null) return null;
+      final localAt = _library.positionTime(track.id);
+      if (localAt != null && !remoteAt.isAfter(localAt)) return null;
+      if ((remoteMs - track.lastPositionMs).abs() < 15000) return null;
+      return PositionProposal(
+        remoteMs: remoteMs,
+        remoteAt: remoteAt,
+        localMs: track.lastPositionMs,
+        localAt: localAt,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> adoptRemotePosition(String id, PositionProposal proposal) =>
+      _library.adoptSyncedPosition(id, proposal.remoteMs, proposal.remoteAt);
+
+  /// Makes this device's position the newest one and publishes it.
+  Future<void> keepLocalPosition(String id) async {
+    await _library.touchPosition(id);
+    try {
+      await syncNow();
+    } catch (_) {
+      // Stays local; the next manual sync publishes it.
+    }
+  }
 
   /// Forgets the key on this device and keeps the account signed in.
   Future<void> disable() async {

@@ -401,5 +401,16 @@
   "rewind30": "Back 30 seconds",
   "forward30": "Forward 30 seconds",
   "playbackSpeed": "Playback speed",
-  "audiobooksEmpty": "No audiobooks. M4B files and “Audiobook” genres show up here."
+  "audiobooksEmpty": "No audiobooks. M4B files and “Audiobook” genres show up here.",
+  "syncPositionTitle": "Progress found on another device",
+  "syncPositionBody": "“{title}” has a different position in sync.",
+  "@syncPositionBody": {"placeholders": {"title": {"type": "String"}}},
+  "syncPositionRemote": "Sync: {position}\n{date}",
+  "@syncPositionRemote": {"placeholders": {"position": {"type": "String"}, "date": {"type": "String"}}},
+  "syncPositionLocal": "This device: {position}\n{date}",
+  "@syncPositionLocal": {"placeholders": {"position": {"type": "String"}, "date": {"type": "String"}}},
+  "syncPositionNoDate": "unknown date",
+  "syncPositionIgnore": "Ignore",
+  "syncPositionKeepLocal": "Keep here",
+  "syncPositionUseRemote": "Resume from sync"
 }

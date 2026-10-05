@@ -716,19 +716,6 @@ class LibraryProvider extends ChangeNotifier {
       if (state.favoriteAt != null) {
         _journal.favoriteTimes[track.id] = state.favoriteAt!;
       }
-      final remoteAt = state.positionAt;
-      final remoteMs = state.positionMs;
-      final localAt = _journal.positionTimes[track.id];
-      if (remoteAt != null &&
-          remoteMs != null &&
-          (localAt == null || remoteAt.isAfter(localAt))) {
-        _journal.positionTimes[track.id] = remoteAt;
-        if (remoteMs != _tracks[index].lastPositionMs) {
-          _tracks[index] = _tracks[index].copyWith(lastPositionMs: remoteMs);
-          await _service.savePosition(track.id, remoteMs);
-          tracksChanged = true;
-        }
-      }
     }
     _playlists
       ..clear()
@@ -835,6 +822,31 @@ class LibraryProvider extends ChangeNotifier {
     }
     await _service.savePosition(id, position.inMilliseconds);
   }
+
+  /// When this device last saved the resume point of [id], if it ever did.
+  DateTime? positionTime(String id) => _journal.positionTimes[id];
+
+  /// Adopts a resume point chosen from another device.
+  Future<void> adoptSyncedPosition(
+      String id, int positionMs, DateTime at) async {
+    final index = _tracks.indexWhere((track) => track.id == id);
+    if (index == -1) return;
+    _tracks[index] = _tracks[index].copyWith(lastPositionMs: positionMs);
+    _journal.positionTimes[id] = at;
+    _invalidateViews();
+    await _journal.save();
+    await _service.savePosition(id, positionMs);
+    notifyListeners();
+  }
+
+  /// Marks the local resume point as the newest, so the next sync keeps it.
+  Future<void> touchPosition(String id) async {
+    _journal.positionTimes[id] = DateTime.now().toUtc();
+    await _journal.save();
+  }
+
+  MusicTrack? trackById(String id) =>
+      _tracks.where((track) => track.id == id).firstOrNull;
 
   Future<void> recordPlayed(String id) async {
     final index = _tracks.indexWhere((track) => track.id == id);

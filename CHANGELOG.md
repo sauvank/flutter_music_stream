@@ -99,3 +99,5 @@ Les versions publiées restent décrites par les tags Git.
 - Fix: server file rows show a progress loader instead of the download icon while a download is queued, running or being imported.
 
 - Feat: audiobook resume position synced (latest save wins per track, `SyncTrackState.positionMs/positionAt`, `SyncJournal.positionTimes`). Fix: Now Playing controls stay centred for audiobooks.
+
+- Change: audiobook sync positions are no longer applied silently by a sync. Opening an audiobook (`playWithPositionCheck`, `lib/widgets/audiobook_position_gate.dart`) compares with the synced position and asks: ignore / keep here (publishes local as newest) / resume from sync. Same flow as Comics Stream's `SyncedReaderGate`.

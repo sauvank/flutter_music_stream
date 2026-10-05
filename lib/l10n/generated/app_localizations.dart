@@ -2485,6 +2485,54 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aucun livre audio. Les fichiers M4B et les genres « Audiobook » apparaissent ici.'**
   String get audiobooksEmpty;
+
+  /// No description provided for @syncPositionTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Progression trouvée sur un autre appareil'**
+  String get syncPositionTitle;
+
+  /// No description provided for @syncPositionBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'« {title} » a une autre position dans la synchronisation.'**
+  String syncPositionBody(String title);
+
+  /// No description provided for @syncPositionRemote.
+  ///
+  /// In fr, this message translates to:
+  /// **'Synchronisation : {position}\n{date}'**
+  String syncPositionRemote(String position, String date);
+
+  /// No description provided for @syncPositionLocal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cet appareil : {position}\n{date}'**
+  String syncPositionLocal(String position, String date);
+
+  /// No description provided for @syncPositionNoDate.
+  ///
+  /// In fr, this message translates to:
+  /// **'date inconnue'**
+  String get syncPositionNoDate;
+
+  /// No description provided for @syncPositionIgnore.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ignorer'**
+  String get syncPositionIgnore;
+
+  /// No description provided for @syncPositionKeepLocal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Garder ici'**
+  String get syncPositionKeepLocal;
+
+  /// No description provided for @syncPositionUseRemote.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reprendre depuis la synchro'**
+  String get syncPositionUseRemote;
 }
 
 class _AppLocalizationsDelegate
