@@ -66,7 +66,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final track = player.current;
       final library = context.read<LibraryProvider>();
       unawaited(() async {
-        if (track != null && track.isAudiobook) {
+        // Only while playing: a paused or still-loading player may report
+        // 0:00, and the player saves real pauses itself.
+        if (track != null && track.isAudiobook && player.playing) {
           await library.savePosition(track.id, player.position);
         }
         await sync.autoSync();

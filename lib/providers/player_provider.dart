@@ -34,8 +34,12 @@ class PlayerProvider extends ChangeNotifier {
       notifyListeners();
       // Audiobooks are resumed days later, so pausing or finishing must not
       // wait for the next 5-second tick to remember the position.
+      // Only a real pause counts: a queue restored at launch is idle at
+      // 0:00 until it loads, and saving that would lose the bookmark.
+      final paused = _wasPlaying && !state.playing;
+      _wasPlaying = state.playing;
       final track = _current;
-      if (track != null && track.isAudiobook && !state.playing) {
+      if (paused && track != null && track.isAudiobook) {
         _lastPersistedAt = DateTime.now();
         unawaited(onPositionChanged?.call(track.id, _player.position));
       }
@@ -52,6 +56,7 @@ class PlayerProvider extends ChangeNotifier {
       }
       final now = DateTime.now();
       if (track != null &&
+          _player.playing &&
           now.difference(_lastPersistedAt) >= const Duration(seconds: 5)) {
         _lastPersistedAt = now;
         unawaited(onPositionChanged?.call(track.id, position));
@@ -161,6 +166,7 @@ class PlayerProvider extends ChangeNotifier {
   String? _lastAnnouncedTrackId;
   bool _isDisposed = false;
   bool _reachedTrackEnd = false;
+  bool _wasPlaying = false;
   Timer? _sleepTimer;
   DateTime? _sleepAt;
   bool _sleepAtTrackEnd = false;
@@ -175,8 +181,10 @@ class PlayerProvider extends ChangeNotifier {
   /// Speed applies to audiobooks only; music always plays at normal speed.
   double get speed => _current?.isAudiobook == true ? _audiobookSpeed : 1;
 
-  void _applySpeed() => unawaited(
-      _player.setSpeed(_current?.isAudiobook == true ? _audiobookSpeed : 1));
+  void _applySpeed() {
+    final target = speed;
+    if (_player.speed != target) unawaited(_player.setSpeed(target));
+  }
 
   /// Chapter of the current audiobook at [position], or -1 without chapters.
   int chapterIndexAt(Duration position) =>
@@ -307,7 +315,6 @@ class PlayerProvider extends ChangeNotifier {
     _queue = List.of(tracks);
     _queueRevision++;
     _current = track;
-    _applySpeed();
     _resetListeningSession(track, force: true);
     _restoreIndex = index;
     try {
@@ -324,6 +331,7 @@ class PlayerProvider extends ChangeNotifier {
     } finally {
       _restoreIndex = null;
     }
+    _applySpeed();
     notifyListeners();
   }
 
@@ -533,9 +541,11 @@ class PlayerProvider extends ChangeNotifier {
       return;
     }
     // Picking a book back up repeats the last words before the pause.
-    if (_current?.isAudiobook == true) {
-      final back = _player.position - const Duration(seconds: 3);
-      await _player.seek(back > Duration.zero ? back : Duration.zero);
+    // Only once loaded: before that the player may report 0:00.
+    if (_current?.isAudiobook == true &&
+        _player.processingState == ProcessingState.ready &&
+        _player.position > const Duration(seconds: 3)) {
+      await _player.seek(_player.position - const Duration(seconds: 3));
     }
     await _playWithFade();
   }
@@ -578,6 +588,12 @@ class PlayerProvider extends ChangeNotifier {
     if (_sleepChapter != null) {
       final index = chapterIndexAt(position);
       if (index >= 0) _sleepChapter = index;
+    }
+    // An explicit jump is a new bookmark, even while paused.
+    final track = _current;
+    if (track != null && track.isAudiobook) {
+      _lastPersistedAt = DateTime.now();
+      unawaited(onPositionChanged?.call(track.id, position));
     }
     return _player.seek(position);
   }
