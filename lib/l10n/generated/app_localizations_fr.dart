@@ -1516,11 +1516,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get chapters => 'Chapitres';
 
   @override
-  String chapterLabel(int number, int total, String title) {
-    return 'Chapitre $number/$total · $title';
-  }
-
-  @override
   String chapterDefault(int number) {
     return 'Chapitre $number';
   }
@@ -1567,4 +1562,26 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get syncPositionUseRemote => 'Reprendre depuis la synchro';
+
+  @override
+  String chapterPosition(int number, int total) {
+    return 'Chapitre $number/$total';
+  }
+
+  @override
+  String audiobookOverall(int percent, String remaining) {
+    return '$percent % du livre · $remaining restantes';
+  }
+
+  @override
+  String get previousChapter => 'Chapitre précédent';
+
+  @override
+  String get nextChapter => 'Chapitre suivant';
+
+  @override
+  String get sleepTimerEndOfChapter => 'Fin du chapitre';
+
+  @override
+  String get sleepTimerEndOfBook => 'Fin du livre';
 }

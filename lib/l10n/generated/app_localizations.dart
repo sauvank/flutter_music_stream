@@ -2450,12 +2450,6 @@ abstract class AppLocalizations {
   /// **'Chapitres'**
   String get chapters;
 
-  /// No description provided for @chapterLabel.
-  ///
-  /// In fr, this message translates to:
-  /// **'Chapitre {number}/{total} · {title}'**
-  String chapterLabel(int number, int total, String title);
-
   /// No description provided for @chapterDefault.
   ///
   /// In fr, this message translates to:
@@ -2533,6 +2527,42 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Reprendre depuis la synchro'**
   String get syncPositionUseRemote;
+
+  /// No description provided for @chapterPosition.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chapitre {number}/{total}'**
+  String chapterPosition(int number, int total);
+
+  /// No description provided for @audiobookOverall.
+  ///
+  /// In fr, this message translates to:
+  /// **'{percent} % du livre · {remaining} restantes'**
+  String audiobookOverall(int percent, String remaining);
+
+  /// No description provided for @previousChapter.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chapitre précédent'**
+  String get previousChapter;
+
+  /// No description provided for @nextChapter.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chapitre suivant'**
+  String get nextChapter;
+
+  /// No description provided for @sleepTimerEndOfChapter.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fin du chapitre'**
+  String get sleepTimerEndOfChapter;
+
+  /// No description provided for @sleepTimerEndOfBook.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fin du livre'**
+  String get sleepTimerEndOfBook;
 }
 
 class _AppLocalizationsDelegate

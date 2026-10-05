@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class PlaybackSettingsService {
   static const _fadeDurationKey = 'playback_fade_duration_ms';
   static const _volumeKey = 'playback_volume';
+  static const _audiobookSpeedKey = 'audiobook_speed';
   static const _queueKey = 'playback_queue_v1';
   static const defaultFadeDuration = Duration(milliseconds: 500);
   static const defaultVolume = 1.0;
@@ -53,6 +54,18 @@ class PlaybackSettingsService {
     }
     await (await SharedPreferences.getInstance()).setDouble(_volumeKey, volume);
   }
+
+  Future<double> loadAudiobookSpeed() async {
+    final speed =
+        (await SharedPreferences.getInstance()).getDouble(_audiobookSpeedKey);
+    return speed == null || !speed.isFinite || speed < .5 || speed > 3
+        ? 1
+        : speed;
+  }
+
+  Future<void> saveAudiobookSpeed(double speed) async =>
+      (await SharedPreferences.getInstance())
+          .setDouble(_audiobookSpeedKey, speed);
 
   /// The last queue as track ids, with the track that was playing.
   Future<({List<String> trackIds, String? currentId})?> loadQueue() async {

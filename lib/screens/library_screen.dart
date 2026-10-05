@@ -114,11 +114,8 @@ class LibraryScreenState extends State<LibraryScreen> {
                     context.watch<LibraryProvider>().tracks,
                   _LibraryMode.history =>
                     context.watch<LibraryProvider>().listeningHistory,
-                  _LibraryMode.audiobooks => context
-                      .watch<LibraryProvider>()
-                      .tracks
-                      .where((track) => track.isAudiobook)
-                      .toList(),
+                  _LibraryMode.audiobooks =>
+                    context.watch<LibraryProvider>().audiobooks,
                   _ => const <MusicTrack>[],
                 },
               ),
@@ -261,7 +258,7 @@ class LibraryScreenState extends State<LibraryScreen> {
             hasScrollBody: false,
             child: _EmptyLibrary(importing: library.isImporting),
           )
-        else if (tracks.isEmpty)
+        else if (tracks.isEmpty && _mode != _LibraryMode.audiobooks)
           const SliverFillRemaining(
             hasScrollBody: false,
             child: _NoResults(),
@@ -301,7 +298,7 @@ class LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
         ] else if (_mode == _LibraryMode.audiobooks) ...[
-          ..._audiobookSlivers(context, tracks),
+          ..._audiobookSlivers(context, library.audiobooks),
         ] else if (_mode == _LibraryMode.tracks) ...[
           if (library.query.trim().isNotEmpty &&
               library.matchingPlaylists.isNotEmpty)
@@ -377,16 +374,7 @@ class LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  /// Audiobooks being listened to come first, most recent on top.
-  List<Widget> _audiobookSlivers(BuildContext context, List<MusicTrack> all) {
-    final books = all.where((track) => track.isAudiobook).toList()
-      ..sort((a, b) {
-        final left = a.lastPlayedAt?.millisecondsSinceEpoch ?? 0;
-        final right = b.lastPlayedAt?.millisecondsSinceEpoch ?? 0;
-        return right != left
-            ? right.compareTo(left)
-            : a.title.toLowerCase().compareTo(b.title.toLowerCase());
-      });
+  List<Widget> _audiobookSlivers(BuildContext context, List<MusicTrack> books) {
     if (books.isEmpty) {
       return [
         SliverFillRemaining(

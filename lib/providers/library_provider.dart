@@ -44,6 +44,7 @@ class LibraryProvider extends ChangeNotifier {
   List<MusicTrack>? _allTracksCache;
   List<MusicTrack>? _tracksCache;
   List<MusicTrack>? _historyCache;
+  List<MusicTrack>? _audiobooksCache;
   Map<String, MusicTrack>? _byIdCache;
   Map<String, MusicTrack>? _bySourceUriCache;
 
@@ -65,11 +66,14 @@ class LibraryProvider extends ChangeNotifier {
           ..sort((a, b) => b.lastPlayedAt!.compareTo(a.lastPlayedAt!)),
       );
 
+  /// Music views; audiobooks live in [audiobooks] so a shuffle or an album
+  /// never runs into an 18-hour book.
   List<MusicTrack> get tracks {
     final cached = _tracksCache;
     if (cached != null) return cached;
     final needle = _fold(query);
     final filtered = _tracks.where((track) {
+      if (track.isAudiobook) return false;
       if (favoritesOnly && !track.favorite) return false;
       return needle.isEmpty ||
           _fold(track.title).contains(needle) ||
@@ -78,6 +82,25 @@ class LibraryProvider extends ChangeNotifier {
     });
     return _tracksCache = List.unmodifiable(sortTracks(filtered, sort));
   }
+
+  /// Audiobooks matching the search, the ones being listened to first.
+  List<MusicTrack> get audiobooks => _audiobooksCache ??= List.unmodifiable(
+        _tracks.where((track) {
+          if (!track.isAudiobook) return false;
+          final needle = _fold(query);
+          return needle.isEmpty ||
+              _fold(track.title).contains(needle) ||
+              _fold(track.artist).contains(needle) ||
+              _fold(track.album).contains(needle);
+        }).toList()
+          ..sort((a, b) {
+            final left = a.lastPlayedAt?.millisecondsSinceEpoch ?? 0;
+            final right = b.lastPlayedAt?.millisecondsSinceEpoch ?? 0;
+            return right != left
+                ? right.compareTo(left)
+                : _fold(a.title).compareTo(_fold(b.title));
+          }),
+      );
 
   /// Sorts with precomputed accent-insensitive keys; ties keep album order.
   static List<MusicTrack> sortTracks(
@@ -147,6 +170,7 @@ class LibraryProvider extends ChangeNotifier {
     _allTracksCache = null;
     _tracksCache = null;
     _historyCache = null;
+    _audiobooksCache = null;
     _byIdCache = null;
     _bySourceUriCache = null;
   }

@@ -231,79 +231,58 @@ class NowPlayingScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    SizedBox(height: compactHeight ? 12 : 22),
-                    ValueListenableBuilder<Duration>(
-                      valueListenable: player.positionListenable,
-                      builder: (context, position, _) => Column(
-                        children: [
-                          SliderTheme(
-                            data: SliderTheme.of(context).copyWith(
-                              trackHeight: 6,
-                              thumbShape: const RoundSliderThumbShape(
-                                  enabledThumbRadius: 7),
-                              overlayShape: const RoundSliderOverlayShape(
-                                  overlayRadius: 18),
-                            ),
-                            child: Slider(
-                              value: duration > Duration.zero
-                                  ? position.inMilliseconds
-                                      .toDouble()
-                                      .clamp(0, maximum)
-                                      .toDouble()
-                                  : 0,
-                              max: maximum,
-                              onChanged: (next) => player
-                                  .seek(Duration(milliseconds: next.round())),
-                              onChangeEnd: (next) => context
-                                  .read<LibraryProvider>()
-                                  .savePosition(track.id,
-                                      Duration(milliseconds: next.round())),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(_time(position)),
-                                Text(
-                                    '-${_time(_remaining(duration, position))}'),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (track.isAudiobook && track.chapters.isNotEmpty)
+                    if (track.isAudiobook)
+                      const _AudiobookPanel()
+                    else ...[
+                      SizedBox(height: compactHeight ? 12 : 22),
                       ValueListenableBuilder<Duration>(
                         valueListenable: player.positionListenable,
-                        builder: (context, position, _) {
-                          final index = player.chapterIndexAt(position);
-                          if (index < 0) return const SizedBox.shrink();
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            child: TextButton(
-                              onPressed: () => _showChapters(context),
-                              child: Text(
-                                context.l10n.chapterLabel(
-                                  index + 1,
-                                  track.chapters.length,
-                                  track.chapters[index].title,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                        builder: (context, position, _) => Column(
+                          children: [
+                            SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                trackHeight: 6,
+                                thumbShape: const RoundSliderThumbShape(
+                                    enabledThumbRadius: 7),
+                                overlayShape: const RoundSliderOverlayShape(
+                                    overlayRadius: 18),
+                              ),
+                              child: Slider(
+                                value: duration > Duration.zero
+                                    ? position.inMilliseconds
+                                        .toDouble()
+                                        .clamp(0, maximum)
+                                        .toDouble()
+                                    : 0,
+                                max: maximum,
+                                onChanged: (next) => player
+                                    .seek(Duration(milliseconds: next.round())),
+                                onChangeEnd: (next) => context
+                                    .read<LibraryProvider>()
+                                    .savePosition(track.id,
+                                        Duration(milliseconds: next.round())),
                               ),
                             ),
-                          );
-                        },
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 4),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(_time(position)),
+                                  Text(
+                                      '-${_time(_remaining(duration, position))}'),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    SizedBox(height: compactHeight ? 12 : 22),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (track.isAudiobook)
-                          _SpeedButton(player: player)
-                        else
+                      SizedBox(height: compactHeight ? 12 : 22),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
                           IconButton(
                             tooltip: player.shuffleEnabled
                                 ? context.l10n.shuffleDisable
@@ -314,111 +293,24 @@ class NowPlayingScreen extends StatelessWidget {
                             onPressed: () => _tap(player.toggleShuffle),
                             icon: const Icon(Icons.shuffle_rounded),
                           ),
-                        IconButton(
-                          iconSize: track.isAudiobook ? 30 : 38,
-                          padding: track.isAudiobook ? EdgeInsets.zero : null,
-                          constraints:
-                              track.isAudiobook ? _audiobookButtonSize : null,
-                          tooltip: context.l10n.actionPrevious,
-                          onPressed: track.isAudiobook
-                              ? () => _tap(player.previousChapter)
-                              : player.hasPrevious
-                                  ? () => _tap(player.previous)
-                                  : null,
-                          icon: const Icon(Icons.skip_previous_rounded),
-                        ),
-                        if (track.isAudiobook)
                           IconButton(
-                            iconSize: 28,
-                            padding: EdgeInsets.zero,
-                            constraints: _audiobookButtonSize,
-                            tooltip: context.l10n.rewind30,
-                            onPressed: () =>
-                                player.skipBy(const Duration(seconds: -30)),
-                            icon: const Icon(Icons.replay_30_rounded),
+                            iconSize: 38,
+                            tooltip: context.l10n.actionPrevious,
+                            onPressed: player.hasPrevious
+                                ? () => _tap(player.previous)
+                                : null,
+                            icon: const Icon(Icons.skip_previous_rounded),
                           ),
-                        SizedBox(width: track.isAudiobook ? 4 : 8),
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          width: 72,
-                          height: 72,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Theme.of(context).colorScheme.primary,
-                                Theme.of(context).colorScheme.tertiary,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .primary
-                                    .withValues(alpha: .34),
-                                blurRadius: player.playing ? 30 : 18,
-                                offset: const Offset(0, 12),
-                              ),
-                            ],
-                          ),
-                          child: IconButton(
-                            iconSize: 40,
-                            color: Colors.white,
-                            tooltip: player.playing
-                                ? context.l10n.actionPause
-                                : context.l10n.actionPlay,
-                            onPressed: () => _tap(player.toggle),
-                            icon: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 180),
-                              transitionBuilder: (child, animation) =>
-                                  ScaleTransition(
-                                      scale: animation, child: child),
-                              child: Icon(
-                                player.playing
-                                    ? Icons.pause_rounded
-                                    : Icons.play_arrow_rounded,
-                                key: ValueKey(player.playing),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: track.isAudiobook ? 4 : 8),
-                        if (track.isAudiobook)
+                          const SizedBox(width: 8),
+                          _PlayButton(player: player),
+                          const SizedBox(width: 8),
                           IconButton(
-                            iconSize: 28,
-                            padding: EdgeInsets.zero,
-                            constraints: _audiobookButtonSize,
-                            tooltip: context.l10n.forward30,
-                            onPressed: () =>
-                                player.skipBy(const Duration(seconds: 30)),
-                            icon: const Icon(Icons.forward_30_rounded),
+                            iconSize: 38,
+                            tooltip: context.l10n.actionNext,
+                            onPressed:
+                                player.hasNext ? () => _tap(player.next) : null,
+                            icon: const Icon(Icons.skip_next_rounded),
                           ),
-                        IconButton(
-                          iconSize: track.isAudiobook ? 30 : 38,
-                          padding: track.isAudiobook ? EdgeInsets.zero : null,
-                          constraints:
-                              track.isAudiobook ? _audiobookButtonSize : null,
-                          tooltip: context.l10n.actionNext,
-                          onPressed: track.isAudiobook
-                              ? () => _tap(player.nextChapter)
-                              : player.hasNext
-                                  ? () => _tap(player.next)
-                                  : null,
-                          icon: const Icon(Icons.skip_next_rounded),
-                        ),
-                        if (track.isAudiobook)
-                          IconButton(
-                            padding: EdgeInsets.zero,
-                            constraints: _audiobookButtonSize,
-                            tooltip: context.l10n.chapters,
-                            onPressed: track.chapters.isEmpty
-                                ? null
-                                : () => _showChapters(context),
-                            icon: const Icon(Icons.list_rounded),
-                          )
-                        else
                           IconButton(
                             tooltip: switch (player.loopMode) {
                               LoopMode.off => context.l10n.repeatQueue,
@@ -433,66 +325,67 @@ class NowPlayingScreen extends StatelessWidget {
                                 ? Icons.repeat_one_rounded
                                 : Icons.repeat_rounded),
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(
-                          player.volume == 0
-                              ? Icons.volume_off_rounded
-                              : Icons.volume_down_rounded,
-                          size: 22,
-                        ),
-                        Expanded(
-                          child: Slider(
-                            value: player.volume,
-                            onChanged: player.setVolume,
-                          ),
-                        ),
-                        const Icon(Icons.volume_up_rounded, size: 22),
-                        SizedBox(
-                          width: 44,
-                          child: Text(
-                            context.l10n
-                                .volumePercent((player.volume * 100).round()),
-                            textAlign: TextAlign.end,
-                            style: Theme.of(context).textTheme.labelMedium,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    OutlinedButton.icon(
-                      onPressed: () => _showQueue(context),
-                      icon: const Icon(Icons.queue_music_rounded),
-                      label: Text(
-                        context.l10n.queueButton(player.queue.length),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    FilledButton.tonalIcon(
-                      onPressed: () => showModalBottomSheet<void>(
-                        context: context,
-                        isScrollControlled: true,
-                        showDragHandle: true,
-                        builder: (_) => Consumer<PlayerProvider>(
-                          builder: (context, currentPlayer, _) =>
-                              FractionallySizedBox(
-                            heightFactor: .78,
-                            child: currentPlayer.current == null
-                                ? Center(
-                                    child: Text(context.l10n.nothingPlaying))
-                                : LyricsSheet(
-                                    key: ValueKey(currentPlayer.current!.id),
-                                    track: currentPlayer.current!,
-                                  ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Icon(
+                            player.volume == 0
+                                ? Icons.volume_off_rounded
+                                : Icons.volume_down_rounded,
+                            size: 22,
                           ),
+                          Expanded(
+                            child: Slider(
+                              value: player.volume,
+                              onChanged: player.setVolume,
+                            ),
+                          ),
+                          const Icon(Icons.volume_up_rounded, size: 22),
+                          SizedBox(
+                            width: 44,
+                            child: Text(
+                              context.l10n
+                                  .volumePercent((player.volume * 100).round()),
+                              textAlign: TextAlign.end,
+                              style: Theme.of(context).textTheme.labelMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      OutlinedButton.icon(
+                        onPressed: () => _showQueue(context),
+                        icon: const Icon(Icons.queue_music_rounded),
+                        label: Text(
+                          context.l10n.queueButton(player.queue.length),
                         ),
                       ),
-                      icon: const Icon(Icons.lyrics_rounded),
-                      label: Text(context.l10n.lyrics),
-                    ),
+                      const SizedBox(height: 10),
+                      FilledButton.tonalIcon(
+                        onPressed: () => showModalBottomSheet<void>(
+                          context: context,
+                          isScrollControlled: true,
+                          showDragHandle: true,
+                          builder: (_) => Consumer<PlayerProvider>(
+                            builder: (context, currentPlayer, _) =>
+                                FractionallySizedBox(
+                              heightFactor: .78,
+                              child: currentPlayer.current == null
+                                  ? Center(
+                                      child: Text(context.l10n.nothingPlaying))
+                                  : LyricsSheet(
+                                      key: ValueKey(currentPlayer.current!.id),
+                                      track: currentPlayer.current!,
+                                    ),
+                            ),
+                          ),
+                        ),
+                        icon: const Icon(Icons.lyrics_rounded),
+                        label: Text(context.l10n.lyrics),
+                      ),
+                    ],
                     const SizedBox(height: 18),
                     Wrap(
                       alignment: WrapAlignment.center,
@@ -551,6 +444,54 @@ class NowPlayingScreen extends StatelessWidget {
 }
 
 /// Tints Now Playing and its controls with colors drawn from the artwork.
+class _PlayButton extends StatelessWidget {
+  const _PlayButton({required this.player});
+  final PlayerProvider player;
+
+  @override
+  Widget build(BuildContext context) => AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        width: 72,
+        height: 72,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.tertiary,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color:
+                  Theme.of(context).colorScheme.primary.withValues(alpha: .34),
+              blurRadius: player.playing ? 30 : 18,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: IconButton(
+          iconSize: 40,
+          color: Colors.white,
+          tooltip: player.playing
+              ? context.l10n.actionPause
+              : context.l10n.actionPlay,
+          onPressed: () => _tap(player.toggle),
+          icon: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            transitionBuilder: (child, animation) =>
+                ScaleTransition(scale: animation, child: child),
+            child: Icon(
+              player.playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+              key: ValueKey(player.playing),
+            ),
+          ),
+        ),
+      );
+}
+
 String _time(Duration value) {
   final seconds = value.inSeconds.remainder(60).toString().padLeft(2, '0');
   if (value.inHours == 0) return '${value.inMinutes}:$seconds';
@@ -565,14 +506,188 @@ void _showChapters(BuildContext context) => showModalBottomSheet<void>(
       builder: (_) => const _ChaptersSheet(),
     );
 
-/// Same width for every side button so the play button stays centred.
-const _audiobookButtonSize = BoxConstraints.tightFor(width: 42, height: 48);
+/// Spoken-word layout: the slider spans the current chapter, because a
+/// whole 18-hour book on one slider cannot be scrubbed with a finger.
+class _AudiobookPanel extends StatelessWidget {
+  const _AudiobookPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    final player = context.watch<PlayerProvider>();
+    final track = player.current!;
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        const SizedBox(height: 14),
+        ValueListenableBuilder<Duration>(
+          valueListenable: player.positionListenable,
+          builder: (context, position, _) {
+            final total = player.duration > Duration.zero
+                ? player.duration.inMilliseconds
+                : track.durationMs ?? 0;
+            final chapters = track.chapters;
+            final index = track.chapterIndexAt(position.inMilliseconds);
+            final start = index >= 0 ? chapters[index].startMs : 0;
+            final end = index >= 0 && index + 1 < chapters.length
+                ? chapters[index + 1].startMs
+                : total;
+            final span = end - start > 0 ? end - start : 1;
+            final inChapter =
+                (position.inMilliseconds - start).clamp(0, span).toInt();
+            final left = total - position.inMilliseconds;
+            final percent =
+                total > 0 ? (position.inMilliseconds * 100 / total).floor() : 0;
+            final title = index >= 0 ? _chapterTitle(chapters[index]) : null;
+            return Column(
+              children: [
+                if (index >= 0)
+                  InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () => _showChapters(context),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      child: Column(
+                        children: [
+                          if (title != null)
+                            Text(
+                              title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w800),
+                            ),
+                          Text(
+                            l10n.chapterPosition(index + 1, chapters.length),
+                            style: (title == null
+                                    ? theme.textTheme.titleMedium
+                                    : theme.textTheme.labelMedium)
+                                ?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 6,
+                    thumbShape:
+                        const RoundSliderThumbShape(enabledThumbRadius: 7),
+                    overlayShape:
+                        const RoundSliderOverlayShape(overlayRadius: 18),
+                  ),
+                  child: Slider(
+                    value: inChapter.toDouble(),
+                    max: span.toDouble(),
+                    onChanged: (next) => player
+                        .seek(Duration(milliseconds: start + next.round())),
+                    onChangeEnd: (next) => context
+                        .read<LibraryProvider>()
+                        .savePosition(track.id,
+                            Duration(milliseconds: start + next.round())),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(_time(Duration(milliseconds: inChapter))),
+                      Text(
+                          '-${_time(Duration(milliseconds: span - inChapter))}'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  l10n.audiobookOverall(
+                    percent.clamp(0, 100).toInt(),
+                    _time(Duration(
+                      milliseconds: (left > 0 ? left : 0) ~/ player.speed,
+                    )),
+                  ),
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              iconSize: 32,
+              tooltip: l10n.rewind30,
+              onPressed: () => player.skipBy(const Duration(seconds: -30)),
+              icon: const Icon(Icons.replay_30_rounded),
+            ),
+            IconButton(
+              iconSize: 36,
+              tooltip: l10n.previousChapter,
+              onPressed: () => _tap(player.previousChapter),
+              icon: const Icon(Icons.skip_previous_rounded),
+            ),
+            const SizedBox(width: 6),
+            _PlayButton(player: player),
+            const SizedBox(width: 6),
+            IconButton(
+              iconSize: 36,
+              tooltip: l10n.nextChapter,
+              onPressed: track.chapters.isEmpty
+                  ? null
+                  : () => _tap(player.nextChapter),
+              icon: const Icon(Icons.skip_next_rounded),
+            ),
+            IconButton(
+              iconSize: 32,
+              tooltip: l10n.forward30,
+              onPressed: () => player.skipBy(const Duration(seconds: 30)),
+              icon: const Icon(Icons.forward_30_rounded),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 10,
+          runSpacing: 8,
+          children: [
+            _SpeedButton(player: player),
+            if (track.chapters.isNotEmpty)
+              OutlinedButton.icon(
+                onPressed: () => _showChapters(context),
+                icon: const Icon(Icons.list_rounded),
+                label: Text(l10n.chapters),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// A chapter's own title, or null when it only repeats its number
+/// ("Chapitre 5", "Track 05"), which the position line already shows.
+String? _chapterTitle(TrackChapter chapter) {
+  final title = chapter.title.trim();
+  final generic = RegExp(
+    r'^(chapitre|chapter|chap\.?|ch\.?|partie|part|piste|track)?\s*0*\d+$',
+    caseSensitive: false,
+  );
+  return title.isEmpty || generic.hasMatch(title) ? null : title;
+}
 
 class _SpeedButton extends StatelessWidget {
   const _SpeedButton({required this.player});
   final PlayerProvider player;
 
-  static const speeds = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
+  static const speeds = [0.75, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0];
 
   @override
   Widget build(BuildContext context) => PopupMenuButton<double>(
@@ -587,14 +702,20 @@ class _SpeedButton extends StatelessWidget {
               child: Text('${value}x'),
             ),
         ],
-        child: SizedBox(
-          width: 42,
-          height: 48,
-          child: Center(
-            child: Text(
-              '${player.speed}x',
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            border: Border.all(color: Theme.of(context).colorScheme.outline),
+            borderRadius: BorderRadius.circular(40),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.speed_rounded, size: 18),
+              const SizedBox(width: 8),
+              Text('${player.speed}x',
+                  style: Theme.of(context).textTheme.labelLarge),
+            ],
           ),
         ),
       );
@@ -623,9 +744,7 @@ class _ChaptersSheet extends StatelessWidget {
                 ? Icon(Icons.graphic_eq_rounded, color: colors.primary)
                 : Text('${index + 1}'),
             title: Text(
-              chapter.title.isEmpty
-                  ? context.l10n.chapterDefault(index + 1)
-                  : chapter.title,
+              _chapterTitle(chapter) ?? context.l10n.chapterDefault(index + 1),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -812,9 +931,18 @@ class _SleepTimerSheet extends StatelessWidget {
                 onTap: () => choose(
                     () => player.setSleepTimer(Duration(minutes: minutes))),
               ),
+            if (player.current?.chapters.isNotEmpty == true)
+              ListTile(
+                leading: const Icon(Icons.bookmark_outline_rounded),
+                title: Text(context.l10n.sleepTimerEndOfChapter),
+                selected: player.sleepAtChapterEnd,
+                onTap: () => choose(player.setSleepAtChapterEnd),
+              ),
             ListTile(
               leading: const Icon(Icons.music_off_outlined),
-              title: Text(context.l10n.sleepTimerEndOfTrack),
+              title: Text(player.current?.isAudiobook == true
+                  ? context.l10n.sleepTimerEndOfBook
+                  : context.l10n.sleepTimerEndOfTrack),
               selected: player.sleepAtTrackEnd,
               onTap: () => choose(player.setSleepAtTrackEnd),
             ),

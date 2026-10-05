@@ -105,3 +105,5 @@ Les versions publiées restent décrites par les tags Git.
 - Feat: audiobook sync now automatic like Comics Stream: position published when the app is left (HomeScreen lifecycle) or an audiobook is paused (`SyncProvider.publishPosition`); on resume with an idle audiobook the position is compared and the keep/resume dialog shown. Superseded: everything now syncs automatically (see next entry).
 
 - Feat: full automatic sync (`SyncProvider.startAutoSync/autoSync`): at launch, 3 s after any change to favorites/playlists/servers/play counts/audiobook positions (signature compare, no network when idle), on leaving or resuming the app, and on audiobook pause. Add-to-playlist sheet now has a "Nouvelle playlist" row.
+
+- Rework: audiobook mode. Audiobooks left out of music views (`LibraryProvider.tracks`) and played alone; Now Playing `_AudiobookPanel` with a chapter-relative slider, chapter title (generic "Chapitre N" not repeated), whole-book percent and time left at current speed, controls split in two rows; speed persisted and applied to audiobooks only (music stays 1x); 3 s rewind on resume; finished books restart; sleep timer "end of chapter".

@@ -65,6 +65,7 @@ Future<void> main() async {
   final playbackSettings = PlaybackSettingsService();
   final fadeDuration = await playbackSettings.loadFadeDuration();
   final volume = await playbackSettings.loadVolume();
+  final audiobookSpeed = await playbackSettings.loadAudiobookSpeed();
   final savedQueue = await playbackSettings.loadQueue();
   await library.load();
   // The native downloader takes up to a second to start; keep it off the
@@ -105,6 +106,7 @@ Future<void> main() async {
     playbackSettings: playbackSettings,
     fadeDuration: fadeDuration,
     volume: volume,
+    audiobookSpeed: audiobookSpeed,
     savedQueue: savedQueue,
   ));
 }
@@ -121,6 +123,7 @@ class MusicStreamApp extends StatelessWidget {
     required this.playbackSettings,
     required this.fadeDuration,
     required this.volume,
+    required this.audiobookSpeed,
     this.savedQueue,
   });
   final LibraryProvider library;
@@ -132,6 +135,7 @@ class MusicStreamApp extends StatelessWidget {
   final PlaybackSettingsService playbackSettings;
   final Duration fadeDuration;
   final double volume;
+  final double audiobookSpeed;
   final ({List<String> trackIds, String? currentId})? savedQueue;
 
   /// Reloads the last session paused. Streams from servers need their
@@ -187,6 +191,8 @@ class MusicStreamApp extends StatelessWidget {
               },
               fadeDuration: fadeDuration,
               volume: volume,
+              audiobookSpeed: audiobookSpeed,
+              onAudiobookSpeedChanged: playbackSettings.saveAudiobookSpeed,
               onFadeDurationChanged: playbackSettings.saveFadeDuration,
               onVolumeChanged: playbackSettings.saveVolume,
               onQueueChanged: (ids, currentId) =>

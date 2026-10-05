@@ -18,12 +18,15 @@ class PlayerProvider extends ChangeNotifier {
     this.displayMetadata,
     this.onNowPlayingChanged,
     this.onQueueChanged,
+    this.onAudiobookSpeedChanged,
+    double audiobookSpeed = 1,
     Duration fadeDuration = const Duration(milliseconds: 500),
     double volume = 1,
     AudioPlayer? audioPlayer,
     AudioCodecSupport codecSupport = const AudioCodecSupport(),
   })  : _codecSupport = codecSupport,
         _fadeDuration = fadeDuration,
+        _audiobookSpeed = audiobookSpeed,
         _volume = volume.clamp(0, 1),
         _player = audioPlayer ?? AudioPlayer() {
     unawaited(_player.setVolume(_volume));
@@ -53,6 +56,12 @@ class PlayerProvider extends ChangeNotifier {
         _lastPersistedAt = now;
         unawaited(onPositionChanged?.call(track.id, position));
       }
+      final sleepChapter = _sleepChapter;
+      if (sleepChapter != null &&
+          track != null &&
+          track.chapterIndexAt(position.inMilliseconds) > sleepChapter) {
+        unawaited(_sleep(fade: false));
+      }
       _position.value = position;
     }));
     _subscriptions.add(_player.durationStream.listen((_) => notifyListeners()));
@@ -69,6 +78,7 @@ class PlayerProvider extends ChangeNotifier {
       }
       _reachedTrackEnd = false;
       _current = index != null && index < _queue.length ? _queue[index] : null;
+      _applySpeed();
       _resetListeningSession(_current);
       _announceTrack();
       notifyListeners();
@@ -155,16 +165,28 @@ class PlayerProvider extends ChangeNotifier {
   DateTime? _sleepAt;
   bool _sleepAtTrackEnd = false;
 
+  /// Chapter after which an audiobook pauses, for "end of chapter".
+  int? _sleepChapter;
+  double _audiobookSpeed;
+  final Future<void> Function(double speed)? onAudiobookSpeedChanged;
+
   MusicTrack? get current => _current;
-  double get speed => _player.speed;
+
+  /// Speed applies to audiobooks only; music always plays at normal speed.
+  double get speed => _current?.isAudiobook == true ? _audiobookSpeed : 1;
+
+  void _applySpeed() => unawaited(
+      _player.setSpeed(_current?.isAudiobook == true ? _audiobookSpeed : 1));
 
   /// Chapter of the current audiobook at [position], or -1 without chapters.
   int chapterIndexAt(Duration position) =>
       _current?.chapterIndexAt(position.inMilliseconds) ?? -1;
 
   Future<void> setSpeed(double speed) async {
-    await _player.setSpeed(speed);
+    _audiobookSpeed = speed;
+    _applySpeed();
     notifyListeners();
+    await onAudiobookSpeedChanged?.call(speed);
   }
 
   /// Jumps by [offset] inside the current track, clamped to its bounds.
@@ -225,7 +247,17 @@ class PlayerProvider extends ChangeNotifier {
   /// When the sleep timer pauses playback, or null without a timed sleep.
   DateTime? get sleepAt => _sleepAt;
   bool get sleepAtTrackEnd => _sleepAtTrackEnd;
-  bool get sleepTimerActive => _sleepAt != null || _sleepAtTrackEnd;
+  bool get sleepAtChapterEnd => _sleepChapter != null;
+  bool get sleepTimerActive =>
+      _sleepAt != null || _sleepAtTrackEnd || _sleepChapter != null;
+
+  /// Pauses when the current audiobook chapter ends.
+  void setSleepAtChapterEnd() {
+    final index = chapterIndexAt(_player.position);
+    _cancelSleepTimer();
+    if (index >= 0) _sleepChapter = index;
+    notifyListeners();
+  }
 
   /// Pauses with a long fade after [delay]; null cancels the sleep timer.
   void setSleepTimer(Duration? delay) {
@@ -249,12 +281,17 @@ class PlayerProvider extends ChangeNotifier {
     _sleepTimer = null;
     _sleepAt = null;
     _sleepAtTrackEnd = false;
+    _sleepChapter = null;
   }
 
-  Future<void> _sleep() async {
+  Future<void> _sleep({bool fade = true}) async {
     _cancelSleepTimer();
     notifyListeners();
     if (!_player.playing) return;
+    if (!fade) {
+      await _player.pause();
+      return;
+    }
     if (await _fadeTo(0, duration: const Duration(seconds: 8))) {
       await _player.pause();
       await _player.setVolume(_volume);
@@ -270,6 +307,7 @@ class PlayerProvider extends ChangeNotifier {
     _queue = List.of(tracks);
     _queueRevision++;
     _current = track;
+    _applySpeed();
     _resetListeningSession(track, force: true);
     _restoreIndex = index;
     try {
@@ -290,6 +328,15 @@ class PlayerProvider extends ChangeNotifier {
   }
 
   Future<void> playTrack(MusicTrack track, List<MusicTrack> library) async {
+    // An audiobook plays on its own: it never runs on into music.
+    if (track.isAudiobook) {
+      final total = track.durationMs;
+      // A finished book starts over instead of stopping at once.
+      if (total != null && track.lastPositionMs >= total - 30000) {
+        track = track.copyWith(lastPositionMs: 0);
+      }
+      library = [track];
+    }
     final startIndex = library.indexWhere((item) => item.id == track.id);
     _queue = List.of(library);
     _queueRevision++;
@@ -301,6 +348,7 @@ class PlayerProvider extends ChangeNotifier {
       preload: true,
     );
     _current = track;
+    _applySpeed();
     _resetListeningSession(track, force: true);
     _announceTrack();
     await _playWithFade();
@@ -484,6 +532,11 @@ class PlayerProvider extends ChangeNotifier {
       }
       return;
     }
+    // Picking a book back up repeats the last words before the pause.
+    if (_current?.isAudiobook == true) {
+      final back = _player.position - const Duration(seconds: 3);
+      await _player.seek(back > Duration.zero ? back : Duration.zero);
+    }
     await _playWithFade();
   }
 
@@ -521,6 +574,11 @@ class PlayerProvider extends ChangeNotifier {
 
   Future<void> seek(Duration position) {
     _reachedTrackEnd = false;
+    // Jumping elsewhere moves "end of chapter" to the chapter landed in.
+    if (_sleepChapter != null) {
+      final index = chapterIndexAt(position);
+      if (index >= 0) _sleepChapter = index;
+    }
     return _player.seek(position);
   }
 
@@ -593,6 +651,7 @@ class PlayerProvider extends ChangeNotifier {
   void _syncCurrentTrack() {
     final index = _player.currentIndex;
     _current = index != null && index < _queue.length ? _queue[index] : null;
+    _applySpeed();
     _announceTrack();
   }
 
