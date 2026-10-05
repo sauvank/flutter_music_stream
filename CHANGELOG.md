@@ -93,3 +93,5 @@
 Les versions publiées restent décrites par les tags Git.
 
 - Fix: `.m4b` (audiobooks) added to `LibraryService.supportedExtensions`, so WebDAV/HTTP/FTP listings, imports and device scan now include them.
+
+- Feat: audiobook mode. `MusicTrack.chapters`/`isAudiobook` (M4B or genre Audiobook), M4B `chpl` chapters read at import, "Livres audio" library tab with progress bars, Now Playing chapter label/list, chapter prev/next, ±30 s, speed 0.75–2x, position saved immediately on pause.

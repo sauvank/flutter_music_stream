@@ -391,5 +391,15 @@
   "addServerHint": "Connect a WebDAV, HTTP or FTP server. The connection is tested before the server is saved.",
   "saveAndTest": "Test and save",
   "unsupportedFlac": "FLAC can’t be played on this device: “{title}” was paused. Try an MP3, AAC or Opus file instead.",
-  "@unsupportedFlac": {"placeholders": {"title": {"type": "String"}}}
+  "@unsupportedFlac": {"placeholders": {"title": {"type": "String"}}},
+  "modeAudiobooks": "Audiobooks",
+  "chapters": "Chapters",
+  "chapterLabel": "Chapter {number}/{total} · {title}",
+  "@chapterLabel": {"placeholders": {"number": {"type": "int"}, "total": {"type": "int"}, "title": {"type": "String"}}},
+  "chapterDefault": "Chapter {number}",
+  "@chapterDefault": {"placeholders": {"number": {"type": "int"}}},
+  "rewind30": "Back 30 seconds",
+  "forward30": "Forward 30 seconds",
+  "playbackSpeed": "Playback speed",
+  "audiobooksEmpty": "No audiobooks. M4B files and “Audiobook” genres show up here."
 }

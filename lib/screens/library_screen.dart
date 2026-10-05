@@ -13,11 +13,20 @@ import 'home_screen.dart';
 import '../widgets/import_music_sheet.dart';
 import '../l10n/l10n.dart';
 
-enum _LibraryMode { tracks, history, artists, albums, genres, playlists }
+enum _LibraryMode {
+  tracks,
+  audiobooks,
+  history,
+  artists,
+  albums,
+  genres,
+  playlists
+}
 
 extension on _LibraryMode {
   String label(AppLocalizations l10n) => switch (this) {
         _LibraryMode.tracks => l10n.modeTracks,
+        _LibraryMode.audiobooks => l10n.modeAudiobooks,
         _LibraryMode.history => l10n.modeHistory,
         _LibraryMode.artists => l10n.modeArtists,
         _LibraryMode.albums => l10n.modeAlbums,
@@ -27,6 +36,7 @@ extension on _LibraryMode {
 
   IconData get icon => switch (this) {
         _LibraryMode.tracks => Icons.music_note_rounded,
+        _LibraryMode.audiobooks => Icons.menu_book_rounded,
         _LibraryMode.history => Icons.history_rounded,
         _LibraryMode.artists => Icons.mic_external_on_rounded,
         _LibraryMode.albums => Icons.album_rounded,
@@ -36,6 +46,7 @@ extension on _LibraryMode {
 
   String valueFor(MusicTrack track) => switch (this) {
         _LibraryMode.tracks => track.title,
+        _LibraryMode.audiobooks => '',
         _LibraryMode.history => '',
         _LibraryMode.artists => track.artist,
         _LibraryMode.albums => track.album,
@@ -102,6 +113,11 @@ class LibraryScreenState extends State<LibraryScreen> {
                     context.watch<LibraryProvider>().tracks,
                   _LibraryMode.history =>
                     context.watch<LibraryProvider>().listeningHistory,
+                  _LibraryMode.audiobooks => context
+                      .watch<LibraryProvider>()
+                      .tracks
+                      .where((track) => track.isAudiobook)
+                      .toList(),
                   _ => const <MusicTrack>[],
                 },
               ),
@@ -118,6 +134,7 @@ class LibraryScreenState extends State<LibraryScreen> {
         ? library.listeningHistory
         : const <MusicTrack>[];
     final groups = _mode == _LibraryMode.tracks ||
+            _mode == _LibraryMode.audiobooks ||
             _mode == _LibraryMode.history ||
             _mode == _LibraryMode.playlists
         ? const <String, List<MusicTrack>>{}
@@ -282,6 +299,8 @@ class LibraryScreenState extends State<LibraryScreen> {
                 ),
               ),
             ),
+        ] else if (_mode == _LibraryMode.audiobooks) ...[
+          ..._audiobookSlivers(context, tracks),
         ] else if (_mode == _LibraryMode.tracks) ...[
           if (library.query.trim().isNotEmpty &&
               library.matchingPlaylists.isNotEmpty)
@@ -355,6 +374,55 @@ class LibraryScreenState extends State<LibraryScreen> {
         ],
       ],
     );
+  }
+
+  /// Audiobooks being listened to come first, most recent on top.
+  List<Widget> _audiobookSlivers(BuildContext context, List<MusicTrack> all) {
+    final books = all.where((track) => track.isAudiobook).toList()
+      ..sort((a, b) {
+        final left = a.lastPlayedAt?.millisecondsSinceEpoch ?? 0;
+        final right = b.lastPlayedAt?.millisecondsSinceEpoch ?? 0;
+        return right != left
+            ? right.compareTo(left)
+            : a.title.toLowerCase().compareTo(b.title.toLowerCase());
+      });
+    if (books.isEmpty) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Text(
+                context.l10n.audiobooksEmpty,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      ];
+    }
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+        sliver: SliverToBoxAdapter(
+          child: _SectionTitle(
+            title: _mode.label(context.l10n),
+            detail: context.l10n.trackCount(books.length),
+          ),
+        ),
+      ),
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 190),
+        sliver: SliverList.builder(
+          itemCount: books.length,
+          itemBuilder: (context, index) => _StaggeredEntry(
+            index: index,
+            child: _TrackTile(track: books[index], queue: [books[index]]),
+          ),
+        ),
+      ),
+    ];
   }
 
   Map<String, List<MusicTrack>> _group(
@@ -1683,6 +1751,14 @@ class _TrackTileState extends State<_TrackTile> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: detail),
+                          if (track.isAudiobook && track.progress != null) ...[
+                            const SizedBox(height: 6),
+                            LinearProgressIndicator(
+                              value: track.progress,
+                              minHeight: 4,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ],
                         ],
                       );
                     },

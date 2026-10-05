@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:audio_metadata_reader/audio_metadata_reader.dart' as tags;
 
+import '../models/music_track.dart';
+
 class AudioMetadata {
   const AudioMetadata({
     this.title,
@@ -14,6 +16,7 @@ class AudioMetadata {
     this.durationMs,
     this.artworkBytes,
     this.artworkExtension,
+    this.chapters = const [],
   });
 
   final String? title;
@@ -25,6 +28,7 @@ class AudioMetadata {
   final int? durationMs;
   final Uint8List? artworkBytes;
   final String? artworkExtension;
+  final List<TrackChapter> chapters;
 }
 
 class AudioMetadataService {
@@ -47,6 +51,14 @@ class AudioMetadataService {
       durationMs: tag.duration?.inMilliseconds,
       artworkBytes: artwork?.bytes,
       artworkExtension: _extension(artwork?.mimetype),
+      chapters: [
+        for (final chapter in tag.chapters)
+          if (chapter.title.trim().isNotEmpty || chapter.start > Duration.zero)
+            TrackChapter(
+              startMs: chapter.start.inMilliseconds,
+              title: chapter.title.trim(),
+            ),
+      ]..sort((a, b) => a.startMs.compareTo(b.startMs)),
     );
   }
 

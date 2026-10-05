@@ -28,7 +28,16 @@ class PlayerProvider extends ChangeNotifier {
         _player = audioPlayer ?? AudioPlayer() {
     unawaited(_player.setVolume(_volume));
     _subscriptions
-        .add(_player.playerStateStream.listen((_) => notifyListeners()));
+        .add(_player.playerStateStream.listen((state) {
+      notifyListeners();
+      // Audiobooks are resumed days later, so pausing or finishing must not
+      // wait for the next 5-second tick to remember the position.
+      final track = _current;
+      if (track != null && track.isAudiobook && !state.playing) {
+        _lastPersistedAt = DateTime.now();
+        unawaited(onPositionChanged?.call(track.id, _player.position));
+      }
+    }));
     _subscriptions.add(_player.positionStream.listen((position) {
       final track = _current;
       _trackListening(track, position);
@@ -148,6 +157,51 @@ class PlayerProvider extends ChangeNotifier {
   bool _sleepAtTrackEnd = false;
 
   MusicTrack? get current => _current;
+  double get speed => _player.speed;
+
+  /// Chapter of the current audiobook at [position], or -1 without chapters.
+  int chapterIndexAt(Duration position) =>
+      _current?.chapterIndexAt(position.inMilliseconds) ?? -1;
+
+  Future<void> setSpeed(double speed) async {
+    await _player.setSpeed(speed);
+    notifyListeners();
+  }
+
+  /// Jumps by [offset] inside the current track, clamped to its bounds.
+  Future<void> skipBy(Duration offset) {
+    final total = _player.duration;
+    var target = _player.position + offset;
+    if (target < Duration.zero) target = Duration.zero;
+    if (total != null && target > total) target = total;
+    return seek(target);
+  }
+
+  /// Starts the chapter at [index] of the current track.
+  Future<void> seekToChapter(int index) {
+    final chapters = _current?.chapters ?? const <TrackChapter>[];
+    if (index < 0 || index >= chapters.length) return Future.value();
+    return seek(Duration(milliseconds: chapters[index].startMs));
+  }
+
+  /// Like a previous button: restarts the chapter after a few seconds,
+  /// otherwise goes to the one before.
+  Future<void> previousChapter() {
+    final index = chapterIndexAt(_player.position);
+    if (index < 0) return skipBy(const Duration(seconds: -30));
+    final start = Duration(milliseconds: _current!.chapters[index].startMs);
+    if (_player.position - start > const Duration(seconds: 3) || index == 0) {
+      return seek(start);
+    }
+    return seekToChapter(index - 1);
+  }
+
+  Future<void> nextChapter() {
+    final index = chapterIndexAt(_player.position);
+    if (index < 0) return skipBy(const Duration(seconds: 30));
+    if (index + 1 >= _current!.chapters.length) return next();
+    return seekToChapter(index + 1);
+  }
   bool get playing => _player.playing;
 
   /// Android audio session of the player, which the visualizer attaches to.

@@ -61,4 +61,27 @@ void main() {
     expect(track.playCount, 0);
     expect(track.sourceUri, isNull);
   });
+
+  test('audiobooks keep chapters and report progress', () {
+    final book = MusicTrack(
+      id: 'book',
+      title: 'Livre',
+      uri: 'file:///media/livre.m4b',
+      addedAt: DateTime.utc(2026),
+      durationMs: 10000,
+      lastPositionMs: 2500,
+      chapters: const [
+        TrackChapter(startMs: 0, title: 'Intro'),
+        TrackChapter(startMs: 4000, title: 'Un'),
+      ],
+    );
+    final restored = MusicTrack.decodeAll(MusicTrack.encodeAll([book])).single;
+
+    expect(restored.isAudiobook, isTrue);
+    expect(restored.chapters.map((chapter) => chapter.title), ['Intro', 'Un']);
+    expect(restored.progress, .25);
+    expect(restored.chapterIndexAt(3999), 0);
+    expect(restored.chapterIndexAt(4000), 1);
+    expect(restored.copyWith(lastPositionMs: 1).chapters, hasLength(2));
+  });
 }

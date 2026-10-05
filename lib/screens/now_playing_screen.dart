@@ -270,11 +270,37 @@ class NowPlayingScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (track.isAudiobook && track.chapters.isNotEmpty)
+                  ValueListenableBuilder<Duration>(
+                    valueListenable: player.positionListenable,
+                    builder: (context, position, _) {
+                      final index = player.chapterIndexAt(position);
+                      if (index < 0) return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: TextButton(
+                          onPressed: () => _showChapters(context),
+                          child: Text(
+                            context.l10n.chapterLabel(
+                              index + 1,
+                              track.chapters.length,
+                              track.chapters[index].title,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 SizedBox(height: compactHeight ? 12 : 22),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    IconButton(
+                    if (track.isAudiobook)
+                      _SpeedButton(player: player)
+                    else
+                      IconButton(
                       tooltip: player.shuffleEnabled
                           ? context.l10n.shuffleDisable
                           : context.l10n.shuffleEnable,
@@ -287,11 +313,21 @@ class NowPlayingScreen extends StatelessWidget {
                     IconButton(
                       iconSize: 38,
                       tooltip: context.l10n.actionPrevious,
-                      onPressed: player.hasPrevious
-                          ? () => _tap(player.previous)
-                          : null,
+                      onPressed: track.isAudiobook
+                          ? () => _tap(player.previousChapter)
+                          : player.hasPrevious
+                              ? () => _tap(player.previous)
+                              : null,
                       icon: const Icon(Icons.skip_previous_rounded),
                     ),
+                    if (track.isAudiobook)
+                      IconButton(
+                        iconSize: 32,
+                        tooltip: context.l10n.rewind30,
+                        onPressed: () =>
+                            player.skipBy(const Duration(seconds: -30)),
+                        icon: const Icon(Icons.replay_30_rounded),
+                      ),
                     const SizedBox(width: 8),
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 220),
@@ -339,13 +375,33 @@ class NowPlayingScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
+                    if (track.isAudiobook)
+                      IconButton(
+                        iconSize: 32,
+                        tooltip: context.l10n.forward30,
+                        onPressed: () =>
+                            player.skipBy(const Duration(seconds: 30)),
+                        icon: const Icon(Icons.forward_30_rounded),
+                      ),
                     IconButton(
                       iconSize: 38,
                       tooltip: context.l10n.actionNext,
-                      onPressed:
-                          player.hasNext ? () => _tap(player.next) : null,
+                      onPressed: track.isAudiobook
+                          ? () => _tap(player.nextChapter)
+                          : player.hasNext
+                              ? () => _tap(player.next)
+                              : null,
                       icon: const Icon(Icons.skip_next_rounded),
                     ),
+                    if (track.isAudiobook)
+                      IconButton(
+                        tooltip: context.l10n.chapters,
+                        onPressed: track.chapters.isEmpty
+                            ? null
+                            : () => _showChapters(context),
+                        icon: const Icon(Icons.list_rounded),
+                      )
+                    else
                     IconButton(
                       tooltip: switch (player.loopMode) {
                         LoopMode.off => context.l10n.repeatQueue,
@@ -462,12 +518,6 @@ class NowPlayingScreen extends StatelessWidget {
     }
   }
 
-  String _time(Duration value) {
-    final minutes = value.inMinutes;
-    final seconds = value.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
-  }
-
   Duration _remaining(Duration duration, Duration position) =>
       duration > position ? duration - position : Duration.zero;
 
@@ -482,6 +532,90 @@ class NowPlayingScreen extends StatelessWidget {
 }
 
 /// Tints Now Playing and its controls with colors drawn from the artwork.
+String _time(Duration value) {
+  final seconds = value.inSeconds.remainder(60).toString().padLeft(2, '0');
+  if (value.inHours == 0) return '${value.inMinutes}:$seconds';
+  final minutes = value.inMinutes.remainder(60).toString().padLeft(2, '0');
+  return '${value.inHours}:$minutes:$seconds';
+}
+
+void _showChapters(BuildContext context) => showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => const _ChaptersSheet(),
+    );
+
+class _SpeedButton extends StatelessWidget {
+  const _SpeedButton({required this.player});
+  final PlayerProvider player;
+
+  static const speeds = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
+
+  @override
+  Widget build(BuildContext context) => PopupMenuButton<double>(
+        tooltip: context.l10n.playbackSpeed,
+        initialValue: player.speed,
+        onSelected: player.setSpeed,
+        itemBuilder: (_) => [
+          for (final value in speeds)
+            CheckedPopupMenuItem(
+              value: value,
+              checked: value == player.speed,
+              child: Text('${value}x'),
+            ),
+        ],
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Text(
+            '${player.speed}x',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+        ),
+      );
+}
+
+class _ChaptersSheet extends StatelessWidget {
+  const _ChaptersSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final player = context.watch<PlayerProvider>();
+    final track = player.current;
+    if (track == null) return const SizedBox.shrink();
+    final active = player.chapterIndexAt(player.position);
+    final colors = Theme.of(context).colorScheme;
+    return FractionallySizedBox(
+      heightFactor: .7,
+      child: ListView.builder(
+        itemCount: track.chapters.length,
+        itemBuilder: (context, index) {
+          final chapter = track.chapters[index];
+          final selected = index == active;
+          return ListTile(
+            selected: selected,
+            leading: selected
+                ? Icon(Icons.graphic_eq_rounded, color: colors.primary)
+                : Text('${index + 1}'),
+            title: Text(
+              chapter.title.isEmpty
+                  ? context.l10n.chapterDefault(index + 1)
+                  : chapter.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: Text(_time(Duration(milliseconds: chapter.startMs))),
+            onTap: () {
+              player.seekToChapter(index);
+              Navigator.of(context).pop();
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _ArtworkTint extends StatefulWidget {
   const _ArtworkTint({required this.track, required this.child});
   final MusicTrack track;

@@ -4,6 +4,21 @@ import 'dart:convert';
 /// the file in place for [deviceMedia], which the app never deletes.
 enum MusicSource { localImport, serverDownload, deviceMedia }
 
+/// A chapter marker read from the file, such as an M4B audiobook chapter.
+class TrackChapter {
+  const TrackChapter({required this.startMs, required this.title});
+
+  final int startMs;
+  final String title;
+
+  Map<String, Object?> toJson() => {'startMs': startMs, 'title': title};
+
+  factory TrackChapter.fromJson(Map<String, Object?> json) => TrackChapter(
+        startMs: json['startMs'] as int? ?? 0,
+        title: json['title'] as String? ?? '',
+      );
+}
+
 class MusicTrack {
   // Stored placeholders for missing tags; translated only when displayed.
   static const unknownArtist = 'Artiste inconnu';
@@ -30,6 +45,7 @@ class MusicTrack {
     this.metadataRead = false,
     this.source,
     this.sourceUri,
+    this.chapters = const [],
   });
 
   final String id;
@@ -50,6 +66,33 @@ class MusicTrack {
   final MusicSource? source;
   final String? sourceUri;
   final DateTime addedAt;
+  final List<TrackChapter> chapters;
+
+  /// Audiobooks get chapters, a progress bar and spoken-word controls.
+  bool get isAudiobook {
+    final path = Uri.tryParse(uri)?.path.toLowerCase() ?? '';
+    final tagged = genre.toLowerCase().replaceAll(RegExp('[^a-z]'), '');
+    return path.endsWith('.m4b') ||
+        tagged.contains('audiobook') ||
+        tagged.contains('livreaudio') ||
+        tagged.contains('hrbuch');
+  }
+
+  /// Fraction listened, or null when the length is unknown.
+  double? get progress {
+    final total = durationMs;
+    if (total == null || total <= 0) return null;
+    return (lastPositionMs / total).clamp(0.0, 1.0);
+  }
+
+  /// Index of the chapter containing [positionMs], or -1 without chapters.
+  int chapterIndexAt(int positionMs) {
+    var found = -1;
+    for (var i = 0; i < chapters.length; i++) {
+      if (chapters[i].startMs <= positionMs) found = i;
+    }
+    return found;
+  }
 
   MusicTrack copyWith({
     bool? favorite,
@@ -76,6 +119,7 @@ class MusicTrack {
         source: source,
         sourceUri: sourceUri,
         addedAt: addedAt,
+        chapters: chapters,
       );
 
   Map<String, Object?> toJson() => {
@@ -97,6 +141,8 @@ class MusicTrack {
         'source': source?.name,
         'sourceUri': sourceUri,
         'addedAt': addedAt.toIso8601String(),
+        if (chapters.isNotEmpty)
+          'chapters': [for (final chapter in chapters) chapter.toJson()],
       };
 
   factory MusicTrack.fromJson(Map<String, Object?> json) => MusicTrack(
@@ -126,6 +172,10 @@ class MusicTrack {
         },
         sourceUri: json['sourceUri'] as String?,
         addedAt: DateTime.parse(json['addedAt']! as String),
+        chapters: [
+          for (final item in json['chapters'] as List<Object?>? ?? const [])
+            TrackChapter.fromJson((item! as Map).cast<String, Object?>()),
+        ],
       );
 
   static String encodeAll(List<MusicTrack> tracks) =>

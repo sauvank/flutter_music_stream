@@ -1508,4 +1508,33 @@ class AppLocalizationsFr extends AppLocalizations {
   String unsupportedFlac(String title) {
     return 'FLAC non lisible sur cet appareil : « $title » a été mis en pause. Essayez un fichier MP3, AAC ou Opus.';
   }
+
+  @override
+  String get modeAudiobooks => 'Livres audio';
+
+  @override
+  String get chapters => 'Chapitres';
+
+  @override
+  String chapterLabel(int number, int total, String title) {
+    return 'Chapitre $number/$total · $title';
+  }
+
+  @override
+  String chapterDefault(int number) {
+    return 'Chapitre $number';
+  }
+
+  @override
+  String get rewind30 => 'Reculer de 30 secondes';
+
+  @override
+  String get forward30 => 'Avancer de 30 secondes';
+
+  @override
+  String get playbackSpeed => 'Vitesse de lecture';
+
+  @override
+  String get audiobooksEmpty =>
+      'Aucun livre audio. Les fichiers M4B et les genres « Audiobook » apparaissent ici.';
 }

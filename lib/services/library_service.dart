@@ -469,6 +469,7 @@ class LibraryService {
         source: track.source,
         sourceUri: track.sourceUri,
         addedAt: track.addedAt,
+        chapters: metadata.chapters,
       );
     } catch (_) {
       // A malformed or unsupported tag must never prevent importing its audio.
@@ -509,5 +510,6 @@ class LibraryService {
         source: track.source,
         sourceUri: track.sourceUri,
         addedAt: track.addedAt,
+        chapters: track.chapters,
       );
 }

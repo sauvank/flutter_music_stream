@@ -821,5 +821,15 @@
   "addServerHint": "Connectez un serveur WebDAV, HTTP ou FTP. La connexion est testée avant l’enregistrement.",
   "saveAndTest": "Tester et enregistrer",
   "unsupportedFlac": "FLAC non lisible sur cet appareil : « {title} » a été mis en pause. Essayez un fichier MP3, AAC ou Opus.",
-  "@unsupportedFlac": {"placeholders": {"title": {"type": "String"}}}
+  "@unsupportedFlac": {"placeholders": {"title": {"type": "String"}}},
+  "modeAudiobooks": "Livres audio",
+  "chapters": "Chapitres",
+  "chapterLabel": "Chapitre {number}/{total} · {title}",
+  "@chapterLabel": {"placeholders": {"number": {"type": "int"}, "total": {"type": "int"}, "title": {"type": "String"}}},
+  "chapterDefault": "Chapitre {number}",
+  "@chapterDefault": {"placeholders": {"number": {"type": "int"}}},
+  "rewind30": "Reculer de 30 secondes",
+  "forward30": "Avancer de 30 secondes",
+  "playbackSpeed": "Vitesse de lecture",
+  "audiobooksEmpty": "Aucun livre audio. Les fichiers M4B et les genres « Audiobook » apparaissent ici."
 }

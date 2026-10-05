@@ -2437,6 +2437,54 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'FLAC non lisible sur cet appareil : « {title} » a été mis en pause. Essayez un fichier MP3, AAC ou Opus.'**
   String unsupportedFlac(String title);
+
+  /// No description provided for @modeAudiobooks.
+  ///
+  /// In fr, this message translates to:
+  /// **'Livres audio'**
+  String get modeAudiobooks;
+
+  /// No description provided for @chapters.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chapitres'**
+  String get chapters;
+
+  /// No description provided for @chapterLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chapitre {number}/{total} · {title}'**
+  String chapterLabel(int number, int total, String title);
+
+  /// No description provided for @chapterDefault.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chapitre {number}'**
+  String chapterDefault(int number);
+
+  /// No description provided for @rewind30.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reculer de 30 secondes'**
+  String get rewind30;
+
+  /// No description provided for @forward30.
+  ///
+  /// In fr, this message translates to:
+  /// **'Avancer de 30 secondes'**
+  String get forward30;
+
+  /// No description provided for @playbackSpeed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vitesse de lecture'**
+  String get playbackSpeed;
+
+  /// No description provided for @audiobooksEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun livre audio. Les fichiers M4B et les genres « Audiobook » apparaissent ici.'**
+  String get audiobooksEmpty;
 }
 
 class _AppLocalizationsDelegate
