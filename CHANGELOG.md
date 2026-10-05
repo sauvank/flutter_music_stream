@@ -97,3 +97,5 @@ Les versions publiées restent décrites par les tags Git.
 - Feat: audiobook mode. `MusicTrack.chapters`/`isAudiobook` (M4B or genre Audiobook), M4B `chpl` chapters read at import, "Livres audio" library tab with progress bars, Now Playing chapter label/list, chapter prev/next, ±30 s, speed 0.75–2x, position saved immediately on pause.
 
 - Fix: server file rows show a progress loader instead of the download icon while a download is queued, running or being imported.
+
+- Feat: audiobook resume position synced (latest save wins per track, `SyncTrackState.positionMs/positionAt`, `SyncJournal.positionTimes`). Fix: Now Playing controls stay centred for audiobooks.

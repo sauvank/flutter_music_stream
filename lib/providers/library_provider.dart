@@ -672,12 +672,17 @@ class LibraryProvider extends ChangeNotifier {
             if (track.source != MusicSource.deviceMedia &&
                 (track.favorite ||
                     track.playCount > 0 ||
+                    _journal.positionTimes.containsKey(track.id) ||
                     _journal.favoriteTimes.containsKey(track.id)))
               track.id: SyncTrackState(
                 favorite: track.favorite,
                 favoriteAt: _journal.favoriteTimes[track.id],
                 playCount: track.playCount,
                 lastPlayedAt: track.lastPlayedAt,
+                positionMs: _journal.positionTimes.containsKey(track.id)
+                    ? track.lastPositionMs
+                    : null,
+                positionAt: _journal.positionTimes[track.id],
               ),
         },
         playlists: List.of(_playlists),
@@ -710,6 +715,19 @@ class LibraryProvider extends ChangeNotifier {
       }
       if (state.favoriteAt != null) {
         _journal.favoriteTimes[track.id] = state.favoriteAt!;
+      }
+      final remoteAt = state.positionAt;
+      final remoteMs = state.positionMs;
+      final localAt = _journal.positionTimes[track.id];
+      if (remoteAt != null &&
+          remoteMs != null &&
+          (localAt == null || remoteAt.isAfter(localAt))) {
+        _journal.positionTimes[track.id] = remoteAt;
+        if (remoteMs != _tracks[index].lastPositionMs) {
+          _tracks[index] = _tracks[index].copyWith(lastPositionMs: remoteMs);
+          await _service.savePosition(track.id, remoteMs);
+          tracksChanged = true;
+        }
       }
     }
     _playlists
@@ -811,6 +829,10 @@ class LibraryProvider extends ChangeNotifier {
     _tracks[index] =
         _tracks[index].copyWith(lastPositionMs: position.inMilliseconds);
     _invalidateViews();
+    if (_tracks[index].isAudiobook) {
+      _journal.positionTimes[id] = DateTime.now().toUtc();
+      await _journal.save();
+    }
     await _service.savePosition(id, position.inMilliseconds);
   }
 

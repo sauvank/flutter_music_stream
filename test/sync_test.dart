@@ -99,4 +99,21 @@ void main() {
     expect(roundTrip.playlists.map((p) => p.id), ['p1', 'p3']);
     expect(roundTrip.deletedPlaylists['p2'], DateTime.utc(2026, 1, 2));
   });
+
+  test('the most recent audiobook position wins when devices disagree', () {
+    final phone = SyncTrackState(
+      positionMs: 600000,
+      positionAt: DateTime.utc(2026, 1, 2),
+    );
+    final tablet = SyncTrackState(
+      positionMs: 120000,
+      positionAt: DateTime.utc(2026, 1, 3),
+    );
+
+    expect(SyncTrackState.merge(phone, tablet).positionMs, 120000);
+    expect(SyncTrackState.merge(tablet, phone).positionMs, 120000);
+    final restored = SyncTrackState.fromJson(tablet.toJson());
+    expect(restored.positionMs, 120000);
+    expect(restored.positionAt, DateTime.utc(2026, 1, 3));
+  });
 }

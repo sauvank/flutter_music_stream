@@ -9,6 +9,8 @@ class SyncTrackState {
     this.favoriteAt,
     this.playCount = 0,
     this.lastPlayedAt,
+    this.positionMs,
+    this.positionAt,
   });
 
   final bool favorite;
@@ -18,12 +20,21 @@ class SyncTrackState {
   final int playCount;
   final DateTime? lastPlayedAt;
 
+  /// Resume point of an audiobook and when it was last saved; the most
+  /// recent save wins across devices.
+  final int? positionMs;
+  final DateTime? positionAt;
+
   Map<String, Object?> toJson() => {
         'favorite': favorite,
         if (favoriteAt != null) 'favoriteAt': favoriteAt!.toIso8601String(),
         'playCount': playCount,
         if (lastPlayedAt != null)
           'lastPlayedAt': lastPlayedAt!.toIso8601String(),
+        if (positionMs != null && positionAt != null) ...{
+          'positionMs': positionMs,
+          'positionAt': positionAt!.toIso8601String(),
+        },
       };
 
   factory SyncTrackState.fromJson(Map<String, Object?> json) => SyncTrackState(
@@ -31,6 +42,8 @@ class SyncTrackState {
         favoriteAt: _date(json['favoriteAt']),
         playCount: json['playCount'] as int? ?? 0,
         lastPlayedAt: _date(json['lastPlayedAt']),
+        positionMs: json['positionMs'] as int?,
+        positionAt: _date(json['positionAt']),
       );
 
   /// Latest favorite choice wins; listening counters keep the maximum.
@@ -38,7 +51,13 @@ class SyncTrackState {
     final aAt = a.favoriteAt ?? DateTime.utc(0);
     final bAt = b.favoriteAt ?? DateTime.utc(0);
     final favoriteSource = bAt.isAfter(aAt) ? b : a;
+    final positionSource = (b.positionAt ?? DateTime.utc(0))
+            .isAfter(a.positionAt ?? DateTime.utc(0))
+        ? b
+        : a;
     return SyncTrackState(
+      positionMs: positionSource.positionMs,
+      positionAt: positionSource.positionAt,
       favorite: favoriteSource.favorite,
       favoriteAt: favoriteSource.favoriteAt,
       playCount: a.playCount > b.playCount ? a.playCount : b.playCount,

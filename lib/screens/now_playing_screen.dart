@@ -311,7 +311,10 @@ class NowPlayingScreen extends StatelessWidget {
                       icon: const Icon(Icons.shuffle_rounded),
                     ),
                     IconButton(
-                      iconSize: 38,
+                      iconSize: track.isAudiobook ? 30 : 38,
+                      padding: track.isAudiobook ? EdgeInsets.zero : null,
+                      constraints:
+                          track.isAudiobook ? _audiobookButtonSize : null,
                       tooltip: context.l10n.actionPrevious,
                       onPressed: track.isAudiobook
                           ? () => _tap(player.previousChapter)
@@ -322,13 +325,15 @@ class NowPlayingScreen extends StatelessWidget {
                     ),
                     if (track.isAudiobook)
                       IconButton(
-                        iconSize: 32,
+                        iconSize: 28,
+                        padding: EdgeInsets.zero,
+                        constraints: _audiobookButtonSize,
                         tooltip: context.l10n.rewind30,
                         onPressed: () =>
                             player.skipBy(const Duration(seconds: -30)),
                         icon: const Icon(Icons.replay_30_rounded),
                       ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: track.isAudiobook ? 4 : 8),
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 220),
                       width: 72,
@@ -374,17 +379,22 @@ class NowPlayingScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: track.isAudiobook ? 4 : 8),
                     if (track.isAudiobook)
                       IconButton(
-                        iconSize: 32,
+                        iconSize: 28,
+                        padding: EdgeInsets.zero,
+                        constraints: _audiobookButtonSize,
                         tooltip: context.l10n.forward30,
                         onPressed: () =>
                             player.skipBy(const Duration(seconds: 30)),
                         icon: const Icon(Icons.forward_30_rounded),
                       ),
                     IconButton(
-                      iconSize: 38,
+                      iconSize: track.isAudiobook ? 30 : 38,
+                      padding: track.isAudiobook ? EdgeInsets.zero : null,
+                      constraints:
+                          track.isAudiobook ? _audiobookButtonSize : null,
                       tooltip: context.l10n.actionNext,
                       onPressed: track.isAudiobook
                           ? () => _tap(player.nextChapter)
@@ -395,6 +405,8 @@ class NowPlayingScreen extends StatelessWidget {
                     ),
                     if (track.isAudiobook)
                       IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: _audiobookButtonSize,
                         tooltip: context.l10n.chapters,
                         onPressed: track.chapters.isEmpty
                             ? null
@@ -546,6 +558,9 @@ void _showChapters(BuildContext context) => showModalBottomSheet<void>(
       builder: (_) => const _ChaptersSheet(),
     );
 
+/// Same width for every side button so the play button stays centred.
+const _audiobookButtonSize = BoxConstraints.tightFor(width: 42, height: 48);
+
 class _SpeedButton extends StatelessWidget {
   const _SpeedButton({required this.player});
   final PlayerProvider player;
@@ -565,11 +580,14 @@ class _SpeedButton extends StatelessWidget {
               child: Text('${value}x'),
             ),
         ],
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Text(
-            '${player.speed}x',
-            style: Theme.of(context).textTheme.labelLarge,
+        child: SizedBox(
+          width: 42,
+          height: 48,
+          child: Center(
+            child: Text(
+              '${player.speed}x',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
           ),
         ),
       );
