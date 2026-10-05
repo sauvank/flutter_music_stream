@@ -29,6 +29,20 @@ class DownloadQueueProvider extends ChangeNotifier {
   int get activeCount =>
       _records.where((record) => record.status.isNotFinalState).length;
 
+  /// Progress of the unfinished download of [url]: null when none is running,
+  /// a value in 0..1 once bytes flow and a negative value while it waits.
+  double? activeProgress(String url) {
+    for (final record in _records) {
+      if (record.task.url != url) continue;
+      // A finished transfer is still being imported into the library.
+      if (_processing.contains(record.task.taskId)) return 1;
+      if (!record.status.isNotFinalState) continue;
+      final progress = record.progress;
+      return progress > 0 && progress <= 1 ? progress : -1;
+    }
+    return null;
+  }
+
   /// Runs off the startup path: enqueues wait for it through [_enqueueChain],
   /// and the queue notifies listeners once its records are loaded.
   Future<void> initialize(AppLocalizations l10n) {

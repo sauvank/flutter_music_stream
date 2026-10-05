@@ -768,6 +768,9 @@ class _RemoteTile extends StatelessWidget {
     final downloaded = context.select<LibraryProvider, bool>(
       (library) => library.downloadedSourceUris.contains(entry.uri.toString()),
     );
+    final downloadProgress = context.select<DownloadQueueProvider, double?>(
+      (downloads) => downloads.activeProgress(entry.uri.toString()),
+    );
     final preview =
         context.select<PlayerProvider, ({bool selected, bool playing})>(
       (player) => (
@@ -827,7 +830,20 @@ class _RemoteTile extends StatelessWidget {
                               ? Icons.pause_rounded
                               : Icons.play_arrow_rounded),
                         ),
-                      if (!downloaded)
+                      if (!downloaded && downloadProgress != null)
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: SizedBox.square(
+                            dimension: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 3,
+                              value: downloadProgress < 0
+                                  ? null
+                                  : downloadProgress,
+                            ),
+                          ),
+                        )
+                      else if (!downloaded)
                         IconButton(
                           tooltip: context.l10n.download,
                           onPressed: () => _download(context, servers),
