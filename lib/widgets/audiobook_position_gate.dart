@@ -9,31 +9,41 @@ import '../providers/sync_provider.dart';
 
 enum _PositionChoice { ignore, keepLocal, useRemote }
 
-/// Starts [track], first offering to resume from another device when an
-/// audiobook has a newer synced position there.
+/// Offers to resume from another device when [track], an audiobook, has a
+/// newer synced position there. Returns the track with the chosen position.
+Future<MusicTrack> resolveAudiobookPosition(
+  BuildContext context,
+  MusicTrack track,
+) async {
+  final library = context.read<LibraryProvider>();
+  final sync = context.read<SyncProvider?>();
+  if (!track.isAudiobook || sync == null) return track;
+  // The queue's copy of the track keeps the position it was loaded with.
+  track = library.trackById(track.id) ?? track;
+  final proposal = await sync.positionProposal(track);
+  if (proposal == null) return track;
+  if (!context.mounted) return track;
+  final choice = await _ask(context, track, proposal);
+  switch (choice) {
+    case _PositionChoice.useRemote:
+      await sync.adoptRemotePosition(track.id, proposal);
+      return library.trackById(track.id) ?? track;
+    case _PositionChoice.keepLocal:
+      await sync.keepLocalPosition(track.id);
+    case _PositionChoice.ignore:
+      break;
+  }
+  return track;
+}
+
+/// Starts [track], first resolving a conflicting synced audiobook position.
 Future<void> playWithPositionCheck(
   BuildContext context,
   MusicTrack track,
   List<MusicTrack> queue,
 ) async {
-  final library = context.read<LibraryProvider>();
   final player = context.read<PlayerProvider>();
-  final sync = context.read<SyncProvider?>();
-  var start = track;
-  final proposal =
-      track.isAudiobook ? await sync?.positionProposal(track) : null;
-  if (proposal != null && context.mounted) {
-    final choice = await _ask(context, track, proposal);
-    switch (choice) {
-      case _PositionChoice.useRemote:
-        await sync!.adoptRemotePosition(track.id, proposal);
-        start = library.trackById(track.id) ?? track;
-      case _PositionChoice.keepLocal:
-        await sync!.keepLocalPosition(track.id);
-      case _PositionChoice.ignore:
-        break;
-    }
-  }
+  final start = await resolveAudiobookPosition(context, track);
   final index = queue.indexWhere((item) => item.id == track.id);
   final updated = [...queue];
   if (index >= 0) updated[index] = start;

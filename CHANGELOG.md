@@ -101,3 +101,5 @@ Les versions publiées restent décrites par les tags Git.
 - Feat: audiobook resume position synced (latest save wins per track, `SyncTrackState.positionMs/positionAt`, `SyncJournal.positionTimes`). Fix: Now Playing controls stay centred for audiobooks.
 
 - Change: audiobook sync positions are no longer applied silently by a sync. Opening an audiobook (`playWithPositionCheck`, `lib/widgets/audiobook_position_gate.dart`) compares with the synced position and asks: ignore / keep here (publishes local as newest) / resume from sync. Same flow as Comics Stream's `SyncedReaderGate`.
+
+- Feat: audiobook sync now automatic like Comics Stream: position published when the app is left (HomeScreen lifecycle) or an audiobook is paused (`SyncProvider.publishPosition`); on resume with an idle audiobook the position is compared and the keep/resume dialog shown. Other data (favorites, playlists) still sync manually.

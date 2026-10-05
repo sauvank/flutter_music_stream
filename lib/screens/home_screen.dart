@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,9 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/download_queue_provider.dart';
+import '../providers/library_provider.dart';
+import '../providers/sync_provider.dart';
+import '../widgets/audiobook_position_gate.dart';
 import '../providers/player_provider.dart';
 import '../providers/server_provider.dart';
 import '../widgets/track_artwork.dart';
@@ -31,7 +35,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final _library = GlobalKey<LibraryScreenState>();
   int _index = 0;
   // Visited tabs, most recent last, so back returns where the user was.
@@ -40,12 +44,44 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     HomeScreen._nowPlayingRequests.addListener(_showNowPlaying);
     _player = context.read<PlayerProvider>()
       ..unsupportedFormat.addListener(_explainUnsupportedFormat);
     if (Platform.isAndroid) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _offerUpdate());
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final player = context.read<PlayerProvider>();
+    if (state == AppLifecycleState.resumed) {
+      _checkAudiobookPosition(player);
+    } else if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      final track = player.current;
+      if (track == null || !track.isAudiobook) return;
+      final library = context.read<LibraryProvider>();
+      final sync = context.read<SyncProvider>();
+      unawaited(() async {
+        await library.savePosition(track.id, player.position);
+        await sync.publishPosition(track);
+      }());
+    }
+  }
+
+  /// Back in the app with an audiobook loaded but not playing: another
+  /// device may have moved on meanwhile.
+  Future<void> _checkAudiobookPosition(PlayerProvider player) async {
+    final track = player.current;
+    if (track == null || !track.isAudiobook || player.playing) return;
+    final library = context.read<LibraryProvider>();
+    final before = library.trackById(track.id)?.lastPositionMs;
+    final resolved = await resolveAudiobookPosition(context, track);
+    if (!mounted || resolved.lastPositionMs == before) return;
+    await player.seek(Duration(milliseconds: resolved.lastPositionMs));
   }
 
   Future<void> _offerUpdate() async {
@@ -94,6 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _player.unsupportedFormat.removeListener(_explainUnsupportedFormat);
     HomeScreen._nowPlayingRequests.removeListener(_showNowPlaying);
     super.dispose();

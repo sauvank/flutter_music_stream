@@ -171,6 +171,7 @@ class MusicStreamApp extends StatelessWidget {
               },
               displayMetadata: (value) => localizations().metadata(value),
               onNowPlayingChanged: (track, playing) {
+                if (!playing) unawaited(sync.publishPosition(track));
                 final l10n = localizations();
                 const HomeWidgetService().update(
                   title: track?.title,

@@ -30,8 +30,8 @@ class PositionProposal {
 /// End-to-end encrypted sync of favorites, listening counts, playlists and
 /// servers (with their passwords)
 /// through the user's account (Google or email). The backend only stores
-/// cipher text; the passphrase never leaves the device. Manual only, so the
-/// app never contacts the backend by surprise.
+/// cipher text; the passphrase never leaves the device. Syncs when the sheet
+/// asks, and for the current audiobook when the app is left or paused.
 class SyncProvider extends ChangeNotifier {
   SyncProvider(
     this._service,
@@ -149,6 +149,19 @@ class SyncProvider extends ChangeNotifier {
       );
     } catch (_) {
       return null;
+    }
+  }
+
+  /// Publishes the audiobook being listened to, quietly: leaving the app or
+  /// pausing is the moment another device will want to continue from.
+  Future<void> publishPosition(MusicTrack? track) async {
+    if (!enabled || busy || track == null || !track.isAudiobook) return;
+    // Let the player persist its latest position first.
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    try {
+      await syncNow();
+    } catch (_) {
+      // The next manual or automatic attempt retries.
     }
   }
 
