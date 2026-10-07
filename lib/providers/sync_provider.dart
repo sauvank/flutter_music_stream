@@ -365,6 +365,18 @@ class SyncProvider extends ChangeNotifier {
           rethrow;
         }
       }
+      // The library can change while the network upload is in flight (most
+      // importantly when a player saves its pause position). Reconcile those
+      // newer local edits before applying the snapshot we just uploaded, or
+      // the apply would roll them back before the deferred sync can publish.
+      var latestLocal = _library.syncSnapshot();
+      if (servers != null) {
+        latestLocal = SyncPayload.merge(
+          latestLocal,
+          await servers.syncSnapshot(),
+        );
+      }
+      merged = SyncPayload.merge(merged, latestLocal);
       await _library.applySync(merged);
       await _servers?.applySync(merged);
       settings = current.copyWith(

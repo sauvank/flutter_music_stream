@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- Correction d’une course PC → téléphone : une position de livre audio enregistrée pendant l’envoi réseau n’est plus écrasée par l’ancien instantané appliqué à la fin de la synchronisation; la passe différée peut ensuite publier la position récente.
+
 - Refonte de la synchronisation : détection du compte chiffré avant saisie (une seule phrase pour déverrouiller, confirmation seulement à la création), aucune réécriture distante si la fusion n’a rien changé, trois nouvelles tentatives en cas de conflit, reprise automatique avec délai croissant hors ligne, historique des changements inclus et chiffré dans l’enveloppe partagée, compteurs d’écoutes par appareil et horloges logiques observant les valeurs distantes. L’association QR peut maintenant transmettre la clé au PC dans une enveloppe AES-GCM protégée par un secret aléatoire du QR; Firestore ne stocke que cette enveloppe chiffrée. Les règles Firestore correspondantes ont été compilées et déployées.
 
 - Activation de la synchronisation : un appareil qui rejoint un compte contenant déjà une enveloppe chiffrée ne demande désormais la phrase secrète qu'une seule fois. La confirmation reste affichée uniquement lors de la création de la première enveloppe sur un compte vide.
