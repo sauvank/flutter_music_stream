@@ -339,8 +339,12 @@ class PlayerProvider extends ChangeNotifier {
     // An audiobook plays on its own: it never runs on into music.
     if (track.isAudiobook) {
       final total = track.durationMs;
-      // A finished book starts over instead of stopping at once.
-      if (total != null && track.lastPositionMs >= total - 30000) {
+      // Only a genuinely completed book starts over. Treating the last
+      // 30 seconds as finished made a tap in the audiobook list discard a
+      // valid bookmark, unlike resuming from the mini player.
+      if (total != null &&
+          total > 1000 &&
+          track.lastPositionMs >= total - 1000) {
         track = track.copyWith(lastPositionMs: 0);
       }
       library = [track];

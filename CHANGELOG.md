@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- Livres audio : toucher un livre dans la liste conserve désormais un signet situé dans les 30 dernières secondes. Seule la fin réelle (dernière seconde) déclenche un redémarrage à `0:00`, ce qui aligne ce chemin avec la reprise depuis le mini-lecteur.
+
 - Synchronisation PC → téléphone : une publication de position demandée pendant une autre synchronisation est désormais rejouée au lieu d'être perdue, et l'ouverture d'un livre audio vérifie la position distante même si une synchronisation tourne déjà. Ajout d'un historique local des 30 dernières synchronisations réussies (10 affichées), avec date, catégories modifiées et détail des positions de livres audio envoyées ou reçues.
 
 - CI Android : initialisation des outils SDK avec `android-actions/setup-android@v3` avant l’installation du NDK dans les trois workflows, pour corriger `sdkmanager: command not found` sur les runners GitHub.

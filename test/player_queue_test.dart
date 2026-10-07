@@ -83,6 +83,41 @@ void main() {
     player.dispose();
   });
 
+  test('opening an audiobook tile keeps a bookmark near the end', () async {
+    final audioPlayer = _FakeAudioPlayer();
+    final player = PlayerProvider(
+      audioPlayer: audioPlayer,
+      fadeDuration: Duration.zero,
+    );
+    final book = _audiobook(
+      position: const Duration(minutes: 59, seconds: 40),
+    );
+
+    await player.playTrack(book, [book]);
+
+    expect(
+      audioPlayer.currentPosition,
+      Duration(milliseconds: book.lastPositionMs),
+    );
+    player.dispose();
+  });
+
+  test('opening a completed audiobook starts it over', () async {
+    final audioPlayer = _FakeAudioPlayer();
+    final player = PlayerProvider(
+      audioPlayer: audioPlayer,
+      fadeDuration: Duration.zero,
+    );
+    final book = _audiobook(
+      position: const Duration(hours: 1),
+    );
+
+    await player.playTrack(book, [book]);
+
+    expect(audioPlayer.currentPosition, Duration.zero);
+    player.dispose();
+  });
+
   test('removes every queued copy of a deleted track', () async {
     final audioPlayer = _FakeAudioPlayer();
     final player = PlayerProvider(
@@ -307,6 +342,15 @@ MusicTrack _track(String id) => MusicTrack(
       addedAt: DateTime.utc(2026),
     );
 
+MusicTrack _audiobook({required Duration position}) => MusicTrack(
+      id: 'book',
+      title: 'Livre',
+      uri: 'file:///music/book.m4b',
+      durationMs: const Duration(hours: 1).inMilliseconds,
+      lastPositionMs: position.inMilliseconds,
+      addedAt: DateTime.utc(2026),
+    );
+
 class _FakeAudioPlayer extends AudioPlayer {
   final _playerState = StreamController<PlayerState>.broadcast();
   final _position = StreamController<Duration>.broadcast();
@@ -375,6 +419,7 @@ class _FakeAudioPlayer extends AudioPlayer {
       ..clear()
       ..addAll(audioSources);
     index = initialIndex ?? (sources.isEmpty ? null : 0);
+    currentPosition = initialPosition ?? Duration.zero;
     _currentIndex.add(index);
     return null;
   }
