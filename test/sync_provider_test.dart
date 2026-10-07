@@ -49,6 +49,11 @@ void main() {
     expect(a.library.allTracks.single.favorite, isFalse);
     expect(a.library.playlists, isEmpty);
     expect(a.sync.settings?.lastSyncAt, isNotNull);
+
+    // A later no-op sync still summarizes persisted deletion timestamps;
+    // DateTime values must be converted before JSON comparison.
+    await a.sync.syncNow();
+    expect(a.sync.history, isNotEmpty);
   });
 
   test('PC audiobook pause reaches phone despite overlapping syncs', () async {

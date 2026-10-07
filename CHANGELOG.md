@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- Historique de synchronisation : correction de `JsonUnsupportedObjectError` sur PC lorsque l'enveloppe contient des suppressions de playlists ou de serveurs. Le résumé convertit désormais leurs horodatages `DateTime` en chaînes ISO avant comparaison JSON; un second passage après suppression est couvert par test.
+
 - Livres audio : toucher un livre dans la liste conserve désormais un signet situé dans les 30 dernières secondes. Seule la fin réelle (dernière seconde) déclenche un redémarrage à `0:00`, ce qui aligne ce chemin avec la reprise depuis le mini-lecteur.
 
 - Synchronisation PC → téléphone : une publication de position demandée pendant une autre synchronisation est désormais rejouée au lieu d'être perdue, et l'ouverture d'un livre audio vérifie la position distante même si une synchronisation tourne déjà. Ajout d'un historique local des 30 dernières synchronisations réussies (10 affichées), avec date, catégories modifiées et détail des positions de livres audio envoyées ou reçues.

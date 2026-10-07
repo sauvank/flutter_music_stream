@@ -340,8 +340,8 @@ class SyncProvider extends ChangeNotifier {
     }
     if (jsonEncode([for (final item in remote.playlists) item.toJson()]) !=
             jsonEncode([for (final item in local.playlists) item.toJson()]) ||
-        jsonEncode(remote.deletedPlaylists) !=
-            jsonEncode(local.deletedPlaylists)) {
+        jsonEncode(_encodedDates(remote.deletedPlaylists)) !=
+            jsonEncode(_encodedDates(local.deletedPlaylists))) {
       changes.add(const SyncHistoryChange(
         kind: SyncHistoryChangeKind.playlists,
       ));
@@ -352,13 +352,19 @@ class SyncProvider extends ChangeNotifier {
             jsonEncode([
               for (final item in local.servers.values) item.toJson(),
             ]) ||
-        jsonEncode(remote.deletedServers) != jsonEncode(local.deletedServers)) {
+        jsonEncode(_encodedDates(remote.deletedServers)) !=
+            jsonEncode(_encodedDates(local.deletedServers))) {
       changes.add(const SyncHistoryChange(
         kind: SyncHistoryChangeKind.servers,
       ));
     }
     return changes;
   }
+
+  static Map<String, String> _encodedDates(Map<String, DateTime> values) => {
+        for (final entry in values.entries)
+          entry.key: entry.value.toIso8601String(),
+      };
 
   /// PBKDF2 takes seconds on a phone: keep it off the UI isolate.
   Future<List<int>> _deriveKey(String passphrase, SyncKdf kdf) {
