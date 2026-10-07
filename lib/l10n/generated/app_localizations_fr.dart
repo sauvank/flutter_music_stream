@@ -1271,6 +1271,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get syncEnable => 'Activer et synchroniser';
 
   @override
+  String get syncExistingPassphraseStep =>
+      'Entrez la phrase secrète déjà utilisée sur vos autres appareils pour déchiffrer les données de ce compte.';
+
+  @override
   String get syncExplanation =>
       'Favoris, écoutes, playlists et serveurs (avec leurs mots de passe) sont chiffrés sur cet appareil avec votre phrase secrète, puis enregistrés sur votre compte MusicStream. Le serveur ne voit jamais leur contenu, et vos fichiers audio ne sont jamais envoyés.';
 
@@ -1373,6 +1377,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get syncTitle => 'Synchronisation chiffrée';
+
+  @override
+  String get syncUnlock => 'Déchiffrer et synchroniser';
 
   @override
   String get syncUnavailable =>

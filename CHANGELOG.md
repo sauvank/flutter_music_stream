@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- Activation de la synchronisation : un appareil qui rejoint un compte contenant déjà une enveloppe chiffrée ne demande désormais la phrase secrète qu'une seule fois. La confirmation reste affichée uniquement lors de la création de la première enveloppe sur un compte vide.
+
 - Publication Google Play : passage du `minSdk` de 23 à 24 dans l'application et le décodeur Android, exigé par la protection automatique Play. Le workflow utilise aussi l'entrée `tracks` actuelle de l'action d'envoi au lieu de l'ancien `track` déprécié.
 
 - Historique de synchronisation : correction de `JsonUnsupportedObjectError` sur PC lorsque l'enveloppe contient des suppressions de playlists ou de serveurs. Le résumé convertit désormais leurs horodatages `DateTime` en chaînes ISO avant comparaison JSON; un second passage après suppression est couvert par test.

@@ -93,6 +93,12 @@ class SyncProvider extends ChangeNotifier {
   Future<void> sendPasswordReset(String email) =>
       _account.sendPasswordReset(email);
 
+  /// Whether the signed-in account already owns an encrypted sync envelope.
+  /// The setup UI uses this to confirm a newly created passphrase, while an
+  /// existing account only asks for its passphrase once to unlock the data.
+  Future<bool> accountHasSyncedData() async =>
+      await _remote.download(_requireUser().uid) != null;
+
   Future<void> signOut() => _run(() async {
         await _service.clear();
         settings = null;

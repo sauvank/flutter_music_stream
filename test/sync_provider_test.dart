@@ -109,6 +109,16 @@ void main() {
     expect(b.sync.busy, isFalse);
   });
 
+  test('setup detects whether the account already has synced data', () async {
+    final server = _MemoryRemote();
+    final first = await _Device.create(server);
+    final second = await _Device.create(server);
+
+    expect(await first.sync.accountHasSyncedData(), isFalse);
+    await first.sync.enable('correct horse battery');
+    expect(await second.sync.accountHasSyncedData(), isTrue);
+  });
+
   test('a failed first sync leaves sync disabled', () async {
     final device = await _Device.create(_MemoryRemote()..failUploads = true);
 

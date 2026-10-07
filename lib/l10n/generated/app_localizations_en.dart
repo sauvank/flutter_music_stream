@@ -1241,6 +1241,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncEnable => 'Turn on and sync';
 
   @override
+  String get syncExistingPassphraseStep =>
+      'Enter the passphrase already used on your other devices to decrypt this account\'s data.';
+
+  @override
   String get syncExplanation =>
       'Favorites, plays, playlists and servers (with their passwords) are encrypted on this phone with your passphrase, then saved to your MusicStream account. The server never sees their content, and your audio files are never sent.';
 
@@ -1341,6 +1345,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncTitle => 'Encrypted sync';
+
+  @override
+  String get syncUnlock => 'Decrypt and sync';
 
   @override
   String get syncUnavailable => 'Sync is not set up in this build of the app.';

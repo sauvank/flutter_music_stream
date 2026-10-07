@@ -37,6 +37,7 @@
 - [x] Bouton de diffusion ouvrant le sélecteur de sortie audio Android (Bluetooth, Alexa appairée).
 - [x] Passe d’ergonomie : annulation du retrait en playlist, aléatoire depuis la vignette, minuterie de sommeil, reprise de la file au lancement, retours haptiques, gestes et animation de l’écran Lecture, teinte issue de la pochette, recherche sans accents avec historique et playlists.
 - [x] Synchronisation PC → téléphone fiabilisée pour les positions de livres audio et historique local détaillé des synchronisations.
+- [x] Activation adaptée au compte : confirmation lors de la création de la phrase secrète, saisie unique pour déchiffrer un compte existant.
 
 ## En cours
 

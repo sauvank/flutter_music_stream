@@ -708,6 +708,7 @@
   "syncDone": "Synchronisation terminée.",
   "syncEmail": "Adresse e-mail",
   "syncEnable": "Activer et synchroniser",
+  "syncExistingPassphraseStep": "Entrez la phrase secrète déjà utilisée sur vos autres appareils pour déchiffrer les données de ce compte.",
   "syncExplanation": "Favoris, écoutes, playlists et serveurs (avec leurs mots de passe) sont chiffrés sur cet appareil avec votre phrase secrète, puis enregistrés sur votre compte MusicStream. Le serveur ne voit jamais leur contenu, et vos fichiers audio ne sont jamais envoyés.",
   "syncFailed": "Synchronisation impossible. Vérifiez votre connexion.",
   "syncForgotPassword": "Mot de passe oublié ?",
@@ -769,6 +770,7 @@
     }
   },
   "syncTitle": "Synchronisation chiffrée",
+  "syncUnlock": "Déchiffrer et synchroniser",
   "syncUnavailable": "La synchronisation n’est pas configurée dans cette version de l’application.",
   "syncWrongPassphrase": "Cette phrase secrète n’ouvre pas les données synchronisées de ce compte.",
   "theme": "Thème",

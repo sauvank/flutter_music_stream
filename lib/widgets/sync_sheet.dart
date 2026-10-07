@@ -95,6 +95,8 @@ class _SyncSheetState extends State<_SyncSheet> {
   String? _error;
   bool _showPassphrase = false;
   bool _showPassword = false;
+  String? _setupUid;
+  Future<bool>? _hasSyncedData;
 
   @override
   void dispose() {
@@ -345,57 +347,117 @@ class _SyncSheetState extends State<_SyncSheet> {
   List<Widget> _setup(BuildContext context, SyncProvider sync) {
     final l10n = context.l10n;
     return [
-      Text(l10n.syncPassphraseStep),
-      const SizedBox(height: 12),
-      TextField(
-        controller: _passphrase,
-        obscureText: !_showPassphrase,
-        autocorrect: false,
-        enableSuggestions: false,
-        decoration: InputDecoration(
-          labelText: l10n.syncPassphrase,
-          suffixIcon: IconButton(
-            tooltip:
-                _showPassphrase ? l10n.hidePassphrase : l10n.showPassphrase,
-            onPressed: () => setState(() => _showPassphrase = !_showPassphrase),
-            icon: Icon(_showPassphrase
-                ? Icons.visibility_off_outlined
-                : Icons.visibility_outlined),
-          ),
-          helperText: l10n.syncPassphraseHint,
-          helperMaxLines: 3,
-        ),
-      ),
-      const SizedBox(height: 8),
-      TextField(
-        controller: _confirmation,
-        obscureText: !_showPassphrase,
-        autocorrect: false,
-        enableSuggestions: false,
-        decoration: InputDecoration(labelText: l10n.syncPassphraseConfirm),
-      ),
-      const SizedBox(height: 18),
-      FilledButton.icon(
-        onPressed: sync.busy ? null : () => _enable(context, sync),
-        icon: sync.busy
-            ? const SizedBox.square(
-                dimension: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.lock_outline_rounded),
-        label: Text(l10n.syncEnable),
+      FutureBuilder<bool>(
+        future: _setupState(sync),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(l10n.syncFailed),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () => setState(() => _hasSyncedData = null),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: Text(l10n.retry),
+                ),
+              ],
+            );
+          }
+          return _setupFields(context, sync, snapshot.requireData);
+        },
       ),
     ];
   }
 
-  Future<void> _enable(BuildContext context, SyncProvider sync) async {
+  Future<bool> _setupState(SyncProvider sync) {
+    final uid = sync.user!.uid;
+    if (_setupUid != uid) {
+      _setupUid = uid;
+      _hasSyncedData = null;
+    }
+    return _hasSyncedData ??= sync.accountHasSyncedData();
+  }
+
+  Widget _setupFields(
+    BuildContext context,
+    SyncProvider sync,
+    bool hasSyncedData,
+  ) {
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(hasSyncedData
+            ? l10n.syncExistingPassphraseStep
+            : l10n.syncPassphraseStep),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _passphrase,
+          obscureText: !_showPassphrase,
+          autocorrect: false,
+          enableSuggestions: false,
+          decoration: InputDecoration(
+            labelText: l10n.syncPassphrase,
+            suffixIcon: IconButton(
+              tooltip:
+                  _showPassphrase ? l10n.hidePassphrase : l10n.showPassphrase,
+              onPressed: () =>
+                  setState(() => _showPassphrase = !_showPassphrase),
+              icon: Icon(_showPassphrase
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined),
+            ),
+            helperText: l10n.syncPassphraseHint,
+            helperMaxLines: 3,
+          ),
+        ),
+        if (!hasSyncedData) ...[
+          const SizedBox(height: 8),
+          TextField(
+            controller: _confirmation,
+            obscureText: !_showPassphrase,
+            autocorrect: false,
+            enableSuggestions: false,
+            decoration: InputDecoration(labelText: l10n.syncPassphraseConfirm),
+          ),
+        ],
+        const SizedBox(height: 18),
+        FilledButton.icon(
+          onPressed: sync.busy
+              ? null
+              : () => _enable(
+                    context,
+                    sync,
+                    confirmPassphrase: !hasSyncedData,
+                  ),
+          icon: sync.busy
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.lock_outline_rounded),
+          label: Text(hasSyncedData ? l10n.syncUnlock : l10n.syncEnable),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _enable(
+    BuildContext context,
+    SyncProvider sync, {
+    required bool confirmPassphrase,
+  }) async {
     final l10n = context.l10n;
     final passphrase = _passphrase.text;
     if (passphrase.length < 8) {
       setState(() => _error = l10n.syncPassphraseTooShort);
       return;
     }
-    if (passphrase != _confirmation.text) {
+    if (confirmPassphrase && passphrase != _confirmation.text) {
       setState(() => _error = l10n.syncPassphraseMismatch);
       return;
     }

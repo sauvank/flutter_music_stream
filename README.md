@@ -37,7 +37,7 @@ La version Android prend en charge Android 7.0 (API 24) et versions ultérieures
 - proposition de mise à jour Android au lancement selon la disponibilité signalée par Google Play, avec lien vers la boutique et choix « Plus tard » ;
 - thèmes clair et sombre Material 3.
 
-La synchronisation multi-appareils ne transporte jamais les fichiers audio. Les positions de livres audio conflictuelles sont proposées au choix à l’ouverture, sans écraser silencieusement la progression locale.
+La synchronisation multi-appareils ne transporte jamais les fichiers audio. Sur un nouveau compte, la phrase secrète est confirmée; sur un appareil qui rejoint un compte déjà chiffré, elle n'est demandée qu'une fois pour déchiffrer les données. Les positions de livres audio conflictuelles sont proposées au choix à l’ouverture, sans écraser silencieusement la progression locale.
 
 Au premier morceau sans paroles, l’écran Paroles demande si la recherche automatique doit être activée. Une fois activée, elle transmet à LRCLIB le titre, l’artiste et, s’ils sont connus, l’album et la durée au changement de morceau lorsqu’aucune parole n’est en cache. Ce choix peut être modifié dans Réglages ; la recherche manuelle reste disponible. Les paroles récupérées sont enregistrées dans le stockage privé. Choisir une langue pour la traduction envoie les paroles à MyMemory ; la traduction est ensuite conservée localement.
 

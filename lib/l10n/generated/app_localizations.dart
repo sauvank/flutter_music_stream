@@ -2036,6 +2036,12 @@ abstract class AppLocalizations {
   /// **'Activer et synchroniser'**
   String get syncEnable;
 
+  /// No description provided for @syncExistingPassphraseStep.
+  ///
+  /// In fr, this message translates to:
+  /// **'Entrez la phrase secrète déjà utilisée sur vos autres appareils pour déchiffrer les données de ce compte.'**
+  String get syncExistingPassphraseStep;
+
   /// No description provided for @syncExplanation.
   ///
   /// In fr, this message translates to:
@@ -2209,6 +2215,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Synchronisation chiffrée'**
   String get syncTitle;
+
+  /// No description provided for @syncUnlock.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déchiffrer et synchroniser'**
+  String get syncUnlock;
 
   /// No description provided for @syncUnavailable.
   ///
