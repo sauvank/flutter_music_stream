@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- Publication Google Play : passage du `minSdk` de 23 à 24 dans l'application et le décodeur Android, exigé par la protection automatique Play. Le workflow utilise aussi l'entrée `tracks` actuelle de l'action d'envoi au lieu de l'ancien `track` déprécié.
+
 - Historique de synchronisation : correction de `JsonUnsupportedObjectError` sur PC lorsque l'enveloppe contient des suppressions de playlists ou de serveurs. Le résumé convertit désormais leurs horodatages `DateTime` en chaînes ISO avant comparaison JSON; un second passage après suppression est couvert par test.
 
 - Livres audio : toucher un livre dans la liste conserve désormais un signet situé dans les 30 dernières secondes. Seule la fin réelle (dernière seconde) déclenche un redémarrage à `0:00`, ce qui aligne ce chemin avec la reprise depuis le mini-lecteur.

@@ -3,6 +3,7 @@
 ## Livré
 
 - [x] Détection des mises à jour Android directement via Google Play, sans manifeste Firebase à maintenir.
+- [x] Compatibilité avec la protection automatique Google Play (`minSdk 24`).
 
 - [x] Décodeur logiciel Android pour étendre la compatibilité M4A ALAC et AAC/FLAC sans décodeur système ; initialisation des outils SDK et installation du NDK explicites dans les builds CI.
 

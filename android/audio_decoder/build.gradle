@@ -5,7 +5,8 @@ android {
     compileSdk 36
     ndkVersion '27.0.12077973'
     defaultConfig {
-        minSdk 23
+        // Keep the library aligned with the application manifest.
+        minSdk 24
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
     compileOptions {
