@@ -63,6 +63,7 @@ void main() {
     final phone = await _Device.create(server);
     await pc.sync.enable('correct horse battery');
     await phone.sync.enable('correct horse battery');
+    await pc.library.savePosition('shared', const Duration(minutes: 1));
 
     // The PC starts a sync with its old bookmark. While its upload is still
     // running, the player saves a new position and requests the pause sync.
@@ -73,7 +74,7 @@ void main() {
     await pc.sync.autoSync();
     server.releaseUpload();
     await firstPcSync;
-    await server.waitForRevision(4);
+    await server.waitForRevision(3);
     while (pc.sync.busy) {
       await Future<void>.delayed(const Duration(milliseconds: 1));
     }
@@ -86,6 +87,7 @@ void main() {
 
     // Opening the book on the phone must still inspect the PC bookmark when
     // the phone happens to be synchronizing at the same time.
+    await phone.library.toggleFavorite('shared');
     server.blockNextUpload();
     final phoneSync = phone.sync.syncNow();
     await server.uploadEntered!.future;
