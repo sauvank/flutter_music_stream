@@ -51,6 +51,47 @@ void main() {
     expect(a.sync.settings?.lastSyncAt, isNotNull);
   });
 
+  test('PC audiobook pause reaches phone despite overlapping syncs', () async {
+    final server = _MemoryRemote();
+    final pc = await _Device.create(server);
+    final phone = await _Device.create(server);
+    await pc.sync.enable('correct horse battery');
+    await phone.sync.enable('correct horse battery');
+
+    // The PC starts a sync with its old bookmark. While its upload is still
+    // running, the player saves a new position and requests the pause sync.
+    server.blockNextUpload();
+    final firstPcSync = pc.sync.syncNow();
+    await server.uploadEntered!.future;
+    await pc.library.savePosition('shared', const Duration(minutes: 2));
+    await pc.sync.autoSync();
+    server.releaseUpload();
+    await firstPcSync;
+    await server.waitForRevision(4);
+    while (pc.sync.busy) {
+      await Future<void>.delayed(const Duration(milliseconds: 1));
+    }
+    final sentPosition = pc.sync.history.first.changes.firstWhere(
+      (change) => change.kind == SyncHistoryChangeKind.positionUploaded,
+    );
+    expect(pc.sync.history.first.changes, hasLength(1));
+    expect(sentPosition.label, 'Shared');
+    expect(sentPosition.positionMs, const Duration(minutes: 2).inMilliseconds);
+
+    // Opening the book on the phone must still inspect the PC bookmark when
+    // the phone happens to be synchronizing at the same time.
+    server.blockNextUpload();
+    final phoneSync = phone.sync.syncNow();
+    await server.uploadEntered!.future;
+    final proposal = await phone.sync.positionProposal(
+      phone.library.allTracks.single,
+    );
+    expect(proposal?.remoteMs, const Duration(minutes: 2).inMilliseconds);
+    expect(proposal?.localMs, 0);
+    server.releaseUpload();
+    await phoneSync;
+  });
+
   test('a wrong passphrase cannot join an existing account', () async {
     final server = _MemoryRemote();
     final a = await _Device.create(server);
@@ -164,6 +205,26 @@ class _MemoryRemote implements SyncRemote {
   String? body;
   int revision = 0;
   bool failUploads = false;
+  Completer<void>? uploadEntered;
+  Completer<void>? _uploadRelease;
+
+  void blockNextUpload() {
+    uploadEntered = Completer<void>();
+    _uploadRelease = Completer<void>();
+  }
+
+  void releaseUpload() {
+    _uploadRelease?.complete();
+    _uploadRelease = null;
+  }
+
+  Future<void> waitForRevision(int expected) async {
+    for (var attempt = 0; attempt < 100; attempt++) {
+      if (revision >= expected) return;
+      await Future<void>.delayed(const Duration(milliseconds: 1));
+    }
+    throw StateError('Revision $expected was not reached (current: $revision)');
+  }
 
   @override
   Future<RemoteSyncFile?> download(String uid) async {
@@ -182,6 +243,11 @@ class _MemoryRemote implements SyncRemote {
     required RemoteSyncFile? replacing,
   }) async {
     if (failUploads) throw StateError('offline');
+    final release = _uploadRelease;
+    if (release != null) {
+      uploadEntered?.complete();
+      await release.future;
+    }
     if ((replacing?.revision ?? -1) != (body == null ? -1 : revision)) {
       throw const SyncConflictException();
     }
@@ -214,7 +280,7 @@ class _MemoryLibraryService extends LibraryService {
     MusicTrack(
       id: 'shared',
       title: 'Shared',
-      uri: 'file:///media/music/shared.mp3',
+      uri: 'file:///media/music/shared.m4b',
       addedAt: DateTime.utc(2026),
       metadataRead: true,
       source: MusicSource.localImport,

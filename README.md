@@ -14,7 +14,7 @@ MusicStream est un lecteur de musique personnel construit avec Flutter. Il trans
 - visualiseur du son en direct sur la pochette (permission micro demandée à l’activation, rien n’est enregistré) et barres animées dans le widget ;
 - diffusion vers un autre appareil (Bluetooth, dont Alexa appairée) depuis le sélecteur de sortie audio d’Android ;
 - widget d’écran d’accueil Android avec les commandes de lecture ;
-- synchronisation chiffrée de bout en bout des favoris, écoutes et playlists via votre serveur WebDAV ;
+- synchronisation chiffrée de bout en bout des favoris, écoutes, playlists, serveurs et positions de livres audio via le compte MusicStream, avec historique local des 30 dernières synchronisations ;
 - thème système, clair ou sombre au choix ; interface en français ou en anglais ;
 - création et modification de playlists locales avec description facultative et ordre personnalisable par glisser-déposer ; lecture aléatoire des morceaux, favoris, collections et playlists ;
 - mini-lecteur à gestes (glisser pour changer de morceau, vers le haut pour ouvrir Lecture), repère du morceau en cours dans les listes et retour système vers l’onglet précédent ;
@@ -35,7 +35,7 @@ MusicStream est un lecteur de musique personnel construit avec Flutter. Il trans
 - proposition de mise à jour Android au lancement selon la disponibilité signalée par Google Play, avec lien vers la boutique et choix « Plus tard » ;
 - thèmes clair et sombre Material 3.
 
-La synchronisation chiffrée multi-appareils est documentée dans la feuille de route et n’est pas présentée comme déjà livrée.
+La synchronisation multi-appareils ne transporte jamais les fichiers audio. Les positions de livres audio conflictuelles sont proposées au choix à l’ouverture, sans écraser silencieusement la progression locale.
 
 Au premier morceau sans paroles, l’écran Paroles demande si la recherche automatique doit être activée. Une fois activée, elle transmet à LRCLIB le titre, l’artiste et, s’ils sont connus, l’album et la durée au changement de morceau lorsqu’aucune parole n’est en cache. Ce choix peut être modifié dans Réglages ; la recherche manuelle reste disponible. Les paroles récupérées sont enregistrées dans le stockage privé. Choisir une langue pour la traduction envoie les paroles à MyMemory ; la traduction est ensuite conservée localement.
 

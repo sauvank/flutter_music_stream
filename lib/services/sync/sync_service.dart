@@ -5,6 +5,68 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'sync_crypto.dart';
 
+enum SyncHistoryChangeKind {
+  positionUploaded,
+  positionDownloaded,
+  favorites,
+  plays,
+  playlists,
+  servers,
+  noChanges,
+}
+
+class SyncHistoryChange {
+  const SyncHistoryChange({
+    required this.kind,
+    this.label,
+    this.positionMs,
+    this.count = 1,
+  });
+
+  final SyncHistoryChangeKind kind;
+  final String? label;
+  final int? positionMs;
+  final int count;
+
+  Map<String, Object?> toJson() => {
+        'kind': kind.name,
+        if (label != null) 'label': label,
+        if (positionMs != null) 'positionMs': positionMs,
+        if (count != 1) 'count': count,
+      };
+
+  factory SyncHistoryChange.fromJson(Map<String, Object?> json) =>
+      SyncHistoryChange(
+        kind: SyncHistoryChangeKind.values.byName(json['kind']! as String),
+        label: json['label'] as String?,
+        positionMs: json['positionMs'] as int?,
+        count: json['count'] as int? ?? 1,
+      );
+}
+
+class SyncHistoryEntry {
+  const SyncHistoryEntry({required this.at, required this.changes});
+
+  final DateTime at;
+  final List<SyncHistoryChange> changes;
+
+  Map<String, Object?> toJson() => {
+        'at': at.toIso8601String(),
+        'changes': [for (final change in changes) change.toJson()],
+      };
+
+  factory SyncHistoryEntry.fromJson(Map<String, Object?> json) =>
+      SyncHistoryEntry(
+        at: DateTime.parse(json['at']! as String),
+        changes: [
+          for (final item in json['changes'] as List<Object?>? ?? const [])
+            SyncHistoryChange.fromJson(
+              (item! as Map).cast<String, Object?>(),
+            ),
+        ],
+      );
+}
+
 class SyncSettings {
   const SyncSettings({
     required this.uid,
@@ -44,6 +106,8 @@ class SyncService {
 
   static const _settingsKey = 'sync_settings_v1';
   static const _keyKey = 'sync_key_v1';
+  static const _historyKey = 'sync_history_v1';
+  static const _historyLimit = 30;
 
   final FlutterSecureStorage _secureStorage;
 
@@ -75,9 +139,38 @@ class SyncService {
   Future<void> saveKey(List<int> key) =>
       _secureStorage.write(key: _keyKey, value: base64UrlEncode(key));
 
+  Future<List<SyncHistoryEntry>> loadHistory() async {
+    final value =
+        (await SharedPreferences.getInstance()).getString(_historyKey);
+    if (value == null) return const [];
+    try {
+      return [
+        for (final item in jsonDecode(value) as List<Object?>)
+          SyncHistoryEntry.fromJson((item! as Map).cast<String, Object?>()),
+      ];
+    } catch (_) {
+      await (await SharedPreferences.getInstance()).remove(_historyKey);
+      return const [];
+    }
+  }
+
+  Future<List<SyncHistoryEntry>> addHistory(SyncHistoryEntry entry) async {
+    final entries = [entry, ...await loadHistory()];
+    if (entries.length > _historyLimit) {
+      entries.removeRange(_historyLimit, entries.length);
+    }
+    await (await SharedPreferences.getInstance()).setString(
+      _historyKey,
+      jsonEncode([for (final item in entries) item.toJson()]),
+    );
+    return entries;
+  }
+
   /// Forgets sync on this device; the account's envelope is left untouched.
   Future<void> clear() async {
-    await (await SharedPreferences.getInstance()).remove(_settingsKey);
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.remove(_settingsKey);
+    await preferences.remove(_historyKey);
     await _secureStorage.delete(key: _keyKey);
   }
 }

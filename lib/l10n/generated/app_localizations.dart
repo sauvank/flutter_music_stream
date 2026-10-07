@@ -2054,6 +2054,60 @@ abstract class AppLocalizations {
   /// **'Mot de passe oublié ?'**
   String get syncForgotPassword;
 
+  /// No description provided for @syncHistoryEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune synchronisation enregistrée.'**
+  String get syncHistoryEmpty;
+
+  /// No description provided for @syncHistoryFavorites.
+  ///
+  /// In fr, this message translates to:
+  /// **'Favoris modifiés : {count}'**
+  String syncHistoryFavorites(int count);
+
+  /// No description provided for @syncHistoryNoChanges.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune modification'**
+  String get syncHistoryNoChanges;
+
+  /// No description provided for @syncHistoryPlays.
+  ///
+  /// In fr, this message translates to:
+  /// **'Historique d’écoute modifié : {count}'**
+  String syncHistoryPlays(int count);
+
+  /// No description provided for @syncHistoryPlaylists.
+  ///
+  /// In fr, this message translates to:
+  /// **'Playlists modifiées'**
+  String get syncHistoryPlaylists;
+
+  /// No description provided for @syncHistoryPositionDownloaded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Position reçue : {title} — {position}'**
+  String syncHistoryPositionDownloaded(String title, String position);
+
+  /// No description provided for @syncHistoryPositionUploaded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Position envoyée : {title} — {position}'**
+  String syncHistoryPositionUploaded(String title, String position);
+
+  /// No description provided for @syncHistoryServers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Serveurs modifiés'**
+  String get syncHistoryServers;
+
+  /// No description provided for @syncHistoryTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Synchronisations récentes'**
+  String get syncHistoryTitle;
+
   /// No description provided for @syncLastRun.
   ///
   /// In fr, this message translates to:

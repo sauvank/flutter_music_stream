@@ -1282,6 +1282,41 @@ class AppLocalizationsFr extends AppLocalizations {
   String get syncForgotPassword => 'Mot de passe oublié ?';
 
   @override
+  String get syncHistoryEmpty => 'Aucune synchronisation enregistrée.';
+
+  @override
+  String syncHistoryFavorites(int count) {
+    return 'Favoris modifiés : $count';
+  }
+
+  @override
+  String get syncHistoryNoChanges => 'Aucune modification';
+
+  @override
+  String syncHistoryPlays(int count) {
+    return 'Historique d’écoute modifié : $count';
+  }
+
+  @override
+  String get syncHistoryPlaylists => 'Playlists modifiées';
+
+  @override
+  String syncHistoryPositionDownloaded(String title, String position) {
+    return 'Position reçue : $title — $position';
+  }
+
+  @override
+  String syncHistoryPositionUploaded(String title, String position) {
+    return 'Position envoyée : $title — $position';
+  }
+
+  @override
+  String get syncHistoryServers => 'Serveurs modifiés';
+
+  @override
+  String get syncHistoryTitle => 'Synchronisations récentes';
+
+  @override
   String syncLastRun(String date) {
     return 'Dernière synchronisation : $date';
   }

@@ -711,6 +711,33 @@
   "syncExplanation": "Favoris, écoutes, playlists et serveurs (avec leurs mots de passe) sont chiffrés sur cet appareil avec votre phrase secrète, puis enregistrés sur votre compte MusicStream. Le serveur ne voit jamais leur contenu, et vos fichiers audio ne sont jamais envoyés.",
   "syncFailed": "Synchronisation impossible. Vérifiez votre connexion.",
   "syncForgotPassword": "Mot de passe oublié ?",
+  "syncHistoryEmpty": "Aucune synchronisation enregistrée.",
+  "syncHistoryFavorites": "Favoris modifiés : {count}",
+  "@syncHistoryFavorites": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "syncHistoryNoChanges": "Aucune modification",
+  "syncHistoryPlays": "Historique d’écoute modifié : {count}",
+  "@syncHistoryPlays": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "syncHistoryPlaylists": "Playlists modifiées",
+  "syncHistoryPositionDownloaded": "Position reçue : {title} — {position}",
+  "@syncHistoryPositionDownloaded": {
+    "placeholders": {
+      "title": {"type": "String"},
+      "position": {"type": "String"}
+    }
+  },
+  "syncHistoryPositionUploaded": "Position envoyée : {title} — {position}",
+  "@syncHistoryPositionUploaded": {
+    "placeholders": {
+      "title": {"type": "String"},
+      "position": {"type": "String"}
+    }
+  },
+  "syncHistoryServers": "Serveurs modifiés",
+  "syncHistoryTitle": "Synchronisations récentes",
   "syncLastRun": "Dernière synchronisation : {date}",
   "@syncLastRun": {
     "placeholders": {

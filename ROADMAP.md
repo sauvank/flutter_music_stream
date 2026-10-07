@@ -31,10 +31,11 @@
 - [x] Permission audio demandée avant l’import de dossier et nettoyage des copies orphelines au démarrage.
 - [x] Médiathèque de l’appareil comme source distincte, sans copie : 720 morceaux indexés en 17 s sur Galaxy S24.
 - [x] Widget d’accueil Android (morceau, pochette, précédent/lecture/suivant), ajoutable depuis Réglages.
-- [x] Synchronisation chiffrée de bout en bout (favoris, écoutes, playlists) via un fichier sur un serveur WebDAV de l’utilisateur.
+- [x] Synchronisation chiffrée de bout en bout via le compte MusicStream/Firestore (favoris, écoutes, playlists, serveurs et positions de livres audio).
 - [x] Visualiseur en direct sur la pochette et barres animées dans le widget d’accueil.
 - [x] Bouton de diffusion ouvrant le sélecteur de sortie audio Android (Bluetooth, Alexa appairée).
 - [x] Passe d’ergonomie : annulation du retrait en playlist, aléatoire depuis la vignette, minuterie de sommeil, reprise de la file au lancement, retours haptiques, gestes et animation de l’écran Lecture, teinte issue de la pochette, recherche sans accents avec historique et playlists.
+- [x] Synchronisation PC → téléphone fiabilisée pour les positions de livres audio et historique local détaillé des synchronisations.
 
 ## En cours
 

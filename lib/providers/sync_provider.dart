@@ -57,6 +57,7 @@ class SyncProvider extends ChangeNotifier {
   StreamSubscription<SyncUser?>? _accountChanges;
 
   SyncSettings? settings;
+  List<SyncHistoryEntry> history = const [];
   bool busy = false;
 
   /// False when this build has no sync backend configured.
@@ -68,11 +69,13 @@ class SyncProvider extends ChangeNotifier {
 
   Future<void> load() async {
     settings = await _service.loadSettings();
+    history = await _service.loadHistory();
     _accountChanges = _account.changes.listen((user) async {
       // Another account, or none: this device's key belongs to the old one.
       if (settings != null && settings!.uid != user?.uid) {
         await _service.clear();
         settings = null;
+        history = const [];
       }
       notifyListeners();
     });
@@ -93,6 +96,7 @@ class SyncProvider extends ChangeNotifier {
   Future<void> signOut() => _run(() async {
         await _service.clear();
         settings = null;
+        history = const [];
         await _account.signOut();
       });
 
@@ -125,7 +129,9 @@ class SyncProvider extends ChangeNotifier {
   /// is opened. Returns null when sync is off, offline, or nothing newer and
   /// meaningfully different exists, so playback is never blocked.
   Future<PositionProposal?> positionProposal(MusicTrack track) async {
-    if (!enabled || !track.isAudiobook || busy) return null;
+    // A background sync may be running just as the user opens the book. The
+    // remote read is independent and must not make the resume prompt vanish.
+    if (!enabled || !track.isAudiobook) return null;
     try {
       final key = await _service.loadKey();
       if (key == null) return null;
@@ -157,6 +163,7 @@ class SyncProvider extends ChangeNotifier {
   Timer? _autoTimer;
   String? _syncedSignature;
   bool _autoStarted = false;
+  bool _autoSyncPending = false;
 
   /// Starts automatic sync: once now, then whenever favorites, playlists,
   /// servers or audiobook positions change, and when the app is left.
@@ -189,9 +196,16 @@ class SyncProvider extends ChangeNotifier {
   /// Quiet sync: leaving the app, pausing or a local change is the moment
   /// another device will want to continue from. Failures retry next time.
   Future<void> autoSync({Duration delay = Duration.zero}) async {
-    if (!enabled || busy) return;
+    if (!enabled) return;
     // Let the player persist its latest position first.
     if (delay > Duration.zero) await Future<void>.delayed(delay);
+    if (!enabled) return;
+    // Never lose a pause/background publication merely because another sync
+    // is finishing. _run starts this deferred pass once it becomes idle.
+    if (busy) {
+      _autoSyncPending = true;
+      return;
+    }
     try {
       await syncNow();
     } catch (_) {
@@ -216,6 +230,7 @@ class SyncProvider extends ChangeNotifier {
   Future<void> disable() async {
     await _service.clear();
     settings = null;
+    history = const [];
     notifyListeners();
   }
 
@@ -243,11 +258,14 @@ class SyncProvider extends ChangeNotifier {
           await _crypto.open(remote.envelope, key: key),
         );
       }
-      var merged = SyncPayload.merge(remotePayload, _library.syncSnapshot());
+      var localPayload = _library.syncSnapshot();
       final servers = _servers;
       if (servers != null) {
-        merged = SyncPayload.merge(merged, await servers.syncSnapshot());
+        localPayload =
+            SyncPayload.merge(localPayload, await servers.syncSnapshot());
       }
+      final changes = _describeChanges(remotePayload, localPayload);
+      final merged = SyncPayload.merge(remotePayload, localPayload);
       final envelope = await _crypto.seal(merged.toJson(), key: key, kdf: kdf);
       try {
         await _remote.upload(uid, envelope, replacing: remote);
@@ -262,9 +280,84 @@ class SyncProvider extends ChangeNotifier {
         lastSyncAt: DateTime.now().toUtc(),
       );
       await _service.saveSettings(settings!);
+      history = await _service.addHistory(SyncHistoryEntry(
+        at: settings!.lastSyncAt!,
+        changes: changes.isEmpty
+            ? const [
+                SyncHistoryChange(kind: SyncHistoryChangeKind.noChanges),
+              ]
+            : changes,
+      ));
       _syncedSignature = _signature();
       return;
     }
+  }
+
+  List<SyncHistoryChange> _describeChanges(
+    SyncPayload remote,
+    SyncPayload local,
+  ) {
+    final changes = <SyncHistoryChange>[];
+    var favorites = 0;
+    var plays = 0;
+    for (final id in {...remote.tracks.keys, ...local.tracks.keys}) {
+      final remoteTrack = remote.tracks[id] ?? const SyncTrackState();
+      final localTrack = local.tracks[id] ?? const SyncTrackState();
+      if (remoteTrack.favorite != localTrack.favorite ||
+          remoteTrack.favoriteAt != localTrack.favoriteAt) {
+        favorites++;
+      }
+      if (remoteTrack.playCount != localTrack.playCount ||
+          remoteTrack.lastPlayedAt != localTrack.lastPlayedAt) {
+        plays++;
+      }
+      final remoteAt = remoteTrack.positionAt;
+      final localAt = localTrack.positionAt;
+      if (remoteAt == localAt) continue;
+      final localIsNewer =
+          localAt != null && (remoteAt == null || localAt.isAfter(remoteAt));
+      final source = localIsNewer ? localTrack : remoteTrack;
+      if (source.positionMs == null) continue;
+      changes.add(SyncHistoryChange(
+        kind: localIsNewer
+            ? SyncHistoryChangeKind.positionUploaded
+            : SyncHistoryChangeKind.positionDownloaded,
+        label: _library.trackById(id)?.title ?? id,
+        positionMs: source.positionMs,
+      ));
+    }
+    if (favorites > 0) {
+      changes.add(SyncHistoryChange(
+        kind: SyncHistoryChangeKind.favorites,
+        count: favorites,
+      ));
+    }
+    if (plays > 0) {
+      changes.add(SyncHistoryChange(
+        kind: SyncHistoryChangeKind.plays,
+        count: plays,
+      ));
+    }
+    if (jsonEncode([for (final item in remote.playlists) item.toJson()]) !=
+            jsonEncode([for (final item in local.playlists) item.toJson()]) ||
+        jsonEncode(remote.deletedPlaylists) !=
+            jsonEncode(local.deletedPlaylists)) {
+      changes.add(const SyncHistoryChange(
+        kind: SyncHistoryChangeKind.playlists,
+      ));
+    }
+    if (jsonEncode([
+              for (final item in remote.servers.values) item.toJson(),
+            ]) !=
+            jsonEncode([
+              for (final item in local.servers.values) item.toJson(),
+            ]) ||
+        jsonEncode(remote.deletedServers) != jsonEncode(local.deletedServers)) {
+      changes.add(const SyncHistoryChange(
+        kind: SyncHistoryChangeKind.servers,
+      ));
+    }
+    return changes;
   }
 
   /// PBKDF2 takes seconds on a phone: keep it off the UI isolate.
@@ -284,6 +377,10 @@ class SyncProvider extends ChangeNotifier {
     } finally {
       busy = false;
       notifyListeners();
+      if (_autoSyncPending) {
+        _autoSyncPending = false;
+        unawaited(autoSync());
+      }
     }
   }
 

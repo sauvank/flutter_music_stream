@@ -1251,6 +1251,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncForgotPassword => 'Forgot password?';
 
   @override
+  String get syncHistoryEmpty => 'No sync recorded yet.';
+
+  @override
+  String syncHistoryFavorites(int count) {
+    return 'Favorites updated: $count';
+  }
+
+  @override
+  String get syncHistoryNoChanges => 'No change';
+
+  @override
+  String syncHistoryPlays(int count) {
+    return 'Listening history updated: $count';
+  }
+
+  @override
+  String get syncHistoryPlaylists => 'Playlists updated';
+
+  @override
+  String syncHistoryPositionDownloaded(String title, String position) {
+    return 'Position received: $title — $position';
+  }
+
+  @override
+  String syncHistoryPositionUploaded(String title, String position) {
+    return 'Position sent: $title — $position';
+  }
+
+  @override
+  String get syncHistoryServers => 'Servers updated';
+
+  @override
+  String get syncHistoryTitle => 'Recent syncs';
+
+  @override
   String syncLastRun(String date) {
     return 'Last synced: $date';
   }

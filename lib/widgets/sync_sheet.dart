@@ -11,6 +11,7 @@ import '../services/sync/device_pairing.dart';
 import '../services/sync/sync_account.dart';
 import '../services/sync/sync_crypto.dart';
 import '../services/sync/sync_remote.dart';
+import '../services/sync/sync_service.dart';
 
 Future<void> showSyncSheet(BuildContext context) => showModalBottomSheet<void>(
       context: context,
@@ -28,6 +29,55 @@ String syncStatusText(BuildContext context, SyncProvider sync) {
     '${material.formatShortDate(last)} '
     '${material.formatTimeOfDay(TimeOfDay.fromDateTime(last))}',
   );
+}
+
+class _SyncHistoryTile extends StatelessWidget {
+  const _SyncHistoryTile({required this.entry});
+
+  final SyncHistoryEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final material = MaterialLocalizations.of(context);
+    final local = entry.at.toLocal();
+    final date = '${material.formatShortDate(local)} · '
+        '${material.formatTimeOfDay(TimeOfDay.fromDateTime(local))}';
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.history_rounded),
+      title: Text(date),
+      subtitle: Text(entry.changes.map((change) {
+        final position = _clock(change.positionMs ?? 0);
+        return switch (change.kind) {
+          SyncHistoryChangeKind.positionUploaded =>
+            context.l10n.syncHistoryPositionUploaded(
+              change.label ?? '',
+              position,
+            ),
+          SyncHistoryChangeKind.positionDownloaded =>
+            context.l10n.syncHistoryPositionDownloaded(
+              change.label ?? '',
+              position,
+            ),
+          SyncHistoryChangeKind.favorites =>
+            context.l10n.syncHistoryFavorites(change.count),
+          SyncHistoryChangeKind.plays =>
+            context.l10n.syncHistoryPlays(change.count),
+          SyncHistoryChangeKind.playlists => context.l10n.syncHistoryPlaylists,
+          SyncHistoryChangeKind.servers => context.l10n.syncHistoryServers,
+          SyncHistoryChangeKind.noChanges => context.l10n.syncHistoryNoChanges,
+        };
+      }).join('\n')),
+    );
+  }
+
+  static String _clock(int milliseconds) {
+    final value = Duration(milliseconds: milliseconds);
+    final seconds = value.inSeconds.remainder(60).toString().padLeft(2, '0');
+    final minutes = value.inMinutes.remainder(60).toString().padLeft(2, '0');
+    return '${value.inHours}:$minutes:$seconds';
+  }
 }
 
 class _SyncSheet extends StatefulWidget {
@@ -137,6 +187,19 @@ class _SyncSheetState extends State<_SyncSheet> {
             : const Icon(Icons.sync_rounded),
         label: Text(l10n.syncNow),
       ),
+      const SizedBox(height: 18),
+      Text(
+        l10n.syncHistoryTitle,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+      ),
+      const SizedBox(height: 8),
+      if (sync.history.isEmpty)
+        Text(l10n.syncHistoryEmpty)
+      else
+        for (final entry in sync.history.take(10))
+          _SyncHistoryTile(entry: entry),
       TextButton(
         onPressed: sync.busy ? null : sync.disable,
         child: Text(l10n.syncDisable),
@@ -380,9 +443,7 @@ class _SyncSheetState extends State<_SyncSheet> {
         SyncAuthError.weakPassword => l10n.syncAuthWeakPassword,
         SyncAuthError.tooManyRequests => l10n.syncAuthTooManyRequests,
         SyncAuthError.network => l10n.syncAuthNetwork,
-        SyncAuthError.cancelled ||
-        SyncAuthError.unknown =>
-          l10n.syncAuthFailed,
+        SyncAuthError.cancelled || SyncAuthError.unknown => l10n.syncAuthFailed,
       };
 
   /// A short cause without data or credentials: backend code or type.
