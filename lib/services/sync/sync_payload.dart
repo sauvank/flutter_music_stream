@@ -1,5 +1,79 @@
+import 'dart:convert';
+import 'dart:math';
+
 import '../../models/music_playlist.dart';
 import '../../models/server_profile.dart';
+
+enum SyncHistoryChangeKind {
+  positionUploaded,
+  positionDownloaded,
+  favorites,
+  plays,
+  playlists,
+  servers,
+  noChanges,
+}
+
+class SyncHistoryChange {
+  const SyncHistoryChange({
+    required this.kind,
+    this.label,
+    this.positionMs,
+    this.count = 1,
+  });
+
+  final SyncHistoryChangeKind kind;
+  final String? label;
+  final int? positionMs;
+  final int count;
+
+  Map<String, Object?> toJson() => {
+        'kind': kind.name,
+        if (label != null) 'label': label,
+        if (positionMs != null) 'positionMs': positionMs,
+        if (count != 1) 'count': count,
+      };
+
+  factory SyncHistoryChange.fromJson(Map<String, Object?> json) =>
+      SyncHistoryChange(
+        kind: SyncHistoryChangeKind.values.byName(json['kind']! as String),
+        label: json['label'] as String?,
+        positionMs: json['positionMs'] as int?,
+        count: json['count'] as int? ?? 1,
+      );
+}
+
+class SyncHistoryEntry {
+  const SyncHistoryEntry({
+    required this.at,
+    required this.changes,
+    this.id = '',
+    this.device = '',
+  });
+
+  final String id;
+  final String device;
+  final DateTime at;
+  final List<SyncHistoryChange> changes;
+
+  Map<String, Object?> toJson() => {
+        if (id.isNotEmpty) 'id': id,
+        if (device.isNotEmpty) 'device': device,
+        'at': at.toIso8601String(),
+        'changes': [for (final change in changes) change.toJson()],
+      };
+
+  factory SyncHistoryEntry.fromJson(Map<String, Object?> json) =>
+      SyncHistoryEntry(
+        id: json['id'] as String? ?? '',
+        device: json['device'] as String? ?? '',
+        at: DateTime.parse(json['at']! as String),
+        changes: [
+          for (final item in json['changes'] as List<Object?>? ?? const [])
+            SyncHistoryChange.fromJson((item! as Map).cast<String, Object?>()),
+        ],
+      );
+}
 
 /// Listening state of one track, keyed by its content hash so the same
 /// file matches across devices.
@@ -11,6 +85,7 @@ class SyncTrackState {
     this.lastPlayedAt,
     this.positionMs,
     this.positionAt,
+    this.playCountsByDevice = const {},
   });
 
   final bool favorite;
@@ -24,11 +99,14 @@ class SyncTrackState {
   /// recent save wins across devices.
   final int? positionMs;
   final DateTime? positionAt;
+  final Map<String, int> playCountsByDevice;
 
   Map<String, Object?> toJson() => {
         'favorite': favorite,
         if (favoriteAt != null) 'favoriteAt': favoriteAt!.toIso8601String(),
         'playCount': playCount,
+        if (playCountsByDevice.isNotEmpty)
+          'playCountsByDevice': playCountsByDevice,
         if (lastPlayedAt != null)
           'lastPlayedAt': lastPlayedAt!.toIso8601String(),
         if (positionMs != null && positionAt != null) ...{
@@ -44,9 +122,14 @@ class SyncTrackState {
         lastPlayedAt: _date(json['lastPlayedAt']),
         positionMs: json['positionMs'] as int?,
         positionAt: _date(json['positionAt']),
+        playCountsByDevice: {
+          for (final entry
+              in ((json['playCountsByDevice'] as Map?) ?? const {}).entries)
+            entry.key as String: (entry.value as num).toInt(),
+        },
       );
 
-  /// Latest favorite choice wins; listening counters keep the maximum.
+  /// Latest favorite choice wins; per-device listening counters merge by max.
   static SyncTrackState merge(SyncTrackState a, SyncTrackState b) {
     final aAt = a.favoriteAt ?? DateTime.utc(0);
     final bAt = b.favoriteAt ?? DateTime.utc(0);
@@ -55,12 +138,30 @@ class SyncTrackState {
             .isAfter(a.positionAt ?? DateTime.utc(0))
         ? b
         : a;
+    final playCounts = <String, int>{...a.playCountsByDevice};
+    for (final entry in b.playCountsByDevice.entries) {
+      playCounts[entry.key] = max(playCounts[entry.key] ?? 0, entry.value);
+    }
+    final playCount = playCounts.isEmpty
+        ? max(a.playCount, b.playCount)
+        : max(
+            max(a.playCount, b.playCount),
+            playCounts.values.fold<int>(0, (sum, value) => sum + value),
+          );
+    final samePositionTime = a.positionAt != null &&
+        b.positionAt != null &&
+        a.positionAt!.isAtSameMomentAs(b.positionAt!);
     return SyncTrackState(
-      positionMs: positionSource.positionMs,
+      positionMs: samePositionTime
+          ? max(a.positionMs ?? 0, b.positionMs ?? 0)
+          : positionSource.positionMs,
       positionAt: positionSource.positionAt,
-      favorite: favoriteSource.favorite,
+      favorite: aAt.isAtSameMomentAs(bAt)
+          ? (a.favorite && b.favorite)
+          : favoriteSource.favorite,
       favoriteAt: favoriteSource.favoriteAt,
-      playCount: a.playCount > b.playCount ? a.playCount : b.playCount,
+      playCount: playCount,
+      playCountsByDevice: playCounts,
       lastPlayedAt: _latest(a.lastPlayedAt, b.lastPlayedAt),
     );
   }
@@ -141,6 +242,7 @@ class SyncPayload {
     this.deletedPlaylists = const {},
     this.servers = const {},
     this.deletedServers = const {},
+    this.history = const [],
   });
 
   final Map<String, SyncTrackState> tracks;
@@ -152,6 +254,7 @@ class SyncPayload {
   /// Servers by [SyncServer.key]; deletions by the same key.
   final Map<String, SyncServer> servers;
   final Map<String, DateTime> deletedServers;
+  final List<SyncHistoryEntry> history;
 
   Map<String, Object?> toJson() => {
         'tracks': {
@@ -167,6 +270,7 @@ class SyncPayload {
           for (final entry in deletedServers.entries)
             entry.key: entry.value.toIso8601String(),
         },
+        'history': [for (final entry in history) entry.toJson()],
       };
 
   factory SyncPayload.fromJson(Map<String, Object?> json) => SyncPayload(
@@ -197,6 +301,10 @@ class SyncPayload {
               in ((json['deletedServers'] as Map?) ?? const {}).entries)
             entry.key as String: DateTime.parse(entry.value as String),
         },
+        history: [
+          for (final item in (json['history'] as List?) ?? const [])
+            SyncHistoryEntry.fromJson((item as Map).cast<String, Object?>()),
+        ],
       );
 
   static SyncPayload merge(SyncPayload a, SyncPayload b) {
@@ -216,7 +324,13 @@ class SyncPayload {
     };
     for (final playlist in b.playlists) {
       final existing = playlists[playlist.id];
-      if (existing == null || playlist.updatedAt.isAfter(existing.updatedAt)) {
+      if (existing == null ||
+          playlist.updatedAt.isAfter(existing.updatedAt) ||
+          (playlist.updatedAt.isAtSameMomentAs(existing.updatedAt) &&
+              jsonEncode(playlist.toJson()).compareTo(
+                    jsonEncode(existing.toJson()),
+                  ) >
+                  0)) {
         playlists[playlist.id] = playlist;
       }
     }
@@ -226,7 +340,10 @@ class SyncPayload {
       return deletedAt != null && !playlist.updatedAt.isAfter(deletedAt);
     });
     final ordered = playlists.values.toList()
-      ..sort((x, y) => x.createdAt.compareTo(y.createdAt));
+      ..sort((x, y) {
+        final byDate = x.createdAt.compareTo(y.createdAt);
+        return byDate != 0 ? byDate : x.id.compareTo(y.id);
+      });
     final deletedServers = <String, DateTime>{...a.deletedServers};
     for (final entry in b.deletedServers.entries) {
       deletedServers[entry.key] =
@@ -239,7 +356,11 @@ class SyncPayload {
         servers[entry.key] = entry.value;
         continue;
       }
-      final winner = entry.value.addedAt.isAfter(existing.addedAt)
+      final winner = entry.value.addedAt.isAfter(existing.addedAt) ||
+              (entry.value.addedAt.isAtSameMomentAs(existing.addedAt) &&
+                  jsonEncode(entry.value.toJson())
+                          .compareTo(jsonEncode(existing.toJson())) >
+                      0)
           ? entry.value
           : existing;
       final loser = identical(winner, existing) ? entry.value : existing;
@@ -258,7 +379,36 @@ class SyncPayload {
       deletedPlaylists: deleted,
       servers: servers,
       deletedServers: deletedServers,
+      history: _mergeHistory(a.history, b.history),
     );
+  }
+
+  SyncPayload withHistory(List<SyncHistoryEntry> value) => SyncPayload(
+        tracks: tracks,
+        playlists: playlists,
+        deletedPlaylists: deletedPlaylists,
+        servers: servers,
+        deletedServers: deletedServers,
+        history: value,
+      );
+
+  static List<SyncHistoryEntry> _mergeHistory(
+    List<SyncHistoryEntry> a,
+    List<SyncHistoryEntry> b,
+  ) {
+    final entries = <String, SyncHistoryEntry>{};
+    for (final entry in [...a, ...b]) {
+      final id = entry.id.isEmpty
+          ? '${entry.at.toUtc().toIso8601String()}|${entry.device}|${entry.changes.map((c) => c.kind.name).join(',')}'
+          : entry.id;
+      entries[id] = entry;
+    }
+    final sorted = entries.values.toList()
+      ..sort((left, right) {
+        final byDate = right.at.compareTo(left.at);
+        return byDate != 0 ? byDate : left.id.compareTo(right.id);
+      });
+    return List.unmodifiable(sorted.take(30));
   }
 }
 

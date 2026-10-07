@@ -4,68 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'sync_crypto.dart';
-
-enum SyncHistoryChangeKind {
-  positionUploaded,
-  positionDownloaded,
-  favorites,
-  plays,
-  playlists,
-  servers,
-  noChanges,
-}
-
-class SyncHistoryChange {
-  const SyncHistoryChange({
-    required this.kind,
-    this.label,
-    this.positionMs,
-    this.count = 1,
-  });
-
-  final SyncHistoryChangeKind kind;
-  final String? label;
-  final int? positionMs;
-  final int count;
-
-  Map<String, Object?> toJson() => {
-        'kind': kind.name,
-        if (label != null) 'label': label,
-        if (positionMs != null) 'positionMs': positionMs,
-        if (count != 1) 'count': count,
-      };
-
-  factory SyncHistoryChange.fromJson(Map<String, Object?> json) =>
-      SyncHistoryChange(
-        kind: SyncHistoryChangeKind.values.byName(json['kind']! as String),
-        label: json['label'] as String?,
-        positionMs: json['positionMs'] as int?,
-        count: json['count'] as int? ?? 1,
-      );
-}
-
-class SyncHistoryEntry {
-  const SyncHistoryEntry({required this.at, required this.changes});
-
-  final DateTime at;
-  final List<SyncHistoryChange> changes;
-
-  Map<String, Object?> toJson() => {
-        'at': at.toIso8601String(),
-        'changes': [for (final change in changes) change.toJson()],
-      };
-
-  factory SyncHistoryEntry.fromJson(Map<String, Object?> json) =>
-      SyncHistoryEntry(
-        at: DateTime.parse(json['at']! as String),
-        changes: [
-          for (final item in json['changes'] as List<Object?>? ?? const [])
-            SyncHistoryChange.fromJson(
-              (item! as Map).cast<String, Object?>(),
-            ),
-        ],
-      );
-}
+import 'sync_payload.dart';
 
 class SyncSettings {
   const SyncSettings({
@@ -164,6 +103,16 @@ class SyncService {
       jsonEncode([for (final item in entries) item.toJson()]),
     );
     return entries;
+  }
+
+  Future<void> saveHistory(List<SyncHistoryEntry> entries) async {
+    final values = entries.length > _historyLimit
+        ? entries.take(_historyLimit).toList()
+        : entries;
+    await (await SharedPreferences.getInstance()).setString(
+      _historyKey,
+      jsonEncode([for (final item in values) item.toJson()]),
+    );
   }
 
   /// Forgets sync on this device; the account's envelope is left untouched.

@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- Refonte de la synchronisation : détection du compte chiffré avant saisie (une seule phrase pour déverrouiller, confirmation seulement à la création), aucune réécriture distante si la fusion n’a rien changé, trois nouvelles tentatives en cas de conflit, reprise automatique avec délai croissant hors ligne, historique des changements inclus et chiffré dans l’enveloppe partagée, compteurs d’écoutes par appareil et horloges logiques observant les valeurs distantes. L’association QR peut maintenant transmettre la clé au PC dans une enveloppe AES-GCM protégée par un secret aléatoire du QR; Firestore ne stocke que cette enveloppe chiffrée. Les règles Firestore correspondantes ont été compilées et déployées.
+
 - Activation de la synchronisation : un appareil qui rejoint un compte contenant déjà une enveloppe chiffrée ne demande désormais la phrase secrète qu'une seule fois. La confirmation reste affichée uniquement lors de la création de la première enveloppe sur un compte vide.
 
 - Publication Google Play : passage du `minSdk` de 23 à 24 dans l'application et le décodeur Android, exigé par la protection automatique Play. Le workflow utilise aussi l'entrée `tracks` actuelle de l'action d'envoi au lieu de l'ancien `track` déprécié.

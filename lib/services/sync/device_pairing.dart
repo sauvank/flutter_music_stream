@@ -1,11 +1,20 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'sync_crypto.dart';
+
 enum PairingError { notGoogleAccount, invalidCode, expired, failed }
+
+class PairingRequest {
+  const PairingRequest(this.id, this.secret);
+  final String id;
+  final String secret;
+}
 
 class PairingException implements Exception {
   const PairingException(this.error);
@@ -17,8 +26,9 @@ class PairingException implements Exception {
 
 /// Signs a computer in with the Google account of a phone, through a short-lived
 /// Firestore document. The computer shows a QR code holding a random 128-bit
-/// id; the signed-in phone scans it and drops a Google ID token (valid about an
-/// hour) in `pairings/{id}`; the computer reads it, signs in and deletes it.
+/// id plus an AES key; the signed-in phone scans it and drops a short-lived
+/// Google ID token and optionally an encrypted sync key in `pairings/{id}`.
+/// The computer reads it, signs in, unwraps the key locally and deletes it.
 class DevicePairing {
   DevicePairing({
     FirebaseFirestore? firestore,
@@ -47,20 +57,36 @@ class DevicePairing {
   }
 
   static String uriFor(String id) => '$uriPrefix$id';
+  static String uriForRequest(PairingRequest request) =>
+      '$uriPrefix${request.id}/${request.secret}';
 
-  /// The session id inside a scanned QR payload, or null if it is not ours.
-  static String? idFromUri(String? value) {
+  static PairingRequest newRequest() => PairingRequest(
+        newSessionId(),
+        base64UrlEncode(SyncCrypto.newPairingSecret()),
+      );
+
+  /// The session id and one-time encryption secret from the QR code.
+  static PairingRequest? requestFromUri(String? value) {
     if (value == null || !value.startsWith(uriPrefix)) return null;
-    final id = value.substring(uriPrefix.length);
-    return RegExp(r'^[0-9a-f]{32}$').hasMatch(id) ? id : null;
+    final parts = value.substring(uriPrefix.length).split('/');
+    if (parts.length != 2 || !RegExp(r'^[0-9a-f]{32}$').hasMatch(parts[0])) {
+      return null;
+    }
+    try {
+      final secret = base64Url.decode(base64Url.normalize(parts[1]));
+      if (secret.length != 32) return null;
+      return PairingRequest(parts[0], parts[1]);
+    } on FormatException {
+      return null;
+    }
   }
 
-  /// Computer side: waits for a phone to approve session [id], then signs in.
-  Future<void> waitForApproval(
-    String id, {
+  /// Computer side: waits for a phone to approve [request], then signs in.
+  Future<Map<String, Object?>?> waitForApproval(
+    PairingRequest request, {
     Duration timeout = const Duration(minutes: 5),
   }) async {
-    final document = _document(id);
+    final document = _document(request.id);
     try {
       final snapshot = await document
           .snapshots()
@@ -71,12 +97,20 @@ class DevicePairing {
       await _auth.signInWithCredential(GoogleAuthProvider.credential(
         idToken: token,
       ));
+      final wrapped = snapshot.data()?['wrappedKey'];
+      if (wrapped is Map) {
+        return await SyncCrypto().unwrapFromPairing(
+          wrapped.cast<String, Object?>(),
+          base64Url.decode(base64Url.normalize(request.secret)),
+        );
+      }
+      return null;
     } on TimeoutException {
       throw const PairingException(PairingError.expired);
     } on FirebaseException {
       throw const PairingException(PairingError.failed);
     } finally {
-      await cancel(id);
+      await cancel(request.id);
     }
   }
 
@@ -95,8 +129,11 @@ class DevicePairing {
           .any((info) => info.providerId == 'google.com') ??
       false;
 
-  /// Phone side: hands this phone's Google sign-in to the computer showing [id].
-  Future<void> approve(String id) async {
+  /// Phone side: hands this phone's Google sign-in and sync key to the QR PC.
+  Future<void> approve(
+    PairingRequest request, {
+    Map<String, Object?>? keyPackage,
+  }) async {
     if (!canApprove) {
       throw const PairingException(PairingError.notGoogleAccount);
     }
@@ -105,11 +142,18 @@ class DevicePairing {
       final account = await google.signInSilently() ?? await google.signIn();
       final token = (await account?.authentication)?.idToken;
       if (token == null) throw const PairingException(PairingError.failed);
-      await _document(id).set({
+      final wrappedKey = keyPackage == null
+          ? null
+          : await SyncCrypto().wrapForPairing(
+              keyPackage,
+              base64Url.decode(base64Url.normalize(request.secret)),
+            );
+      await _document(request.id).set({
         'idToken': token,
         'expiresAt': Timestamp.fromDate(
           DateTime.now().add(const Duration(minutes: 10)),
         ),
+        if (wrappedKey != null) 'wrappedKey': wrappedKey,
       });
     } on FirebaseException {
       throw const PairingException(PairingError.failed);

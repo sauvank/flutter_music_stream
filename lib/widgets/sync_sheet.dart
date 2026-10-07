@@ -11,7 +11,7 @@ import '../services/sync/device_pairing.dart';
 import '../services/sync/sync_account.dart';
 import '../services/sync/sync_crypto.dart';
 import '../services/sync/sync_remote.dart';
-import '../services/sync/sync_service.dart';
+import '../services/sync/sync_payload.dart';
 
 Future<void> showSyncSheet(BuildContext context) => showModalBottomSheet<void>(
       context: context,
@@ -46,7 +46,7 @@ class _SyncHistoryTile extends StatelessWidget {
       dense: true,
       contentPadding: EdgeInsets.zero,
       leading: const Icon(Icons.history_rounded),
-      title: Text(date),
+      title: Text(entry.device.isEmpty ? date : '$date · ${entry.device}'),
       subtitle: Text(entry.changes.map((change) {
         final position = _clock(change.positionMs ?? 0);
         return switch (change.kind) {

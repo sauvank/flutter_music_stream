@@ -38,6 +38,7 @@
 - [x] Passe d’ergonomie : annulation du retrait en playlist, aléatoire depuis la vignette, minuterie de sommeil, reprise de la file au lancement, retours haptiques, gestes et animation de l’écran Lecture, teinte issue de la pochette, recherche sans accents avec historique et playlists.
 - [x] Synchronisation PC → téléphone fiabilisée pour les positions de livres audio et historique local détaillé des synchronisations.
 - [x] Activation adaptée au compte : confirmation lors de la création de la phrase secrète, saisie unique pour déchiffrer un compte existant.
+- [x] Synchronisation optimisée : pas d’écriture distante à vide, relance progressive hors ligne, historique partagé chiffré, compteurs d’écoutes par appareil, horloges logiques et déverrouillage PC par QR protégé.
 
 ## En cours
 

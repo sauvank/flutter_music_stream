@@ -21,6 +21,7 @@ class MusicPlaylist {
     String? name,
     String? description,
     List<String>? trackIds,
+    DateTime? updatedAt,
   }) =>
       MusicPlaylist(
         id: id,
@@ -28,7 +29,7 @@ class MusicPlaylist {
         description: description ?? this.description,
         trackIds: trackIds ?? this.trackIds,
         createdAt: createdAt,
-        updatedAt: DateTime.now().toUtc(),
+        updatedAt: updatedAt ?? DateTime.now().toUtc(),
       );
 
   Map<String, Object?> toJson() => {

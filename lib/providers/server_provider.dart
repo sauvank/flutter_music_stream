@@ -108,7 +108,7 @@ class ServerProvider extends ChangeNotifier {
       final key = _keyOf(profile);
       final addedAt = _journal.added.putIfAbsent(key, () {
         journalChanged = true;
-        return DateTime.now().toUtc();
+        return _journal.nextTimestamp();
       });
       servers[key] = SyncServer(
         id: profile.id,
@@ -147,6 +147,7 @@ class ServerProvider extends ChangeNotifier {
       changed = true;
     }
     for (final server in merged.servers.values) {
+      _journal.observe(server.addedAt);
       final local = profiles
           .where((profile) => _keyOf(profile) == server.key)
           .firstOrNull;
@@ -163,6 +164,9 @@ class ServerProvider extends ChangeNotifier {
     _journal.deleted
       ..clear()
       ..addAll(merged.deletedServers);
+    for (final at in merged.deletedServers.values) {
+      _journal.observe(at);
+    }
     await _journal.save();
     if (changed) {
       await _profilesService.save(profiles);
@@ -172,7 +176,7 @@ class ServerProvider extends ChangeNotifier {
 
   Future<void> addProfile(ServerProfile profile, String password) async {
     profiles.add(profile);
-    _journal.added[_keyOf(profile)] = DateTime.now().toUtc();
+    _journal.added[_keyOf(profile)] = _journal.nextTimestamp();
     await _journal.save();
     await _profilesService.save(profiles);
     await _profilesService.writePassword(profile.id, password);
@@ -234,7 +238,7 @@ class ServerProvider extends ChangeNotifier {
         username: username,
       );
       profiles.add(profile);
-      _journal.added[_keyOf(profile)] = DateTime.now().toUtc();
+      _journal.added[_keyOf(profile)] = _journal.nextTimestamp();
       await _profilesService.writePassword(profile.id, importedPassword);
       imported++;
     }
@@ -284,7 +288,7 @@ class ServerProvider extends ChangeNotifier {
     profiles.removeWhere((item) => item.id == profile.id);
     if (selected?.id == profile.id) disconnect();
     _journal.added.remove(_keyOf(profile));
-    _journal.deleted[_keyOf(profile)] = DateTime.now().toUtc();
+    _journal.deleted[_keyOf(profile)] = _journal.nextTimestamp();
     await _journal.save();
     await _profilesService.save(profiles);
     await _profilesService.deletePassword(profile.id);

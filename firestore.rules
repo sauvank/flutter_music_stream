@@ -14,19 +14,20 @@ service cloud.firestore {
         // An encrypted library stays far below Firestore's 1 MiB limit.
         && request.resource.size() < 900 * 1024;
     }
-    // A computer waiting for a phone to approve its sign-in. The 128-bit id is
-    // only in the QR code, so a document can be read (never listed) by its
-    // holder; it carries a short-lived Google ID token and is deleted after use
-    // or on cancel; the token itself expires after an hour anyway.
+    // A computer waiting for a phone to approve sign-in and optionally deliver
+    // its sync key. The QR carries a random document id and a separate one-time
+    // AES key; Firestore receives only the wrapped sync key.
     match /pairings/{id} {
       allow get: if id.size() >= 32;
       allow create: if request.auth != null
         && id.size() >= 32
-        && request.resource.data.keys().hasOnly(['idToken', 'expiresAt'])
+        && request.resource.data.keys().hasOnly(['idToken', 'expiresAt', 'wrappedKey'])
         && request.resource.data.idToken is string
         && request.resource.data.idToken.size() < 4096
         && request.resource.data.expiresAt is timestamp
-        && request.resource.data.expiresAt < request.time + duration.value(15, 'm');
+        && request.resource.data.expiresAt < request.time + duration.value(15, 'm')
+        && (!('wrappedKey' in request.resource.data)
+          || request.resource.data.wrappedKey is map);
       allow delete: if id.size() >= 32;
     }
     match /{document=**} {

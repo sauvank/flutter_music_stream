@@ -821,7 +821,7 @@ abstract class AppLocalizations {
   /// No description provided for @pairQrHint.
   ///
   /// In fr, this message translates to:
-  /// **'Sur votre téléphone, ouvrez Réglages → Synchronisation chiffrée → Connecter un ordinateur, puis scannez ce code.'**
+  /// **'Sur votre téléphone, ouvrez Réglages → Synchronisation chiffrée → Connecter un ordinateur, puis scannez ce code. Si la synchro est déjà activée sur le téléphone, le PC sera aussi déverrouillé automatiquement.'**
   String get pairQrHint;
 
   /// No description provided for @pairWaiting.
@@ -839,7 +839,7 @@ abstract class AppLocalizations {
   /// No description provided for @pairConnectComputerHint.
   ///
   /// In fr, this message translates to:
-  /// **'Scannez le QR code affiché sur l’ordinateur'**
+  /// **'Scannez le QR code affiché sur l’ordinateur. Si la synchro est déverrouillée, sa clé sera transmise chiffrée.'**
   String get pairConnectComputerHint;
 
   /// No description provided for @pairScanTitle.
@@ -857,7 +857,7 @@ abstract class AppLocalizations {
   /// No description provided for @pairConfirmBody.
   ///
   /// In fr, this message translates to:
-  /// **'Il sera connecté à votre compte. Continuez seulement si vous l’avez demandé sur votre propre ordinateur.'**
+  /// **'Il sera connecté à votre compte et, si la synchro est déverrouillée, recevra sa clé chiffrée. Continuez seulement si vous l’avez demandé sur votre propre ordinateur.'**
   String get pairConfirmBody;
 
   /// No description provided for @pairConfirm.

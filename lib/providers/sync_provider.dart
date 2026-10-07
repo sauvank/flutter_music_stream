@@ -5,7 +5,6 @@ import 'dart:isolate';
 import 'package:flutter/foundation.dart';
 
 import '../models/music_track.dart';
-import '../models/server_profile.dart';
 import '../services/sync/sync_account.dart';
 import '../services/sync/sync_crypto.dart';
 import '../services/sync/sync_payload.dart';
@@ -59,6 +58,10 @@ class SyncProvider extends ChangeNotifier {
   SyncSettings? settings;
   List<SyncHistoryEntry> history = const [];
   bool busy = false;
+  RemoteSyncFile? _preparedRemote;
+  String? _preparedRemoteUid;
+  bool _hasPreparedRemote = false;
+  int _retryExponent = 0;
 
   /// False when this build has no sync backend configured.
   bool get available => _account.available;
@@ -76,6 +79,8 @@ class SyncProvider extends ChangeNotifier {
         await _service.clear();
         settings = null;
         history = const [];
+        _preparedRemote = null;
+        _hasPreparedRemote = false;
       }
       notifyListeners();
     });
@@ -96,8 +101,42 @@ class SyncProvider extends ChangeNotifier {
   /// Whether the signed-in account already owns an encrypted sync envelope.
   /// The setup UI uses this to confirm a newly created passphrase, while an
   /// existing account only asks for its passphrase once to unlock the data.
-  Future<bool> accountHasSyncedData() async =>
-      await _remote.download(_requireUser().uid) != null;
+  Future<bool> accountHasSyncedData() async {
+    final uid = _requireUser().uid;
+    _preparedRemote = await _remote.download(uid);
+    _preparedRemoteUid = uid;
+    _hasPreparedRemote = true;
+    return _preparedRemote != null;
+  }
+
+  Future<Map<String, Object?>?> pairingKeyPackage() async {
+    if (!enabled) return null;
+    final key = await _service.loadKey();
+    if (key == null) return null;
+    return {'key': base64UrlEncode(key), 'kdf': settings!.kdf.toJson()};
+  }
+
+  Future<void> acceptPairingKeyPackage(Map<String, Object?> value) async {
+    final uid = _requireUser().uid;
+    final key = base64Url.decode(value['key']! as String);
+    final kdf =
+        SyncKdf.fromJson((value['kdf']! as Map).cast<String, Object?>());
+    final remote = await _remote.download(uid);
+    if (remote == null) throw StateError('No sync envelope to unlock');
+    await _crypto.open(remote.envelope, key: key);
+    await _run(() async {
+      await _service.saveKey(key);
+      settings = SyncSettings(uid: uid, kdf: kdf);
+      await _service.saveSettings(settings!);
+      try {
+        await _sync();
+      } catch (_) {
+        await _service.clear();
+        settings = null;
+        rethrow;
+      }
+    });
+  }
 
   Future<void> signOut() => _run(() async {
         await _service.clear();
@@ -110,7 +149,11 @@ class SyncProvider extends ChangeNotifier {
   /// passphrase must open it, so every device shares one key.
   Future<void> enable(String passphrase) => _run(() async {
         final uid = _requireUser().uid;
-        final remote = await _remote.download(uid);
+        final remote = _hasPreparedRemote && _preparedRemoteUid == uid
+            ? _preparedRemote
+            : await _remote.download(uid);
+        _preparedRemote = null;
+        _hasPreparedRemote = false;
         final kdf = remote == null
             ? SyncKdf(salt: SyncCrypto.newSalt(), iterations: _iterations)
             : SyncCrypto.kdfOf(remote.envelope);
@@ -120,7 +163,7 @@ class SyncProvider extends ChangeNotifier {
         settings = SyncSettings(uid: uid, kdf: kdf);
         await _service.saveSettings(settings!);
         try {
-          await _sync();
+          await _sync(initialRemote: remote, useInitialRemote: true);
         } catch (_) {
           // Stays off until one sync succeeds, instead of looking active.
           await _service.clear();
@@ -184,20 +227,20 @@ class SyncProvider extends ChangeNotifier {
   void _scheduleAuto() {
     if (!enabled) return;
     _autoTimer?.cancel();
-    _autoTimer = Timer(const Duration(seconds: 3), () {
-      if (_signature() != _syncedSignature) unawaited(autoSync());
+    _autoTimer = Timer(const Duration(seconds: 3), () async {
+      if (await _signature() != _syncedSignature) unawaited(autoSync());
     });
   }
 
-  /// What sync would send, without passwords: cheap enough to compare after
-  /// each burst of changes so idle screens never touch the network.
-  String _signature() => jsonEncode([
-        _library.syncSnapshot().toJson(),
-        [
-          for (final profile in _servers?.profiles ?? const <ServerProfile>[])
-            [profile.id, profile.name, profile.baseUrl, profile.username],
-        ],
-      ]);
+  /// What sync would send, including encrypted server credentials, used to
+  /// detect edits after each burst without touching the network while idle.
+  Future<String> _signature() async {
+    var payload = _library.syncSnapshot();
+    if (_servers != null) {
+      payload = SyncPayload.merge(payload, await _servers.syncSnapshot());
+    }
+    return jsonEncode(payload.toJson());
+  }
 
   /// Quiet sync: leaving the app, pausing or a local change is the moment
   /// another device will want to continue from. Failures retry next time.
@@ -215,7 +258,12 @@ class SyncProvider extends ChangeNotifier {
     try {
       await syncNow();
     } catch (_) {
-      // Offline or backend unavailable; the next change retries.
+      final seconds = (5 * (1 << _retryExponent.clamp(0, 6))).clamp(5, 300);
+      _retryExponent = (_retryExponent + 1).clamp(0, 6);
+      _autoTimer?.cancel();
+      _autoTimer = Timer(Duration(seconds: seconds), () {
+        unawaited(autoSync());
+      });
     }
   }
 
@@ -246,16 +294,21 @@ class SyncProvider extends ChangeNotifier {
     return user;
   }
 
-  Future<void> _sync() async {
+  Future<void> _sync({
+    RemoteSyncFile? initialRemote,
+    bool useInitialRemote = false,
+  }) async {
     final current = settings;
     final key = await _service.loadKey();
     final uid = _requireUser().uid;
     if (current == null || key == null || current.uid != uid) {
       throw StateError('Sync is not configured');
     }
-    // One retry covers a device uploading between our download and upload.
+    // Retries cover devices uploading between our download and upload.
     for (var attempt = 0;; attempt++) {
-      final remote = await _remote.download(uid);
+      final remote = attempt == 0 && useInitialRemote
+          ? initialRemote
+          : await _remote.download(uid);
       var kdf = current.kdf;
       var remotePayload = const SyncPayload();
       if (remote != null) {
@@ -271,13 +324,46 @@ class SyncProvider extends ChangeNotifier {
             SyncPayload.merge(localPayload, await servers.syncSnapshot());
       }
       final changes = _describeChanges(remotePayload, localPayload);
-      final merged = SyncPayload.merge(remotePayload, localPayload);
+      var merged = SyncPayload.merge(remotePayload, localPayload);
+      if (remotePayload.history.isEmpty) {
+        merged = merged.withHistory(
+          SyncPayload.merge(
+            SyncPayload(history: await _service.loadHistory()),
+            merged,
+          ).history,
+        );
+      }
+      if (changes.isNotEmpty) {
+        final at = DateTime.now().toUtc();
+        final deviceId = _library.syncDeviceId;
+        final label = switch (defaultTargetPlatform) {
+          TargetPlatform.windows => 'PC Windows',
+          TargetPlatform.linux => 'PC Linux',
+          TargetPlatform.macOS => 'Mac',
+          TargetPlatform.android => 'Android',
+          TargetPlatform.iOS => 'iPhone/iPad',
+          TargetPlatform.fuchsia => 'Appareil',
+        };
+        merged = merged.withHistory([
+          SyncHistoryEntry(
+            id: '$deviceId-${at.microsecondsSinceEpoch}',
+            device: label,
+            at: at,
+            changes: changes,
+          ),
+          ...merged.history,
+        ]);
+      }
+      final remoteCanonical = jsonEncode(remotePayload.toJson());
+      final mergedCanonical = jsonEncode(merged.toJson());
       final envelope = await _crypto.seal(merged.toJson(), key: key, kdf: kdf);
-      try {
-        await _remote.upload(uid, envelope, replacing: remote);
-      } on SyncConflictException {
-        if (attempt == 0) continue;
-        rethrow;
+      if (remote == null || remoteCanonical != mergedCanonical) {
+        try {
+          await _remote.upload(uid, envelope, replacing: remote);
+        } on SyncConflictException {
+          if (attempt < 2) continue;
+          rethrow;
+        }
       }
       await _library.applySync(merged);
       await _servers?.applySync(merged);
@@ -286,15 +372,10 @@ class SyncProvider extends ChangeNotifier {
         lastSyncAt: DateTime.now().toUtc(),
       );
       await _service.saveSettings(settings!);
-      history = await _service.addHistory(SyncHistoryEntry(
-        at: settings!.lastSyncAt!,
-        changes: changes.isEmpty
-            ? const [
-                SyncHistoryChange(kind: SyncHistoryChangeKind.noChanges),
-              ]
-            : changes,
-      ));
-      _syncedSignature = _signature();
+      history = merged.history;
+      await _service.saveHistory(history);
+      _retryExponent = 0;
+      _syncedSignature = await _signature();
       return;
     }
   }

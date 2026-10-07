@@ -51,6 +51,7 @@ class LibraryProvider extends ChangeNotifier {
   List<MusicTrack> get allTracks =>
       _allTracksCache ??= List.unmodifiable(_tracks);
   int get trackCount => _tracks.length;
+  String get syncDeviceId => _journal.deviceId;
   Set<String> get downloadedSourceUris => _downloadedSourceUris;
   List<MusicTrack> get downloadedTracks => List.unmodifiable(
         _tracks.where((track) => track.source == MusicSource.serverDownload),
@@ -325,11 +326,15 @@ class LibraryProvider extends ChangeNotifier {
       if (playlist.trackIds.any(ids.contains)) {
         _playlists[index] = playlist.copyWith(
           trackIds: playlist.trackIds.where((id) => !ids.contains(id)).toList(),
+          updatedAt: _journal.nextTimestamp(),
         );
         playlistsChanged = true;
       }
     }
-    if (playlistsChanged) await _playlistService.save(_playlists);
+    if (playlistsChanged) {
+      await _playlistService.save(_playlists);
+      await _journal.save();
+    }
   }
 
   /// Runs before downloads resume so no import is moving files meanwhile.
@@ -376,7 +381,7 @@ class LibraryProvider extends ChangeNotifier {
   Future<MusicPlaylist?> createPlaylist(String name) async {
     final normalized = name.trim();
     if (normalized.isEmpty) return null;
-    final now = DateTime.now().toUtc();
+    final now = _journal.nextTimestamp();
     final playlist = MusicPlaylist(
       id: const Uuid().v4(),
       name: normalized,
@@ -386,6 +391,7 @@ class LibraryProvider extends ChangeNotifier {
     );
     _playlists.add(playlist);
     await _playlistService.save(_playlists);
+    await _journal.save();
     notifyListeners();
     return playlist;
   }
@@ -394,8 +400,12 @@ class LibraryProvider extends ChangeNotifier {
     final normalized = name.trim();
     final index = _playlists.indexWhere((playlist) => playlist.id == id);
     if (index == -1 || normalized.isEmpty) return;
-    _playlists[index] = _playlists[index].copyWith(name: normalized);
+    _playlists[index] = _playlists[index].copyWith(
+      name: normalized,
+      updatedAt: _journal.nextTimestamp(),
+    );
     await _playlistService.save(_playlists);
+    await _journal.save();
     notifyListeners();
   }
 
@@ -410,8 +420,10 @@ class LibraryProvider extends ChangeNotifier {
     _playlists[index] = _playlists[index].copyWith(
       name: normalized,
       description: description.trim(),
+      updatedAt: _journal.nextTimestamp(),
     );
     await _playlistService.save(_playlists);
+    await _journal.save();
     notifyListeners();
   }
 
@@ -441,15 +453,18 @@ class LibraryProvider extends ChangeNotifier {
       return;
     }
     ids.insert(newIndex, ids.removeAt(oldIndex));
-    _playlists[index] =
-        _playlists[index].copyWith(trackIds: [...ids, ...absent]);
+    _playlists[index] = _playlists[index].copyWith(
+      trackIds: [...ids, ...absent],
+      updatedAt: _journal.nextTimestamp(),
+    );
     notifyListeners();
     await _playlistService.save(_playlists);
+    await _journal.save();
   }
 
   Future<void> deletePlaylist(String id) async {
     _playlists.removeWhere((playlist) => playlist.id == id);
-    _journal.deletedPlaylists[id] = DateTime.now().toUtc();
+    _journal.deletedPlaylists[id] = _journal.nextTimestamp();
     await _journal.save();
     await _playlistService.save(_playlists);
     notifyListeners();
@@ -461,8 +476,10 @@ class LibraryProvider extends ChangeNotifier {
     if (index == -1 || _playlists[index].trackIds.contains(trackId)) return;
     _playlists[index] = _playlists[index].copyWith(
       trackIds: [..._playlists[index].trackIds, trackId],
+      updatedAt: _journal.nextTimestamp(),
     );
     await _playlistService.save(_playlists);
+    await _journal.save();
     notifyListeners();
   }
 
@@ -479,8 +496,10 @@ class LibraryProvider extends ChangeNotifier {
     if (missing.isEmpty) return 0;
     _playlists[index] = _playlists[index].copyWith(
       trackIds: [..._playlists[index].trackIds, ...missing],
+      updatedAt: _journal.nextTimestamp(),
     );
     await _playlistService.save(_playlists);
+    await _journal.save();
     notifyListeners();
     return missing.length;
   }
@@ -500,10 +519,12 @@ class LibraryProvider extends ChangeNotifier {
           .trackIds
           .where((candidate) => candidate != trackId)
           .toList(),
+      updatedAt: _journal.nextTimestamp(),
     );
     // Notify first: a swiped row must leave the list in the same frame.
     notifyListeners();
     await _playlistService.save(_playlists);
+    await _journal.save();
     return position;
   }
 
@@ -518,9 +539,13 @@ class LibraryProvider extends ChangeNotifier {
     if (index == -1 || _playlists[index].trackIds.contains(trackId)) return;
     final ids = [..._playlists[index].trackIds];
     ids.insert(position.clamp(0, ids.length), trackId);
-    _playlists[index] = _playlists[index].copyWith(trackIds: ids);
+    _playlists[index] = _playlists[index].copyWith(
+      trackIds: ids,
+      updatedAt: _journal.nextTimestamp(),
+    );
     notifyListeners();
     await _playlistService.save(_playlists);
+    await _journal.save();
   }
 
   /// Deletes app-owned tracks with their files. Device media tracks are only
@@ -565,10 +590,12 @@ class LibraryProvider extends ChangeNotifier {
                 trackIds: playlist.trackIds
                     .where((id) => !removedIds.contains(id))
                     .toList(),
+                updatedAt: _journal.nextTimestamp(),
               );
             }
           }
           await _playlistService.save(_playlists);
+          await _journal.save();
         }
       } finally {
         isDeleting = false;
@@ -682,7 +709,7 @@ class LibraryProvider extends ChangeNotifier {
     if (index == -1) return;
     _tracks[index] =
         _tracks[index].copyWith(favorite: !_tracks[index].favorite);
-    _journal.favoriteTimes[id] = DateTime.now().toUtc();
+    _journal.favoriteTimes[id] = _journal.nextTimestamp();
     await _service.save(_tracks);
     await _journal.save();
     notifyListeners();
@@ -702,6 +729,10 @@ class LibraryProvider extends ChangeNotifier {
                 favorite: track.favorite,
                 favoriteAt: _journal.favoriteTimes[track.id],
                 playCount: track.playCount,
+                playCountsByDevice: _journal.playCounts[track.id] ??
+                    (track.playCount == 0
+                        ? const {}
+                        : {'legacy': track.playCount}),
                 lastPlayedAt: track.lastPlayedAt,
                 positionMs: _journal.positionTimes.containsKey(track.id)
                     ? track.lastPositionMs
@@ -739,7 +770,26 @@ class LibraryProvider extends ChangeNotifier {
       }
       if (state.favoriteAt != null) {
         _journal.favoriteTimes[track.id] = state.favoriteAt!;
+        _journal.observe(state.favoriteAt!);
       }
+      if (state.positionAt != null) {
+        _journal.positionTimes[track.id] = state.positionAt!;
+        _journal.observe(state.positionAt!);
+      }
+      if (state.lastPlayedAt != null) _journal.observe(state.lastPlayedAt!);
+      if (state.playCountsByDevice.isNotEmpty) {
+        final counters = Map<String, int>.of(state.playCountsByDevice);
+        final legacyRemainder = state.playCount -
+            counters.values.fold<int>(0, (sum, value) => sum + value);
+        if (legacyRemainder > 0) counters['legacy'] = legacyRemainder;
+        _journal.playCounts[track.id] = counters;
+      }
+    }
+    for (final playlist in merged.playlists) {
+      _journal.observe(playlist.updatedAt);
+    }
+    for (final at in merged.deletedPlaylists.values) {
+      _journal.observe(at);
     }
     _playlists
       ..clear()
@@ -841,7 +891,7 @@ class LibraryProvider extends ChangeNotifier {
         _tracks[index].copyWith(lastPositionMs: position.inMilliseconds);
     _invalidateViews();
     if (_tracks[index].isAudiobook) {
-      _journal.positionTimes[id] = DateTime.now().toUtc();
+      _journal.positionTimes[id] = _journal.nextTimestamp();
       await _journal.save();
     }
     await _service.savePosition(id, position.inMilliseconds);
@@ -857,6 +907,7 @@ class LibraryProvider extends ChangeNotifier {
     if (index == -1) return;
     _tracks[index] = _tracks[index].copyWith(lastPositionMs: positionMs);
     _journal.positionTimes[id] = at;
+    _journal.observe(at);
     _invalidateViews();
     await _journal.save();
     await _service.savePosition(id, positionMs);
@@ -865,7 +916,7 @@ class LibraryProvider extends ChangeNotifier {
 
   /// Marks the local resume point as the newest, so the next sync keeps it.
   Future<void> touchPosition(String id) async {
-    _journal.positionTimes[id] = DateTime.now().toUtc();
+    _journal.positionTimes[id] = _journal.nextTimestamp();
     await _journal.save();
   }
 
@@ -876,11 +927,18 @@ class LibraryProvider extends ChangeNotifier {
     final index = _tracks.indexWhere((track) => track.id == id);
     if (index == -1) return;
     final track = _tracks[index];
+    final counters = _journal.playCounts.putIfAbsent(
+        id,
+        () => {
+              if (track.playCount > 0) 'legacy': track.playCount,
+            });
+    counters.update(_journal.deviceId, (count) => count + 1, ifAbsent: () => 1);
     _tracks[index] = track.copyWith(
-      lastPlayedAt: DateTime.now().toUtc(),
-      playCount: track.playCount + 1,
+      lastPlayedAt: _journal.nextTimestamp(),
+      playCount: counters.values.fold<int>(0, (sum, value) => sum + value),
     );
     await _service.save(_tracks);
+    await _journal.save();
     notifyListeners();
   }
 }

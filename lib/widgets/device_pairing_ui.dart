@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:provider/provider.dart';
 
 import '../l10n/l10n.dart';
+import '../providers/sync_provider.dart';
 import '../services/sync/device_pairing.dart';
 
 String _pairingMessage(BuildContext context, PairingError error) =>
@@ -31,7 +33,7 @@ class _PairingQrDialog extends StatefulWidget {
 
 class _PairingQrDialogState extends State<_PairingQrDialog> {
   final _pairing = DevicePairing();
-  final _id = DevicePairing.newSessionId();
+  final _request = DevicePairing.newRequest();
   String? _error;
 
   @override
@@ -41,17 +43,26 @@ class _PairingQrDialogState extends State<_PairingQrDialog> {
   }
 
   Future<void> _wait() async {
+    final sync = context.read<SyncProvider>();
+    final l10n = context.l10n;
     try {
-      await _pairing.waitForApproval(_id);
+      final keyPackage = await _pairing.waitForApproval(_request);
+      if (keyPackage != null && mounted) {
+        await sync.acceptPairingKeyPackage(keyPackage);
+      }
       if (mounted) Navigator.of(context).pop();
     } on PairingException catch (error) {
-      if (mounted) setState(() => _error = _pairingMessage(context, error.error));
+      if (mounted) {
+        setState(() => _error = _pairingMessage(context, error.error));
+      }
+    } catch (_) {
+      if (mounted) setState(() => _error = l10n.pairFailed);
     }
   }
 
   @override
   void dispose() {
-    unawaited(_pairing.cancel(_id));
+    unawaited(_pairing.cancel(_request.id));
     super.dispose();
   }
 
@@ -69,7 +80,7 @@ class _PairingQrDialogState extends State<_PairingQrDialog> {
               color: Colors.white,
               padding: const EdgeInsets.all(12),
               child: QrImageView(
-                data: DevicePairing.uriFor(_id),
+                data: DevicePairing.uriForRequest(_request),
                 size: 220,
                 backgroundColor: Colors.white,
               ),
@@ -111,10 +122,11 @@ class _PairingQrDialogState extends State<_PairingQrDialog> {
 Future<void> connectComputer(BuildContext context) async {
   final messenger = ScaffoldMessenger.of(context);
   final l10n = context.l10n;
-  final id = await Navigator.of(context).push<String>(
+  final sync = context.read<SyncProvider>();
+  final request = await Navigator.of(context).push<PairingRequest>(
     MaterialPageRoute(builder: (_) => const _PairingScannerPage()),
   );
-  if (id == null || !context.mounted) return;
+  if (request == null || !context.mounted) return;
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
@@ -134,7 +146,10 @@ Future<void> connectComputer(BuildContext context) async {
   );
   if (confirmed != true) return;
   try {
-    await DevicePairing().approve(id);
+    await DevicePairing().approve(
+      request,
+      keyPackage: await sync.pairingKeyPackage(),
+    );
     messenger.showSnackBar(SnackBar(content: Text(l10n.pairDone)));
   } on PairingException catch (error) {
     final message = switch (error.error) {
@@ -170,10 +185,10 @@ class _PairingScannerPageState extends State<_PairingScannerPage> {
   void _onDetect(BarcodeCapture capture) {
     if (_done) return;
     for (final barcode in capture.barcodes) {
-      final id = DevicePairing.idFromUri(barcode.rawValue);
-      if (id != null) {
+      final request = DevicePairing.requestFromUri(barcode.rawValue);
+      if (request != null) {
         _done = true;
-        Navigator.of(context).pop(id);
+        Navigator.of(context).pop(request);
         return;
       }
     }

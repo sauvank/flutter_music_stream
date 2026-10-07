@@ -518,7 +518,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pairQrHint =>
-      'Sur votre téléphone, ouvrez Réglages → Synchronisation chiffrée → Connecter un ordinateur, puis scannez ce code.';
+      'Sur votre téléphone, ouvrez Réglages → Synchronisation chiffrée → Connecter un ordinateur, puis scannez ce code. Si la synchro est déjà activée sur le téléphone, le PC sera aussi déverrouillé automatiquement.';
 
   @override
   String get pairWaiting => 'En attente du téléphone…';
@@ -528,7 +528,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pairConnectComputerHint =>
-      'Scannez le QR code affiché sur l’ordinateur';
+      'Scannez le QR code affiché sur l’ordinateur. Si la synchro est déverrouillée, sa clé sera transmise chiffrée.';
 
   @override
   String get pairScanTitle => 'Scanner le QR code';
@@ -538,7 +538,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pairConfirmBody =>
-      'Il sera connecté à votre compte. Continuez seulement si vous l’avez demandé sur votre propre ordinateur.';
+      'Il sera connecté à votre compte et, si la synchro est déverrouillée, recevra sa clé chiffrée. Continuez seulement si vous l’avez demandé sur votre propre ordinateur.';
 
   @override
   String get pairConfirm => 'Connecter';

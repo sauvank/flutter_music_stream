@@ -43,6 +43,42 @@ class SyncCrypto {
   final Cipher _cipher;
 
   static List<int> newSalt() => SecretKeyData.random(length: 16).bytes;
+  static List<int> newPairingSecret() => SecretKeyData.random(length: 32).bytes;
+
+  Future<Map<String, Object?>> wrapForPairing(
+    Map<String, Object?> value,
+    List<int> pairingSecret,
+  ) async {
+    final box = await _cipher.encrypt(
+      utf8.encode(jsonEncode(value)),
+      secretKey: SecretKey(pairingSecret),
+    );
+    return {
+      'nonce': base64UrlEncode(box.nonce),
+      'ciphertext': base64UrlEncode(box.cipherText),
+      'mac': base64UrlEncode(box.mac.bytes),
+    };
+  }
+
+  Future<Map<String, Object?>> unwrapFromPairing(
+    Map<String, Object?> wrapped,
+    List<int> pairingSecret,
+  ) async {
+    final box = SecretBox(
+      base64Url.decode(wrapped['ciphertext']! as String),
+      nonce: base64Url.decode(wrapped['nonce']! as String),
+      mac: Mac(base64Url.decode(wrapped['mac']! as String)),
+    );
+    try {
+      return (jsonDecode(utf8.decode(await _cipher.decrypt(
+        box,
+        secretKey: SecretKey(pairingSecret),
+      ))) as Map)
+          .cast<String, Object?>();
+    } on SecretBoxAuthenticationError {
+      throw const FormatException('Invalid pairing secret');
+    }
+  }
 
   Future<List<int>> deriveKey(String passphrase, SyncKdf kdf) async {
     final key = await Pbkdf2(

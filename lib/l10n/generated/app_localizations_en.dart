@@ -501,7 +501,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pairQrHint =>
-      'On your phone, open Settings → Encrypted sync → Connect a computer, then scan this code.';
+      'On your phone, open Settings → Encrypted sync → Connect a computer, then scan this code. If sync is already enabled on the phone, the PC will also be unlocked automatically.';
 
   @override
   String get pairWaiting => 'Waiting for your phone…';
@@ -511,7 +511,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pairConnectComputerHint =>
-      'Scan the QR code shown on the computer';
+      'Scan the QR code shown on the computer. If sync is unlocked, its key will be sent encrypted.';
 
   @override
   String get pairScanTitle => 'Scan the QR code';
@@ -521,7 +521,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pairConfirmBody =>
-      'It will be signed in to your account. Only continue if you started this on your own computer.';
+      'It will be signed in to your account and, if sync is unlocked, receive its key encrypted. Only continue if you started this on your own computer.';
 
   @override
   String get pairConfirm => 'Connect';
