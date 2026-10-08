@@ -2,6 +2,8 @@
 
 ## Livré
 
+- [x] Bouton de téléchargement du serveur sur une ligne dédiée, libellé compact et tests petit écran français/anglais.
+
 - [x] Gestionnaire de téléchargements : préparation sans fenêtre bloquante, téléchargement du serveur entier, transferts en cours en tête, filtres, progression détaillée et compteurs distincts du travail d’indexation.
 
 - [x] Détection des mises à jour Android directement via Google Play, sans manifeste Firebase à maintenir.

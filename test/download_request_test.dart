@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -133,7 +134,7 @@ void main() {
           home: const Scaffold(body: ServersScreen()),
         )));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Télécharger tout le serveur'));
+    await tester.tap(find.text('Tout télécharger'));
     await tester.pump();
     expect(find.byType(AlertDialog), findsNothing);
     expect(Navigator.of(tester.element(find.byType(ServersScreen))).canPop(),
@@ -150,4 +151,53 @@ void main() {
     expect(queue.requests.single.stage, DownloadRequestStage.complete);
     servers.dispose();
   });
+
+  for (final language in ['fr', 'en']) {
+    for (final browser in [false, true]) {
+      testWidgets(
+          'server download button stays on one line ($language, browser=$browser)',
+          (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(320, 800);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        addTearDown(tester.view.resetPhysicalSize);
+        final servers = _Servers(ServerProfileService(), remote)
+          ..profiles.add(profile);
+        if (browser) {
+          servers.selected = profile;
+          servers.currentUri = entry.uri;
+        }
+        for (final scale in [1.0, 2.0]) {
+          await tester.pumpWidget(MultiProvider(
+            providers: [
+              ChangeNotifierProvider<LibraryProvider>.value(value: library),
+              ChangeNotifierProvider<DownloadQueueProvider>.value(value: queue),
+              ChangeNotifierProvider<ServerProvider>.value(value: servers),
+            ],
+            child: MaterialApp(
+              locale: Locale(language),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: TextScaler.linear(scale)),
+                child: child!,
+              ),
+              home: const Scaffold(body: ServersScreen()),
+            ),
+          ));
+          await tester.pumpAndSettle();
+          final label =
+              find.text(language == 'fr' ? 'Tout télécharger' : 'Download all');
+          if (!browser) await tester.scrollUntilVisible(label, 150);
+          final paragraph = tester.renderObject<RenderParagraph>(label);
+          expect(paragraph.maxLines, 1);
+          expect(paragraph.overflow, TextOverflow.ellipsis);
+          expect(tester.takeException(), isNull);
+        }
+        await tester.pumpWidget(const SizedBox());
+        servers.dispose();
+      });
+    }
+  }
 }

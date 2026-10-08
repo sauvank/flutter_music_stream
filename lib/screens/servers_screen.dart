@@ -17,27 +17,37 @@ import '../services/server_scan_service.dart';
 import '../widgets/add_server_sheet.dart';
 import 'downloads_sheet.dart';
 
-void _downloadServer(BuildContext context, ServerProvider servers, ServerProfile profile) {
+void _downloadServer(
+    BuildContext context, ServerProvider servers, ServerProfile profile) {
   final root = Uri.parse(profile.baseUrl);
-  _startDownload(context, servers, profile, RemoteAudioEntry(
-    name: profile.name,
-    uri: root.replace(path: root.path.endsWith('/') ? root.path : '${root.path}/'),
-    isDirectory: true,
-  ));
+  _startDownload(
+      context,
+      servers,
+      profile,
+      RemoteAudioEntry(
+        name: profile.name,
+        uri: root.replace(
+            path: root.path.endsWith('/') ? root.path : '${root.path}/'),
+        isDirectory: true,
+      ));
 }
 
 void _startDownload(BuildContext context, ServerProvider servers,
     ServerProfile profile, RemoteAudioEntry entry) {
   final started = context.read<DownloadQueueProvider>().startRequest(
-    entry: entry, profile: profile,
-    password: () => servers.passwordFor(profile), remote: servers.remoteService,
-  );
+        entry: entry,
+        profile: profile,
+        password: () => servers.passwordFor(profile),
+        remote: servers.remoteService,
+      );
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(
-      content: Text(started ? context.l10n.downloadPreparing(entry.name)
+      content: Text(started
+          ? context.l10n.downloadPreparing(entry.name)
           : context.l10n.alreadyDownloading(entry.name)),
-      action: SnackBarAction(label: context.l10n.downloadViewQueue,
+      action: SnackBarAction(
+          label: context.l10n.downloadViewQueue,
           onPressed: () => showDownloadQueue(context)),
     ));
 }
@@ -484,50 +494,60 @@ class _ServerCard extends StatelessWidget {
               .surfaceContainer
               .withValues(alpha: .62),
           borderRadius: BorderRadius.circular(24),
-          child: ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            onTap: onOpen,
-            leading: CircleAvatar(
-              child: Icon(switch (profile.type) {
-                ServerType.webdav => Icons.cloud_outlined,
-                ServerType.http => Icons.http_rounded,
-                ServerType.ftp => Icons.dns_outlined,
-              }),
-            ),
-            title: Text(profile.name,
-                style: const TextStyle(fontWeight: FontWeight.w800)),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(profile.baseUrl, maxLines: 1, overflow: TextOverflow.ellipsis),
-                TextButton.icon(
-                  onPressed: () => _downloadServer(context, context.read<ServerProvider>(), profile),
-                  icon: const Icon(Icons.download_for_offline_outlined, size: 18),
-                  label: Text(context.l10n.downloadEntireServer),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                onTap: onOpen,
+                leading: CircleAvatar(
+                  child: Icon(switch (profile.type) {
+                    ServerType.webdav => Icons.cloud_outlined,
+                    ServerType.http => Icons.http_rounded,
+                    ServerType.ftp => Icons.dns_outlined,
+                  }),
                 ),
-              ],
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  tooltip: context.l10n.scanNewAlbums,
-                  onPressed: scanning ? null : onScan,
-                  icon: scanning
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.new_releases_outlined),
+                title: Text(profile.name,
+                    style: const TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: Text(profile.baseUrl,
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: context.l10n.scanNewAlbums,
+                      onPressed: scanning ? null : onScan,
+                      icon: scanning
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.new_releases_outlined),
+                    ),
+                    IconButton(
+                      tooltip: context.l10n.delete,
+                      onPressed: onDelete,
+                      icon: const Icon(Icons.delete_outline_rounded),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  tooltip: context.l10n.delete,
-                  onPressed: onDelete,
-                  icon: const Icon(Icons.delete_outline_rounded),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+                child: Tooltip(
+                  message: context.l10n.downloadEntireServer,
+                  child: FilledButton.tonalIcon(
+                    onPressed: () => _downloadServer(
+                        context, context.read<ServerProvider>(), profile),
+                    icon: const Icon(Icons.download_for_offline_outlined,
+                        size: 20),
+                    label: Text(context.l10n.downloadAll,
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       );
@@ -623,10 +643,15 @@ class _BrowserState extends State<_Browser> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: FilledButton.tonalIcon(
-              onPressed: () => _downloadServer(context, provider, provider.selected!),
-              icon: const Icon(Icons.download_for_offline_outlined, size: 20),
-              label: Text(context.l10n.downloadEntireServer),
+            child: Tooltip(
+              message: context.l10n.downloadEntireServer,
+              child: FilledButton.tonalIcon(
+                onPressed: () =>
+                    _downloadServer(context, provider, provider.selected!),
+                icon: const Icon(Icons.download_for_offline_outlined, size: 20),
+                label: Text(context.l10n.downloadAll,
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
             ),
           ),
         ),
@@ -1046,8 +1071,6 @@ class _RemoteArtwork extends StatelessWidget {
     );
   }
 }
-
-
 
 /// Streams every audio file below [folder], in path order.
 Future<void> _playRemoteFolder(

@@ -104,6 +104,12 @@ abstract class AppLocalizations {
   /// **'Télécharger tout le serveur'**
   String get downloadEntireServer;
 
+  /// No description provided for @downloadAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout télécharger'**
+  String get downloadAll;
+
   /// No description provided for @downloadPreparing.
   ///
   /// In fr, this message translates to:

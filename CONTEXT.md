@@ -56,6 +56,7 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 
 ## Tests sur appareil
 
+- Le bouton serveur « Tout télécharger » est placé hors du `ListTile`, sur sa propre ligne; ne pas le remettre dans le sous-titre entre l’avatar et les actions. Tests de mise en page carte/navigateur à 320 px, français/anglais et texte ×2 dans `test/download_request_test.dart`.
 - Les écrans vivent dans un `IndexedStack` : un champ focalisé sur un onglet masqué reprend le focus à la fermeture d’un dialogue. `HomeScreen._select` libère le focus à chaque changement d’onglet.
 - Pour tester le FTP depuis WSL, le pare-feu Windows bloque les connexions entrantes : utiliser `adb reverse` sur le port de contrôle et les ports passifs, avec une adresse passive `127.0.0.1`.
 

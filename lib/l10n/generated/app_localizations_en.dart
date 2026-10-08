@@ -12,6 +12,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get downloadEntireServer => 'Download entire server';
 
   @override
+  String get downloadAll => 'Download all';
+
+  @override
   String downloadPreparing(String name) {
     return 'Preparing “$name”… You can keep browsing.';
   }

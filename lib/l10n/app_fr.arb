@@ -1,5 +1,6 @@
 {
   "downloadEntireServer": "Télécharger tout le serveur",
+  "downloadAll": "Tout télécharger",
   "downloadPreparing": "Préparation de « {name} »… Vous pouvez continuer à naviguer.",
   "downloadPreparingShort": "Préparation des téléchargements…",
   "downloadPreparationHint": "L’analyse continue pendant que vous naviguez. Les fichiers déjà présents seront ignorés.",

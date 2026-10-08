@@ -12,6 +12,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get downloadEntireServer => 'Télécharger tout le serveur';
 
   @override
+  String get downloadAll => 'Tout télécharger';
+
+  @override
   String downloadPreparing(String name) {
     return 'Préparation de « $name »… Vous pouvez continuer à naviguer.';
   }

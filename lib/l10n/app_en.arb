@@ -1,5 +1,6 @@
 {
   "downloadEntireServer": "Download entire server",
+  "downloadAll": "Download all",
   "downloadPreparing": "Preparing “{name}”… You can keep browsing.",
   "downloadPreparingShort": "Preparing downloads…",
   "downloadPreparationHint": "Scanning continues while you browse. Files already on your device will be skipped.",
