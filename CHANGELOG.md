@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- Refonte des téléchargements : feuille redimensionnable, accès permanent, filtres et compteurs, fichiers en cours avant les fichiers en attente, pourcentage/taille/dossier, erreurs HTTP lisibles et actions explicites. Préparation des dossiers indépendante de l’écran, sans dialogue bloquant; bouton de téléchargement du serveur entier, accès capturés pour continuer après navigation, FTP suivi au premier plan. « Terminés » compte les transferts achevés même pendant l’indexation; relecture différée après les callbacks natifs pour éviter un dernier état périmé. Une nouvelle tentative acceptée retire l’ancien échec; le nettoyage conserve la musique. Tests d’interaction, préparation, tri, erreurs et petit écran avec texte agrandi ajoutés.
+
 - Correction d’une course PC → téléphone : une position de livre audio enregistrée pendant l’envoi réseau n’est plus écrasée par l’ancien instantané appliqué à la fin de la synchronisation; la passe différée peut ensuite publier la position récente.
 
 - Refonte de la synchronisation : détection du compte chiffré avant saisie (une seule phrase pour déverrouiller, confirmation seulement à la création), aucune réécriture distante si la fusion n’a rien changé, trois nouvelles tentatives en cas de conflit, reprise automatique avec délai croissant hors ligne, historique des changements inclus et chiffré dans l’enveloppe partagée, compteurs d’écoutes par appareil et horloges logiques observant les valeurs distantes. L’association QR peut maintenant transmettre la clé au PC dans une enveloppe AES-GCM protégée par un secret aléatoire du QR; Firestore ne stocke que cette enveloppe chiffrée. Les règles Firestore correspondantes ont été compilées et déployées.

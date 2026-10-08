@@ -29,7 +29,7 @@ La version Android prend en charge Android 7.0 (API 24) et versions ultérieures
 - profils WebDAV, HTTP et FTP importables par JSON ComicStream ou MusicStream, avec mot de passe transféré dans le coffre sécurisé de l’OS ;
 - navigation distante et téléchargement de morceaux ou dossiers entiers, avec état local explicite sous chaque dossier (vert si complet, orange si partiel) ; HTTP/WebDAV utilisent une file persistante en arrière-plan, limitée à deux transferts simultanés par serveur, tandis que FTP importe au premier plan ;
 - badge « Sur le téléphone » à la place du bouton de téléchargement pour les morceaux distants déjà importés ;
-- file de téléchargement accessible depuis la liste des serveurs, badge du nombre de transferts actifs sur l’onglet Serveurs, relance des échecs, nettoyage des terminés et annulation groupée ;
+- téléchargement d’un morceau, d’un dossier ou de tout un serveur sans fenêtre bloquante; préparation suivie dans le gestionnaire pendant la navigation. Transferts réellement en cours en tête, compteurs d’attente/pause/terminés, filtres, pourcentage et taille, reprise et relance des échecs, nettoyage de l’historique sans effacer la musique ;
 - navigation distante avec fil d’Ariane cliquable et filtre des dossiers volumineux ;
 - suppression des téléchargements serveur depuis le menu d’un morceau ou globalement depuis la bibliothèque ;
 - détection à la demande des nouveaux albums d’un serveur, après création d’une référence locale ;

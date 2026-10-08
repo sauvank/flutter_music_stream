@@ -1,13 +1,7 @@
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:background_downloader/background_downloader.dart';
-import 'package:crypto/crypto.dart';
-import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../models/remote_audio_entry.dart';
@@ -21,6 +15,32 @@ import '../providers/server_provider.dart';
 import '../l10n/l10n.dart';
 import '../services/server_scan_service.dart';
 import '../widgets/add_server_sheet.dart';
+import 'downloads_sheet.dart';
+
+void _downloadServer(BuildContext context, ServerProvider servers, ServerProfile profile) {
+  final root = Uri.parse(profile.baseUrl);
+  _startDownload(context, servers, profile, RemoteAudioEntry(
+    name: profile.name,
+    uri: root.replace(path: root.path.endsWith('/') ? root.path : '${root.path}/'),
+    isDirectory: true,
+  ));
+}
+
+void _startDownload(BuildContext context, ServerProvider servers,
+    ServerProfile profile, RemoteAudioEntry entry) {
+  final started = context.read<DownloadQueueProvider>().startRequest(
+    entry: entry, profile: profile,
+    password: () => servers.passwordFor(profile), remote: servers.remoteService,
+  );
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(
+      content: Text(started ? context.l10n.downloadPreparing(entry.name)
+          : context.l10n.alreadyDownloading(entry.name)),
+      action: SnackBarAction(label: context.l10n.downloadViewQueue,
+          onPressed: () => showDownloadQueue(context)),
+    ));
+}
 
 class ServersScreen extends StatelessWidget {
   const ServersScreen({super.key});
@@ -38,6 +58,7 @@ class ServersScreen extends StatelessWidget {
             onImport: () => _chooseImport(context),
           ),
         ),
+        const SliverToBoxAdapter(child: DownloadQueueShortcut()),
         if (servers.profiles.isEmpty)
           SliverFillRemaining(
             hasScrollBody: false,
@@ -336,22 +357,6 @@ class _ServerHeader extends StatelessWidget {
                     ],
                   ),
                 ),
-                Consumer<DownloadQueueProvider>(
-                  builder: (context, downloads, _) => downloads.records.isEmpty
-                      ? const SizedBox.shrink()
-                      : Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Badge(
-                            isLabelVisible: downloads.activeCount > 0,
-                            label: Text('${downloads.activeCount}'),
-                            child: IconButton.filledTonal(
-                              tooltip: context.l10n.downloads,
-                              onPressed: () => _showDownloadQueue(context),
-                              icon: const Icon(Icons.download_rounded),
-                            ),
-                          ),
-                        ),
-                ),
                 IconButton.filledTonal(
                   tooltip: context.l10n.importJsonFile,
                   onPressed: onImport,
@@ -492,10 +497,16 @@ class _ServerCard extends StatelessWidget {
             ),
             title: Text(profile.name,
                 style: const TextStyle(fontWeight: FontWeight.w800)),
-            subtitle: Text(
-              profile.baseUrl,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(profile.baseUrl, maxLines: 1, overflow: TextOverflow.ellipsis),
+                TextButton.icon(
+                  onPressed: () => _downloadServer(context, context.read<ServerProvider>(), profile),
+                  icon: const Icon(Icons.download_for_offline_outlined, size: 18),
+                  label: Text(context.l10n.downloadEntireServer),
+                ),
+              ],
             ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
@@ -593,7 +604,7 @@ class _BrowserState extends State<_Browser> {
                   isLabelVisible: downloads.activeCount > 0,
                   label: Text('${downloads.activeCount}'),
                   child: IconButton(
-                    onPressed: () => _showDownloadQueue(context),
+                    onPressed: () => showDownloadQueue(context),
                     tooltip: context.l10n.downloads,
                     icon: const Icon(Icons.download_rounded),
                   ),
@@ -608,6 +619,17 @@ class _BrowserState extends State<_Browser> {
           ),
         ),
         _Breadcrumbs(provider: provider),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton.tonalIcon(
+              onPressed: () => _downloadServer(context, provider, provider.selected!),
+              icon: const Icon(Icons.download_for_offline_outlined, size: 20),
+              label: Text(context.l10n.downloadEntireServer),
+            ),
+          ),
+        ),
         if (!provider.loading &&
             provider.error == null &&
             provider.entries.length >= _filterThreshold)
@@ -857,52 +879,11 @@ class _RemoteTile extends StatelessWidget {
     );
   }
 
-  Future<void> _downloadFolder(
-    BuildContext context,
-    ServerProvider servers,
-  ) =>
-      showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => _FolderDownloadDialog(
-          entry: entry,
-          servers: servers,
-          downloads: context.read<DownloadQueueProvider>(),
-        ),
-      );
+  void _downloadFolder(BuildContext context, ServerProvider servers) =>
+      _startDownload(context, servers, servers.selected!, entry);
 
-  Future<void> _download(BuildContext context, ServerProvider servers) async {
-    final profile = servers.selected!;
-    if (profile.type == ServerType.ftp) {
-      await showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => _FolderDownloadDialog(
-          entry: entry,
-          servers: servers,
-          downloads: context.read<DownloadQueueProvider>(),
-        ),
-      );
-      return;
-    }
-    try {
-      final added = await context.read<DownloadQueueProvider>().enqueueAll(
-        [entry],
-        headers: servers.remoteService
-            .authorizationHeaders(profile, servers.password),
-      );
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(added > 0
-            ? context.l10n.queuedForDownload(entry.name)
-            : context.l10n.alreadyDownloading(entry.name)),
-      ));
-    } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(context.l10n.downloadFailed)));
-    }
-  }
+  void _download(BuildContext context, ServerProvider servers) =>
+      _startDownload(context, servers, servers.selected!, entry);
 
   Future<void> _preview(
     BuildContext context,
@@ -1066,402 +1047,7 @@ class _RemoteArtwork extends StatelessWidget {
   }
 }
 
-class _FolderDownloadDialog extends StatefulWidget {
-  const _FolderDownloadDialog({
-    required this.entry,
-    required this.servers,
-    required this.downloads,
-  });
 
-  final RemoteAudioEntry entry;
-  final ServerProvider servers;
-  final DownloadQueueProvider downloads;
-
-  @override
-  State<_FolderDownloadDialog> createState() => _FolderDownloadDialogState();
-}
-
-class _FolderDownloadDialogState extends State<_FolderDownloadDialog> {
-  String Function(AppLocalizations) _status = (l10n) => l10n.scanningFolder;
-  double? _progress;
-  int? _queued;
-  Object? _error;
-  _FolderStage _stage = _FolderStage.inventory;
-
-  String _errorMessage(AppLocalizations l10n) {
-    final error = _error;
-    final stage = switch (_stage) {
-      _FolderStage.inventory => l10n.stageInventory,
-      _FolderStage.ftp => l10n.stageFtp,
-      _FolderStage.queue => l10n.stageQueue,
-    };
-    if (error is DioException) {
-      final status = error.response?.statusCode;
-      return status == null
-          ? l10n.folderConnectionLost(stage)
-          : l10n.folderHttpError(status, stage);
-    }
-    // The only StateError while listing is the folder size guard.
-    if (error is StateError) return l10n.folderTooLarge;
-    return l10n.folderFailed(stage);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _start();
-  }
-
-  Future<void> _start() async {
-    try {
-      final profile = widget.servers.selected!;
-      final files = widget.entry.isDirectory
-          ? await widget.servers.remoteService.listRecursively(
-              profile,
-              widget.entry.uri,
-              widget.servers.password,
-            )
-          : [widget.entry];
-      if (!mounted) return;
-      if (files.isEmpty) {
-        setState(() {
-          _status = (l10n) => l10n.noCompatibleTracks;
-          _queued = 0;
-          _progress = 1;
-        });
-        return;
-      }
-      setState(() {
-        _status = profile.type == ServerType.ftp
-            ? (l10n) => l10n.downloadingTracks(files.length)
-            : (l10n) => l10n.queueingTracks(files.length);
-      });
-      if (profile.type == ServerType.ftp) {
-        _stage = _FolderStage.ftp;
-        await _downloadFtp(profile, files);
-        return;
-      }
-      _stage = _FolderStage.queue;
-      final queued = await widget.downloads.enqueueAll(
-        files,
-        headers: widget.servers.remoteService.authorizationHeaders(
-          profile,
-          widget.servers.password,
-        ),
-      );
-      if (!mounted) return;
-      setState(() {
-        _queued = queued;
-        _progress = 1;
-      });
-    } catch (error) {
-      final status = error is DioException ? error.response?.statusCode : null;
-      debugPrint('Folder download failed: stage=${_stage.name}, '
-          'type=${error.runtimeType}, httpStatus=$status');
-      if (!mounted) return;
-      setState(() => _error = error);
-    }
-  }
-
-  Future<void> _downloadFtp(
-    ServerProfile profile,
-    List<RemoteAudioEntry> files,
-  ) async {
-    final library = context.read<LibraryProvider>();
-    final root = Directory(
-      p.join((await getTemporaryDirectory()).path, 'ftp_downloads'),
-    );
-    await root.create(recursive: true);
-    var added = 0;
-    var skipped = 0;
-    var failed = 0;
-    for (var index = 0; index < files.length; index++) {
-      final file = files[index];
-      final digest =
-          sha256.convert(utf8.encode(file.uri.toString())).toString();
-      final temporary = File(
-        p.join(
-            root.path, '${digest.substring(0, 24)}${p.extension(file.name)}'),
-      );
-      try {
-        await widget.servers.remoteService.downloadFtp(
-          profile,
-          file,
-          widget.servers.password,
-          temporary.path,
-          onProgress: (received, total) {
-            if (!mounted) return;
-            final fileProgress = total > 0 ? received / total : 0.0;
-            setState(() {
-              _status =
-                  (l10n) => l10n.downloadProgress(index + 1, files.length);
-              _progress = (index + fileProgress) / files.length;
-            });
-          },
-        );
-        final imported = await library.importDownloadedFile(
-          sourcePath: temporary.path,
-          originalName: file.name,
-          sourceUri: file.uri.toString(),
-        );
-        imported ? added++ : skipped++;
-      } catch (_) {
-        failed++;
-        if (await temporary.exists()) await temporary.delete();
-      }
-      if (mounted) setState(() => _progress = (index + 1) / files.length);
-    }
-    if (!mounted) return;
-    setState(() {
-      _queued = added;
-      _status = (l10n) => [
-            l10n.addedCount(added),
-            if (skipped > 0) l10n.importSkipped(skipped),
-            if (failed > 0) l10n.importFailures(failed),
-          ].join(' • ');
-      _progress = 1;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: Text(context.l10n.downloadTitle(widget.entry.name)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_error != null)
-              Text(_errorMessage(context.l10n))
-            else ...[
-              Text(widget.servers.selected?.type == ServerType.ftp
-                  ? _status(context.l10n)
-                  : _queued == null
-                      ? _status(context.l10n)
-                      : _queued == 0
-                          ? context.l10n.nothingNewToDownload
-                          : context.l10n.folderQueued(_queued!)),
-              const SizedBox(height: 16),
-              LinearProgressIndicator(value: _progress),
-            ],
-          ],
-        ),
-        actions: [
-          if (_queued != null || _error != null)
-            FilledButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(_error != null ||
-                      widget.servers.selected?.type == ServerType.ftp
-                  ? context.l10n.close
-                  : context.l10n.continueInBackground),
-            ),
-        ],
-      );
-}
-
-enum _FolderStage { inventory, ftp, queue }
-
-Future<void> _showDownloadQueue(BuildContext context) =>
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => const _DownloadQueueSheet(),
-    );
-
-class _DownloadQueueSheet extends StatelessWidget {
-  const _DownloadQueueSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    final downloads = context.watch<DownloadQueueProvider>();
-    return SafeArea(
-      child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * .68,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
-              child: Text(
-                context.l10n.downloads,
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w900),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Wrap(
-                spacing: 8,
-                children: [
-                  if (downloads.hasFailed)
-                    ActionChip(
-                      avatar: const Icon(Icons.refresh_rounded, size: 18),
-                      label: Text(context.l10n.retryFailed),
-                      onPressed: downloads.retryFailed,
-                    ),
-                  if (downloads.hasClearable)
-                    ActionChip(
-                      avatar: const Icon(Icons.clear_all_rounded, size: 18),
-                      label: Text(context.l10n.clearFinished),
-                      onPressed: downloads.clearFinished,
-                    ),
-                  if (downloads.activeCount > 0)
-                    ActionChip(
-                      avatar: const Icon(Icons.cancel_outlined, size: 18),
-                      label: Text(context.l10n.cancelAll),
-                      onPressed: () => _confirmCancelAll(context, downloads),
-                    ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: downloads.records.isEmpty
-                  ? Center(child: Text(context.l10n.noDownloads))
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
-                      itemCount: downloads.records.length,
-                      itemBuilder: (context, index) {
-                        final record = downloads.records[index];
-                        return Card(
-                          child: ListTile(
-                            leading: _downloadStatusIcon(record.status),
-                            title: Text(
-                              record.task.displayName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                    _downloadStatusLabel(context.l10n, record)),
-                                if (record.status == TaskStatus.running ||
-                                    record.status == TaskStatus.enqueued)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 6),
-                                    child: LinearProgressIndicator(
-                                      value: record.progress >= 0
-                                          ? record.progress
-                                          : null,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            trailing: _DownloadActions(record: record),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-Future<void> _confirmCancelAll(
-  BuildContext context,
-  DownloadQueueProvider downloads,
-) async {
-  final count = downloads.activeCount;
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(context.l10n.cancelAllTitle),
-      content: Text(context.l10n.cancelAllBody(count)),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext, false),
-          child: Text(context.l10n.continueAction),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(dialogContext, true),
-          child: Text(context.l10n.cancelAll),
-        ),
-      ],
-    ),
-  );
-  if (confirmed == true) await downloads.cancelAll();
-}
-
-class _DownloadActions extends StatelessWidget {
-  const _DownloadActions({required this.record});
-  final TaskRecord record;
-
-  @override
-  Widget build(BuildContext context) {
-    final downloads = context.read<DownloadQueueProvider>();
-    if (record.status == TaskStatus.paused) {
-      return IconButton(
-        tooltip: context.l10n.resume,
-        onPressed: () => downloads.resume(record.taskId),
-        icon: const Icon(Icons.play_arrow_rounded),
-      );
-    }
-    if (record.status == TaskStatus.running) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            tooltip: context.l10n.pause,
-            onPressed: () => downloads.pause(record.taskId),
-            icon: const Icon(Icons.pause_rounded),
-          ),
-          IconButton(
-            tooltip: context.l10n.cancel,
-            onPressed: () => downloads.cancel(record.taskId),
-            icon: const Icon(Icons.close_rounded),
-          ),
-        ],
-      );
-    }
-    if (record.status == TaskStatus.enqueued ||
-        record.status == TaskStatus.waitingToRetry) {
-      return IconButton(
-        tooltip: context.l10n.cancel,
-        onPressed: () => downloads.cancel(record.taskId),
-        icon: const Icon(Icons.close_rounded),
-      );
-    }
-    if (record.status == TaskStatus.failed ||
-        record.status == TaskStatus.notFound) {
-      return IconButton(
-        tooltip: context.l10n.retry,
-        onPressed: () => downloads.retry(record.taskId),
-        icon: const Icon(Icons.refresh_rounded),
-      );
-    }
-    return const SizedBox.shrink();
-  }
-}
-
-Widget _downloadStatusIcon(TaskStatus status) => switch (status) {
-      TaskStatus.complete =>
-        const Icon(Icons.check_circle, color: Colors.green),
-      TaskStatus.failed ||
-      TaskStatus.notFound =>
-        const Icon(Icons.error_outline, color: Colors.red),
-      TaskStatus.canceled => const Icon(Icons.cancel_outlined),
-      TaskStatus.paused => const Icon(Icons.pause_circle_outline),
-      _ => const Icon(Icons.download_rounded),
-    };
-
-String _downloadStatusLabel(AppLocalizations l10n, TaskRecord record) =>
-    switch (record.status) {
-      TaskStatus.enqueued => l10n.statusEnqueued,
-      TaskStatus.running => l10n.statusRunning,
-      TaskStatus.complete => l10n.statusComplete,
-      TaskStatus.notFound => l10n.statusNotFound,
-      TaskStatus.failed => record.exception?.description.isNotEmpty == true
-          ? l10n.statusFailedWithReason(record.exception!.description)
-          : l10n.statusFailed,
-      TaskStatus.canceled => l10n.statusCanceled,
-      TaskStatus.waitingToRetry => l10n.statusWaitingToRetry,
-      TaskStatus.paused => l10n.statusPaused,
-    };
 
 /// Streams every audio file below [folder], in path order.
 Future<void> _playRemoteFolder(

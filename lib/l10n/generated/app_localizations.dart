@@ -98,6 +98,198 @@ abstract class AppLocalizations {
     Locale('fr')
   ];
 
+  /// No description provided for @downloadEntireServer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Télécharger tout le serveur'**
+  String get downloadEntireServer;
+
+  /// No description provided for @downloadPreparing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Préparation de « {name} »… Vous pouvez continuer à naviguer.'**
+  String downloadPreparing(String name);
+
+  /// No description provided for @downloadPreparingShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Préparation des téléchargements…'**
+  String get downloadPreparingShort;
+
+  /// No description provided for @downloadPreparationHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'L’analyse continue pendant que vous naviguez. Les fichiers déjà présents seront ignorés.'**
+  String get downloadPreparationHint;
+
+  /// No description provided for @downloadFtpHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous pouvez naviguer dans MusicStream. Gardez l’application ouverte pendant les transferts FTP.'**
+  String get downloadFtpHint;
+
+  /// No description provided for @downloadWaitingSummary.
+  ///
+  /// In fr, this message translates to:
+  /// **'{waiting} en attente · {paused} en pause'**
+  String downloadWaitingSummary(int waiting, int paused);
+
+  /// No description provided for @downloadHttpError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le serveur a répondu avec une erreur HTTP {code}. Vous pouvez réessayer.'**
+  String downloadHttpError(int code);
+
+  /// No description provided for @downloadQueueActive.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{{count} téléchargement en cours} other{{count} téléchargements en cours}}'**
+  String downloadQueueActive(int count);
+
+  /// No description provided for @downloadQueueSummary.
+  ///
+  /// In fr, this message translates to:
+  /// **'{finished, plural, one{{finished} terminé} other{{finished} terminés}} · {failed} à réessayer'**
+  String downloadQueueSummary(int finished, int failed);
+
+  /// No description provided for @downloadNeedsAttention.
+  ///
+  /// In fr, this message translates to:
+  /// **'Des téléchargements à réessayer'**
+  String get downloadNeedsAttention;
+
+  /// No description provided for @downloadManage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivre les transferts et gérer l’historique'**
+  String get downloadManage;
+
+  /// No description provided for @downloadActionFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Action impossible pour le moment. Réessayez dans quelques instants.'**
+  String get downloadActionFailed;
+
+  /// No description provided for @downloadBackgroundHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous pouvez fermer cette fenêtre : les téléchargements continuent.'**
+  String get downloadBackgroundHint;
+
+  /// No description provided for @downloadQueueActions.
+  ///
+  /// In fr, this message translates to:
+  /// **'Gérer la file'**
+  String get downloadQueueActions;
+
+  /// No description provided for @downloadFilterAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout'**
+  String get downloadFilterAll;
+
+  /// No description provided for @downloadFilterActive.
+  ///
+  /// In fr, this message translates to:
+  /// **'En cours'**
+  String get downloadFilterActive;
+
+  /// No description provided for @downloadFilterFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Échecs'**
+  String get downloadFilterFailed;
+
+  /// No description provided for @downloadFilterFinished.
+  ///
+  /// In fr, this message translates to:
+  /// **'Terminés'**
+  String get downloadFilterFinished;
+
+  /// No description provided for @downloadQueueUpToDate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun transfert en attente'**
+  String get downloadQueueUpToDate;
+
+  /// No description provided for @downloadClearHistory.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nettoyer l’historique'**
+  String get downloadClearHistory;
+
+  /// No description provided for @downloadEmptyFilter.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien dans cette catégorie'**
+  String get downloadEmptyFilter;
+
+  /// No description provided for @downloadEmptyFilterHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Consultez les autres catégories pour retrouver vos téléchargements.'**
+  String get downloadEmptyFilterHint;
+
+  /// No description provided for @downloadEmptyHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Téléchargez un morceau ou un dossier depuis vos serveurs pour l’écouter hors ligne. Retrouvez ici vos transferts HTTP/WebDAV.'**
+  String get downloadEmptyHint;
+
+  /// No description provided for @downloadBrowseServers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Parcourir les serveurs'**
+  String get downloadBrowseServers;
+
+  /// No description provided for @downloadShowAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout afficher'**
+  String get downloadShowAll;
+
+  /// No description provided for @downloadIndexing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajout à la bibliothèque…'**
+  String get downloadIndexing;
+
+  /// No description provided for @downloadTransferComplete.
+  ///
+  /// In fr, this message translates to:
+  /// **'Transfert terminé'**
+  String get downloadTransferComplete;
+
+  /// No description provided for @downloadMoreActions.
+  ///
+  /// In fr, this message translates to:
+  /// **'Options du téléchargement'**
+  String get downloadMoreActions;
+
+  /// No description provided for @downloadMissingHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce fichier n’est plus disponible à cette adresse sur le serveur.'**
+  String get downloadMissingHint;
+
+  /// No description provided for @downloadFailedHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérifiez votre connexion et l’accès au serveur, puis réessayez.'**
+  String get downloadFailedHint;
+
+  /// No description provided for @downloadViewQueue.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir les téléchargements'**
+  String get downloadViewQueue;
+
+  /// No description provided for @downloadHistoryHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le nettoyage retire les transferts terminés ou annulés de cette liste. Vos morceaux sont conservés.'**
+  String get downloadHistoryHint;
+
   /// No description provided for @actionNext.
   ///
   /// In fr, this message translates to:

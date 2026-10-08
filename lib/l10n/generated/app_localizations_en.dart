@@ -9,6 +9,127 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get downloadEntireServer => 'Download entire server';
+
+  @override
+  String downloadPreparing(String name) {
+    return 'Preparing “$name”… You can keep browsing.';
+  }
+
+  @override
+  String get downloadPreparingShort => 'Preparing downloads…';
+
+  @override
+  String get downloadPreparationHint =>
+      'Scanning continues while you browse. Files already on your device will be skipped.';
+
+  @override
+  String get downloadFtpHint =>
+      'You can browse MusicStream. Keep the app open during FTP transfers.';
+
+  @override
+  String downloadWaitingSummary(int waiting, int paused) {
+    return '$waiting queued · $paused paused';
+  }
+
+  @override
+  String downloadHttpError(int code) {
+    return 'The server returned HTTP error $code. You can try again.';
+  }
+
+  @override
+  String downloadQueueActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count downloads in progress',
+      one: '$count download in progress',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String downloadQueueSummary(int finished, int failed) {
+    return '$finished finished · $failed to retry';
+  }
+
+  @override
+  String get downloadNeedsAttention => 'Some downloads need attention';
+
+  @override
+  String get downloadManage => 'Track transfers and manage history';
+
+  @override
+  String get downloadActionFailed =>
+      'This action is unavailable right now. Please try again shortly.';
+
+  @override
+  String get downloadBackgroundHint =>
+      'You can close this window: downloads will continue.';
+
+  @override
+  String get downloadQueueActions => 'Manage queue';
+
+  @override
+  String get downloadFilterAll => 'All';
+
+  @override
+  String get downloadFilterActive => 'Active';
+
+  @override
+  String get downloadFilterFailed => 'Failed';
+
+  @override
+  String get downloadFilterFinished => 'Finished';
+
+  @override
+  String get downloadQueueUpToDate => 'No pending transfers';
+
+  @override
+  String get downloadClearHistory => 'Clear history';
+
+  @override
+  String get downloadEmptyFilter => 'Nothing in this category';
+
+  @override
+  String get downloadEmptyFilterHint =>
+      'Check the other categories to find your downloads.';
+
+  @override
+  String get downloadEmptyHint =>
+      'Download a track or folder from your servers to listen offline. Your HTTP/WebDAV transfers will appear here.';
+
+  @override
+  String get downloadBrowseServers => 'Browse servers';
+
+  @override
+  String get downloadShowAll => 'Show all';
+
+  @override
+  String get downloadIndexing => 'Adding to library…';
+
+  @override
+  String get downloadTransferComplete => 'Transfer complete';
+
+  @override
+  String get downloadMoreActions => 'Download options';
+
+  @override
+  String get downloadMissingHint =>
+      'This file is no longer available at this location on the server.';
+
+  @override
+  String get downloadFailedHint =>
+      'Check your connection and server access, then try again.';
+
+  @override
+  String get downloadViewQueue => 'View downloads';
+
+  @override
+  String get downloadHistoryHint =>
+      'Clearing removes completed or canceled transfers from this list. Your music is kept.';
+
+  @override
   String get actionNext => 'Next';
 
   @override

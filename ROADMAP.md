@@ -2,6 +2,8 @@
 
 ## Livré
 
+- [x] Gestionnaire de téléchargements : préparation sans fenêtre bloquante, téléchargement du serveur entier, transferts en cours en tête, filtres, progression détaillée et compteurs distincts du travail d’indexation.
+
 - [x] Détection des mises à jour Android directement via Google Play, sans manifeste Firebase à maintenir.
 - [x] Compatibilité avec la protection automatique Google Play (`minSdk 24`).
 

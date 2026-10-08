@@ -8,6 +8,9 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 import '../models/remote_audio_entry.dart';
+import '../models/server_profile.dart';
+import '../services/remote_server_service.dart';
+import 'download_request.dart';
 import 'library_provider.dart';
 import '../l10n/generated/app_localizations.dart';
 
@@ -16,8 +19,10 @@ class DownloadQueueProvider extends ChangeNotifier {
 
   static const group = 'musicstream_audio';
   final LibraryProvider _library;
-  final FileDownloader _downloader = FileDownloader();
+  late final FileDownloader _downloader = FileDownloader();
   final Set<String> _processing = {};
+  final Map<String, DownloadRequest> _requests = {};
+  Future<void> _ftpRequests = Future.value();
   List<TaskRecord> _records = const [];
   Future<void> _importChain = Future.value();
   Future<void> _enqueueChain = Future.value();
@@ -26,8 +31,68 @@ class DownloadQueueProvider extends ChangeNotifier {
   bool _reloadPending = false;
 
   List<TaskRecord> get records => List.unmodifiable(_records);
+  List<DownloadRequest> get requests => List.unmodifiable(_requests.values);
+
+  bool startRequest(
+      {required RemoteAudioEntry entry,
+      required ServerProfile profile,
+      required Future<String> Function() password,
+      required RemoteServerService remote}) {
+    final id = '${profile.id}:${entry.uri}';
+    if (_requests[id]?.active == true) return false;
+    final request = DownloadRequest(
+        entry: entry,
+        profile: profile,
+        password: password,
+        remote: remote,
+        library: _library,
+        enqueue: (files, headers) => enqueueAll(files, headers: headers));
+    _requests[id] = request;
+    void changed() {
+      if (request.stage == DownloadRequestStage.complete &&
+          profile.type != ServerType.ftp &&
+          request.added > 0) {
+        _requests.remove(id);
+        request.removeListener(changed);
+      }
+      notifyListeners();
+    }
+
+    request.addListener(changed);
+    notifyListeners();
+    if (profile.type == ServerType.ftp) {
+      _ftpRequests = _ftpRequests.then((_) => request.run());
+    } else {
+      unawaited(request.run());
+    }
+    return true;
+  }
+
+  void dismissRequest(String id) {
+    final request = _requests[id];
+    if (request == null || request.active) return;
+    _requests.remove(id);
+    request.dispose();
+    notifyListeners();
+  }
+
+  Future<void> retryRequest(DownloadRequest request) async {
+    if (request.active) return;
+    request.stage = DownloadRequestStage.scanning;
+    notifyListeners();
+    if (request.profile.type == ServerType.ftp) {
+      _ftpRequests = _ftpRequests.then((_) => request.run());
+      await _ftpRequests;
+    } else {
+      await request.run();
+    }
+  }
+
   int get activeCount =>
-      _records.where((record) => record.status.isNotFinalState).length;
+      _records.where((record) => record.status.isNotFinalState).length +
+      _requests.values.where((request) => request.active).length;
+
+  bool isImporting(String taskId) => _processing.contains(taskId);
 
   /// Progress of the unfinished download of [url]: null when none is running,
   /// a value in 0..1 once bytes flow and a negative value while it waits.
@@ -164,14 +229,18 @@ class DownloadQueueProvider extends ChangeNotifier {
   Future<void> pause(String taskId) async {
     final record = _records.where((item) => item.taskId == taskId).firstOrNull;
     final task = record?.task;
-    if (task is DownloadTask) await _downloader.pause(task);
+    if (task is DownloadTask && !await _downloader.pause(task)) {
+      throw StateError('Pause unavailable');
+    }
     await _reload();
   }
 
   Future<void> resume(String taskId) async {
     final record = _records.where((item) => item.taskId == taskId).firstOrNull;
     final task = record?.task;
-    if (task is DownloadTask) await _downloader.resume(task);
+    if (task is DownloadTask && !await _downloader.resume(task)) {
+      throw StateError('Resume unavailable');
+    }
     await _reload();
   }
 
@@ -206,7 +275,12 @@ class DownloadQueueProvider extends ChangeNotifier {
       metaData: task.metaData,
       displayName: task.displayName,
     );
-    await _downloader.enqueue(retry);
+    if (!await _downloader.enqueue(retry)) {
+      throw StateError('Retry unavailable');
+    }
+    // The replacement owns this transfer now; don't leave a stale failure
+    // behind or show it again in the next bulk retry.
+    await _downloader.database.deleteRecordsWithIds([taskId]);
     await _reload();
   }
 
@@ -249,17 +323,23 @@ class DownloadQueueProvider extends ChangeNotifier {
   }
 
   void _onStatus(TaskStatusUpdate update) {
-    _progressReloadTimer?.cancel();
-    _progressReloadTimer = null;
     _reload();
+    // Native callbacks precede the plugin's asynchronous database write.
+    // Re-read after it settles, including the very last status in the queue.
+    _progressReloadTimer ??= Timer(const Duration(milliseconds: 300), () {
+      _progressReloadTimer = null;
+      _reload();
+    });
     if (update.status == TaskStatus.complete) _scheduleImport(update.task);
   }
 
   void _scheduleImport(Task task) {
     if (_library.downloadedSourceUris.contains(task.url)) return;
     if (!_processing.add(task.taskId)) return;
+    notifyListeners();
     _importChain = _importChain.then((_) => _import(task)).whenComplete(() {
       _processing.remove(task.taskId);
+      notifyListeners();
     });
   }
 
