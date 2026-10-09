@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- Stabilité des gros téléchargements : moteur `background_downloader` 9.5.5, service Android `dataSync`, rafraîchissements regroupés sur 500 ms et lecture des tags/pochettes dans un isolate. Outils Android alignés (AGP 8.9.2, Gradle 8.11.1); installation de test indépendante facultative. Tests de rafales de 1 500 événements, de file volumineuse et de métadonnées hors du thread UI.
+
 - Interface serveur : bouton « Tout télécharger » sur une ligne dédiée pleine largeur dans la carte, au lieu du sous-titre comprimé par les actions. Libellé court français/anglais dans le navigateur, description complète en infobulle et une seule ligne avec ellipse si le texte est agrandi. Tests à 320 px et texte ×2 pour les deux emplacements.
 
 - Refonte des téléchargements : feuille redimensionnable, accès permanent, filtres et compteurs, fichiers en cours avant les fichiers en attente, pourcentage/taille/dossier, erreurs HTTP lisibles et actions explicites. Préparation des dossiers indépendante de l’écran, sans dialogue bloquant; bouton de téléchargement du serveur entier, accès capturés pour continuer après navigation, FTP suivi au premier plan. « Terminés » compte les transferts achevés même pendant l’indexation; relecture différée après les callbacks natifs pour éviter un dernier état périmé. Une nouvelle tentative acceptée retire l’ancien échec; le nettoyage conserve la musique. Tests d’interaction, préparation, tri, erreurs et petit écran avec texte agrandi ajoutés.

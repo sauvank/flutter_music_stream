@@ -2,6 +2,8 @@
 
 ## Livré
 
+- [x] Correctif des gros téléchargements : moteur 9.5.5, rafraîchissements regroupés, tags hors du thread UI et tests automatisés à 1 500 éléments; validation physique suivie ci-dessous.
+
 - [x] Bouton de téléchargement du serveur sur une ligne dédiée, libellé compact et tests petit écran français/anglais.
 
 - [x] Gestionnaire de téléchargements : préparation sans fenêtre bloquante, téléchargement du serveur entier, transferts en cours en tête, filtres, progression détaillée et compteurs distincts du travail d’indexation.
@@ -45,6 +47,9 @@
 - [x] Synchronisation optimisée : pas d’écriture distante à vide, relance progressive hors ligne, historique partagé chiffré, compteurs d’écoutes par appareil, horloges logiques et déverrouillage PC par QR protégé.
 
 ## En cours
+
+- [ ] Valider sur appareil un lot de plus de 1 000 transferts avec le moteur 9.5.5, les rafraîchissements regroupés et le service Android `dataSync`; conserver la file et les morceaux de l’installation Play.
+- [ ] Revue UI petit écran : débordement des commandes Lecture à 320 px repéré; correctif différé pendant la priorité stabilité des téléchargements.
 
 - [ ] Valider le dialogue de mise à jour sur une installation Play avec une version supérieure accessible au compte testeur.
 

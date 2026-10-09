@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 import '../models/remote_audio_entry.dart';
 import '../models/server_profile.dart';
 import '../services/remote_server_service.dart';
+import '../services/download_queue_refresh.dart';
 import 'download_request.dart';
 import 'library_provider.dart';
 import '../l10n/generated/app_localizations.dart';
@@ -26,7 +27,9 @@ class DownloadQueueProvider extends ChangeNotifier {
   List<TaskRecord> _records = const [];
   Future<void> _importChain = Future.value();
   Future<void> _enqueueChain = Future.value();
-  Timer? _progressReloadTimer;
+  late final _refresh = DownloadQueueRefresh(_reload, onError: (error) {
+    debugPrint('Unable to refresh download queue: ${error.runtimeType}');
+  });
   Future<void>? _reloadInFlight;
   bool _reloadPending = false;
 
@@ -119,16 +122,13 @@ class DownloadQueueProvider extends ChangeNotifier {
   Future<void> _initialize(AppLocalizations l10n) async {
     await _downloader.configure(globalConfig: [
       (Config.holdingQueue, (3, 2, 3)),
+    ], androidConfig: [
+      (Config.runInForeground, Config.always)
     ]);
     _downloader.registerCallbacks(
       group: group,
       taskStatusCallback: _onStatus,
-      taskProgressCallback: (_) {
-        _progressReloadTimer ??= Timer(const Duration(milliseconds: 300), () {
-          _progressReloadTimer = null;
-          _reload();
-        });
-      },
+      taskProgressCallback: (_) => _requestReload(),
     );
     configureNotifications(l10n);
     await _downloader.start();
@@ -323,15 +323,13 @@ class DownloadQueueProvider extends ChangeNotifier {
   }
 
   void _onStatus(TaskStatusUpdate update) {
-    _reload();
-    // Native callbacks precede the plugin's asynchronous database write.
-    // Re-read after it settles, including the very last status in the queue.
-    _progressReloadTimer ??= Timer(const Duration(milliseconds: 300), () {
-      _progressReloadTimer = null;
-      _reload();
-    });
+    _requestReload();
     if (update.status == TaskStatus.complete) _scheduleImport(update.task);
   }
+
+  // Thousands of enqueued/status callbacks must not each scan the entire
+  // persistent database and rebuild every consumer. Read after writes settle.
+  void _requestReload() => _refresh.request();
 
   void _scheduleImport(Task task) {
     if (_library.downloadedSourceUris.contains(task.url)) return;
@@ -362,7 +360,7 @@ class DownloadQueueProvider extends ChangeNotifier {
     } catch (error, stackTrace) {
       debugPrint('Unable to index background download: $error\n$stackTrace');
     }
-    await _reload();
+    _requestReload();
   }
 
   Future<void> _reload() {
@@ -393,7 +391,7 @@ class DownloadQueueProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    _progressReloadTimer?.cancel();
+    _refresh.dispose();
     super.dispose();
   }
 }

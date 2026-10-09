@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:audio_metadata_reader/audio_metadata_reader.dart' as tags;
+import 'package:flutter/foundation.dart';
 
 import '../models/music_track.dart';
 
@@ -34,7 +34,11 @@ class AudioMetadata {
 class AudioMetadataService {
   const AudioMetadataService();
 
-  Future<AudioMetadata> read(String path) async {
+  // The tag reader performs synchronous file I/O and artwork parsing. Large
+  // download batches must not run that work on Flutter's UI isolate.
+  Future<AudioMetadata> read(String path) => compute(_read, path);
+
+  static AudioMetadata _read(String path) {
     final tag = tags.readMetadata(File(path), getImage: true);
     final artwork = tag.pictures.where((picture) {
           return picture.pictureType == tags.PictureType.coverFront;

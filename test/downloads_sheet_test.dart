@@ -115,6 +115,22 @@ void main() {
     expect(find.byType(DownloadsSheet), findsNothing);
   });
 
+  testWidgets('a 1500-file queue builds visible rows lazily and stays usable',
+      (tester) async {
+    queue.items = [
+      for (var i = 0; i < 1499; i++) _record('Queued-$i', TaskStatus.enqueued),
+      _record('Currently-downloading', TaskStatus.running),
+    ];
+    await open(tester);
+    expect(find.text('Tout · 1500'), findsOneWidget);
+    expect(find.text('Currently-downloading.mp3'), findsOneWidget);
+    expect(find.text('Queued-1498.mp3'), findsNothing);
+    await tester.tap(find.text('Échecs · 0'));
+    await tester.pumpAndSettle();
+    expect(find.text('Currently-downloading.mp3'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('filters separate failures, active transfers and history',
       (tester) async {
     queue.items = [

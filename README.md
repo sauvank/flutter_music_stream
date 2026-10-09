@@ -10,7 +10,7 @@ La version Android prend en charge Android 7.0 (API 24) et versions ultérieures
 - copie dans le stockage privé de l’application et déduplication SHA-256 ;
 - bibliothèque persistante avec recherche, favoris et tri mémorisé par titre, artiste, album ou date d’ajout ; appui long pour sélectionner plusieurs morceaux et les lire ensuite, les ajouter à la file ou à une playlist, ou les supprimer ;
 - grands catalogues : index traité hors de l’interface, rafraîchissement regroupé des téléchargements et pochettes adaptées à leur taille d’affichage ;
-- lecture des tags audio, pochettes intégrées et durée à l’import ;
+- lecture des tags audio, pochettes intégrées et durée à l’import, hors du thread de l’interface ;
 - navigation par morceaux, artistes, albums et genres ;
 - médiathèque du téléphone en option, lue sur place sans copie ;
 - visualiseur du son en direct sur la pochette (permission micro demandée à l’activation, rien n’est enregistré) et barres animées dans le widget ;
@@ -30,6 +30,7 @@ La version Android prend en charge Android 7.0 (API 24) et versions ultérieures
 - navigation distante et téléchargement de morceaux ou dossiers entiers, avec état local explicite sous chaque dossier (vert si complet, orange si partiel) ; HTTP/WebDAV utilisent une file persistante en arrière-plan, limitée à deux transferts simultanés par serveur, tandis que FTP importe au premier plan ;
 - badge « Sur le téléphone » à la place du bouton de téléchargement pour les morceaux distants déjà importés ;
 - téléchargement d’un morceau, d’un dossier ou de tout un serveur sans fenêtre bloquante; préparation suivie dans le gestionnaire pendant la navigation. Transferts réellement en cours en tête, compteurs d’attente/pause/terminés, filtres, pourcentage et taille, reprise et relance des échecs, nettoyage de l’historique sans effacer la musique ;
+- téléchargements Android avec service de premier plan et notification persistante ; rafraîchissements regroupés pour les grosses files. L’arrêt forcé et les restrictions système peuvent interrompre le travail ; les tâches acceptées sont récupérées au prochain lancement, tandis que la préparation et l’indexation nécessitent le processus de l’app ;
 - navigation distante avec fil d’Ariane cliquable et filtre des dossiers volumineux ;
 - suppression des téléchargements serveur depuis le menu d’un morceau ou globalement depuis la bibliothèque ;
 - détection à la demande des nouveaux albums d’un serveur, après création d’une référence locale ;

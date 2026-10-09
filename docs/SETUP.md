@@ -1,5 +1,15 @@
 # Configuration locale
 
+## Installation de test indépendante (Android)
+
+Pour tester sans remplacer l’application signée Google Play ni toucher à sa bibliothèque :
+
+```sh
+ORG_GRADLE_PROJECT_musicstreamTestSuffix=.stresstest flutter build apk --debug --target-platform android-arm64
+```
+
+L’APK s’appelle « MusicStream Test », possède un stockage distinct et n’utilise pas la configuration Firebase de production. Sans cette variable, l’identifiant et la configuration habituels restent inchangés. Ne jamais désinstaller l’app Play pour contourner une différence de signature.
+
 ## Firebase (synchronisation de compte)
 
 Les fichiers de configuration Firebase ne sont pas versionnés. Sans eux,

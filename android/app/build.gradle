@@ -7,7 +7,7 @@ plugins {
 
 // Firebase config is kept out of the repository; without it the app still
 // builds and simply offers no account sync.
-if (file("google-services.json").exists()) {
+if (file("google-services.json").exists() && !project.hasProperty("musicstreamTestSuffix")) {
     apply plugin: "com.google.gms.google-services"
 }
 
@@ -35,6 +35,13 @@ android {
 
     defaultConfig {
         applicationId = "com.sauvank.musicstream"
+        // Optional isolated installation for device stress tests; never replaces
+        // the Play-signed application or accesses its private library/queue.
+        if (project.hasProperty("musicstreamTestSuffix")) {
+            applicationIdSuffix = project.property("musicstreamTestSuffix")
+        }
+        manifestPlaceholders["musicstreamAppLabel"] = project.hasProperty("musicstreamTestSuffix")
+            ? "MusicStream Test" : "MusicStream"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // Google Play automatic protection requires API 24 or newer.
