@@ -2917,6 +2917,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Supprimer les téléchargements…'**
   String get deleteDownloadsMenu;
+
+  /// No description provided for @syncSignedIn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecté'**
+  String get syncSignedIn;
 }
 
 class _AppLocalizationsDelegate

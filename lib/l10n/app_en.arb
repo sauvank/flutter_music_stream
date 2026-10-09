@@ -486,5 +486,6 @@
   "importFromServer": "From a server",
   "importFromServerHint": "WebDAV, HTTP or FTP: stream or download",
   "libraryMoreOptions": "More options",
-  "deleteDownloadsMenu": "Delete downloads…"
+  "deleteDownloadsMenu": "Delete downloads…",
+  "syncSignedIn": "Signed in"
 }

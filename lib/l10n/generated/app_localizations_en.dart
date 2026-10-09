@@ -1782,4 +1782,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteDownloadsMenu => 'Delete downloads…';
+
+  @override
+  String get syncSignedIn => 'Signed in';
 }

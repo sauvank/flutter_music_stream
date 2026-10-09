@@ -214,8 +214,14 @@ class _SyncSheetState extends State<_SyncSheet> {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: const Icon(Icons.account_circle_outlined),
-      title: Text(context.l10n
-          .syncSignedInAs(user.email ?? user.displayName ?? user.uid)),
+      // The address gets a line of its own: inside "Signed in: …" a long
+      // one wrapped mid-word beside the sign-out button.
+      title: Text(context.l10n.syncSignedIn),
+      subtitle: Text(
+        user.email ?? user.displayName ?? user.uid,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       trailing: TextButton(
         onPressed: sync.busy ? null : sync.signOut,
         child: Text(context.l10n.syncSignOut),

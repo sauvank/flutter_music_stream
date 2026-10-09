@@ -1822,4 +1822,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get deleteDownloadsMenu => 'Supprimer les téléchargements…';
+
+  @override
+  String get syncSignedIn => 'Connecté';
 }

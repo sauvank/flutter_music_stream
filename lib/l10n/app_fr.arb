@@ -934,5 +934,6 @@
   "importFromServer": "Depuis un serveur",
   "importFromServerHint": "WebDAV, HTTP ou FTP : écouter en ligne ou télécharger",
   "libraryMoreOptions": "Plus d’options",
-  "deleteDownloadsMenu": "Supprimer les téléchargements…"
+  "deleteDownloadsMenu": "Supprimer les téléchargements…",
+  "syncSignedIn": "Connecté"
 }
