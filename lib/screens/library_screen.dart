@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../models/audiobook.dart';
 import '../models/music_playlist.dart';
 import '../models/music_track.dart';
 import '../providers/library_provider.dart';
@@ -14,14 +15,16 @@ import 'home_screen.dart';
 import '../widgets/import_music_sheet.dart';
 import '../l10n/l10n.dart';
 
+// Chip order: the most used views first, so the row's first screen shows
+// them and the cut-off chip at its edge hints that it scrolls.
 enum _LibraryMode {
   tracks,
-  audiobooks,
-  history,
-  artists,
   albums,
+  artists,
+  audiobooks,
+  playlists,
+  history,
   genres,
-  playlists
 }
 
 extension on _LibraryMode {
@@ -69,6 +72,8 @@ class LibraryScreenState extends State<LibraryScreen> {
   late final _search =
       TextEditingController(text: context.read<LibraryProvider>().query);
   final _searchFocus = FocusNode();
+  final _selectedChip = GlobalKey();
+  bool _wasSearching = false;
 
   @override
   void initState() {
@@ -83,10 +88,32 @@ class LibraryScreenState extends State<LibraryScreen> {
     if (value.isNotEmpty) library.rememberSearch(value);
   }
 
-  /// Consumes a system back press to leave selection mode.
+  void _revealSelectedChip() =>
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final chip = _selectedChip.currentContext;
+        final box = chip?.findRenderObject();
+        if (chip == null || !chip.mounted || box == null) return;
+        // Only the chip row: the page itself must not move.
+        Scrollable.of(chip).position.ensureVisible(box, alignment: .5);
+      });
+
+  /// Consumes a system back press to undo, one step at a time, what narrows
+  /// the library: selection, search, favorites filter, then the chosen view.
   bool handleBack() {
-    if (!_selection.active) return false;
-    _selection.clear();
+    final library = context.read<LibraryProvider>();
+    if (_selection.active) {
+      _selection.clear();
+    } else if (library.query.isNotEmpty) {
+      _applySearch('');
+      _searchFocus.unfocus();
+    } else if (library.favoritesOnly) {
+      library.toggleFavoritesFilter();
+    } else if (_mode != _LibraryMode.tracks) {
+      setState(() => _mode = _LibraryMode.tracks);
+      _revealSelectedChip();
+    } else {
+      return false;
+    }
     return true;
   }
 
@@ -126,6 +153,11 @@ class LibraryScreenState extends State<LibraryScreen> {
 
   Widget _content(BuildContext context) {
     final library = context.watch<LibraryProvider>();
+    final searching = library.query.trim().isNotEmpty;
+    // The chip row is rebuilt scrolled to its start when a search ends; bring
+    // the selected view back into sight.
+    if (_wasSearching && !searching) _revealSelectedChip();
+    _wasSearching = searching;
     final tracks =
         _mode == _LibraryMode.playlists ? const <MusicTrack>[] : library.tracks;
     final history = _mode == _LibraryMode.history
@@ -201,30 +233,57 @@ class LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
           ),
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 54,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-              scrollDirection: Axis.horizontal,
-              itemCount: _LibraryMode.values.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final mode = _LibraryMode.values[index];
-                return ChoiceChip(
-                  selected: _mode == mode,
-                  showCheckmark: false,
-                  avatar: Icon(mode.icon, size: 18),
-                  label: Text(mode.label(context.l10n)),
-                  onSelected: (_) {
-                    _selection.clear();
-                    setState(() => _mode = mode);
+        // A search covers the whole library, so the view chips step aside.
+        if (searching)
+          ..._searchSlivers(context, library)
+        else ...[
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 54,
+              // Fades the trailing edge: the row scrolls to more views.
+              child: ShaderMask(
+                blendMode: BlendMode.dstIn,
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [Colors.white, Colors.white, Colors.transparent],
+                  stops: [0, .86, 1],
+                ).createShader(bounds),
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 48, 4),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _LibraryMode.values.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final mode = _LibraryMode.values[index];
+                    return ChoiceChip(
+                      key: _mode == mode ? _selectedChip : null,
+                      selected: _mode == mode,
+                      showCheckmark: false,
+                      avatar: Icon(mode.icon, size: 18),
+                      label: Text(mode.label(context.l10n)),
+                      onSelected: (_) {
+                        _selection.clear();
+                        setState(() => _mode = mode);
+                      },
+                    );
                   },
-                );
-              },
+                ),
+              ),
             ),
           ),
-        ),
+          ..._browseSlivers(context, library, tracks, history, groups),
+        ],
+      ],
+    );
+  }
+
+  List<Widget> _browseSlivers(
+    BuildContext context,
+    LibraryProvider library,
+    List<MusicTrack> tracks,
+    List<MusicTrack> history,
+    Map<String, List<MusicTrack>> groups,
+  ) =>
+      [
         if (_mode == _LibraryMode.playlists) ...[
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 14),
@@ -298,14 +357,10 @@ class LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
         ] else if (_mode == _LibraryMode.audiobooks) ...[
-          ..._audiobookSlivers(context, library.audiobooks),
+          ..._audiobookSlivers(context, library.audiobookGroups),
         ] else if (_mode == _LibraryMode.tracks) ...[
-          if (library.query.trim().isNotEmpty &&
-              library.matchingPlaylists.isNotEmpty)
-            SliverToBoxAdapter(
-              child: _PlaylistResults(playlists: library.matchingPlaylists),
-            ),
-          SliverToBoxAdapter(child: _RecentTracks(tracks: tracks)),
+          if (!library.favoritesOnly)
+            SliverToBoxAdapter(child: _RecentAlbums(tracks: tracks)),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 26, 20, 10),
             sliver: SliverToBoxAdapter(
@@ -370,11 +425,9 @@ class LibraryScreenState extends State<LibraryScreen> {
           _GroupGrid(groups: groups, mode: _mode),
           const SliverToBoxAdapter(child: SizedBox(height: 190)),
         ],
-      ],
-    );
-  }
+      ];
 
-  List<Widget> _audiobookSlivers(BuildContext context, List<MusicTrack> books) {
+  List<Widget> _audiobookSlivers(BuildContext context, List<Audiobook> books) {
     if (books.isEmpty) {
       return [
         SliverFillRemaining(
@@ -391,36 +444,143 @@ class LibraryScreenState extends State<LibraryScreen> {
         ),
       ];
     }
+    final listening =
+        books.where((book) => book.started && !book.finished).toList();
+    final others =
+        books.where((book) => !book.started || book.finished).toList();
+    List<Widget> section(String title, List<Audiobook> items) => [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+            sliver: SliverToBoxAdapter(
+              child: _SectionTitle(
+                title: title,
+                detail: context.l10n.audiobookBookCount(items.length),
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            sliver: SliverList.builder(
+              itemCount: items.length,
+              itemBuilder: (context, index) => _StaggeredEntry(
+                index: index,
+                child: _AudiobookTile(book: items[index]),
+              ),
+            ),
+          ),
+        ];
     return [
-      SliverPadding(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
-        sliver: SliverToBoxAdapter(
+      if (listening.isNotEmpty)
+        ...section(context.l10n.audiobooksInProgress, listening),
+      if (others.isNotEmpty)
+        ...section(
+          listening.isEmpty
+              ? _LibraryMode.audiobooks.label(context.l10n)
+              : context.l10n.audiobooksAll,
+          others,
+        ),
+      const SliverToBoxAdapter(child: SizedBox(height: 190)),
+    ];
+  }
+
+  /// Results from every view at once: a search should never depend on which
+  /// chip happened to be selected.
+  List<Widget> _searchSlivers(BuildContext context, LibraryProvider library) {
+    final query = library.query.trim();
+    final tracks = library.tracks;
+    final books = library.audiobookGroups;
+    final playlists = library.matchingPlaylists;
+    Map<String, List<MusicTrack>> named(String Function(MusicTrack) name) => {
+          for (final entry in _group(tracks, _LibraryMode.tracks, by: name)
+              .entries)
+            if (entry.key != MusicTrack.unknownArtist &&
+                entry.key != MusicTrack.unknownAlbum &&
+                LibraryProvider.matchesQuery(entry.key, query))
+              entry.key: entry.value,
+        };
+    final artists = named((track) => track.artist);
+    final albums = named((track) => track.album);
+    if (tracks.isEmpty && books.isEmpty && playlists.isEmpty) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: _NoResults(query: query),
+        ),
+      ];
+    }
+    Widget title(String text, int count, {Widget? action}) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
           child: _SectionTitle(
-            title: _mode.label(context.l10n),
-            detail: context.l10n.trackCount(books.length),
+            title: text,
+            detail: count.toString(),
+            action: action,
+          ),
+        );
+    return [
+      if (playlists.isNotEmpty)
+        SliverToBoxAdapter(child: _PlaylistResults(playlists: playlists)),
+      if (artists.isNotEmpty) ...[
+        SliverToBoxAdapter(
+          child: title(context.l10n.modeArtists, artists.length),
+        ),
+        SliverToBoxAdapter(
+          child: _CollectionRow(groups: artists, circularArtwork: true),
+        ),
+      ],
+      if (albums.isNotEmpty) ...[
+        SliverToBoxAdapter(
+          child: title(context.l10n.modeAlbums, albums.length),
+        ),
+        SliverToBoxAdapter(child: _CollectionRow(groups: albums)),
+      ],
+      if (books.isNotEmpty) ...[
+        SliverToBoxAdapter(
+          child: title(context.l10n.modeAudiobooks, books.length),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          sliver: SliverList.builder(
+            itemCount: books.length,
+            itemBuilder: (context, index) =>
+                _AudiobookTile(book: books[index]),
           ),
         ),
-      ),
-      SliverPadding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 190),
-        sliver: SliverList.builder(
-          itemCount: books.length,
-          itemBuilder: (context, index) => _StaggeredEntry(
-            index: index,
-            child: _TrackTile(track: books[index], queue: [books[index]]),
+      ],
+      if (tracks.isNotEmpty) ...[
+        SliverToBoxAdapter(
+          child: title(
+            context.l10n.modeTracks,
+            tracks.length,
+            action: TextButton.icon(
+              onPressed: () => context.read<PlayerProvider>().playAll(tracks),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: Text(context.l10n.playAll),
+            ),
           ),
         ),
-      ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          sliver: SliverList.builder(
+            itemCount: tracks.length,
+            itemBuilder: (context, index) => _StaggeredEntry(
+              index: index,
+              child: _TrackTile(track: tracks[index], queue: tracks),
+            ),
+          ),
+        ),
+      ],
+      const SliverToBoxAdapter(child: SizedBox(height: 190)),
     ];
   }
 
   Map<String, List<MusicTrack>> _group(
     List<MusicTrack> tracks,
-    _LibraryMode mode,
-  ) {
+    _LibraryMode mode, {
+    String Function(MusicTrack)? by,
+  }) {
     final grouped = <String, List<MusicTrack>>{};
     for (final track in tracks) {
-      grouped.putIfAbsent(mode.valueFor(track), () => []).add(track);
+      grouped.putIfAbsent((by ?? mode.valueFor)(track), () => []).add(track);
     }
     for (final values in grouped.values) {
       values.sort((a, b) {
@@ -515,12 +675,6 @@ class _LibraryHeader extends StatelessWidget {
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded),
                 ),
-                if (count > 0)
-                  IconButton(
-                    tooltip: context.l10n.deleteDownloadsTooltip,
-                    onPressed: onDeleteAll,
-                    icon: const Icon(Icons.delete_sweep_outlined),
-                  ),
                 IconButton.filled(
                   tooltip: context.l10n.importTracks,
                   onPressed: importing ? null : onImport,
@@ -531,23 +685,39 @@ class _LibraryHeader extends StatelessWidget {
                         )
                       : const Icon(Icons.add_rounded),
                 ),
+                // Deleting lives behind a menu, away from everyday buttons.
+                if (count > 0)
+                  PopupMenuButton<VoidCallback>(
+                    tooltip: context.l10n.libraryMoreOptions,
+                    icon: const Icon(Icons.more_vert_rounded),
+                    onSelected: (action) => action(),
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: onDeleteAll,
+                        enabled: onDeleteAll != null,
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(
+                            Icons.delete_sweep_outlined,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                          title: Text(context.l10n.deleteDownloadsMenu),
+                        ),
+                      ),
+                    ],
+                  ),
               ],
             ),
-            const SizedBox(height: 28),
-            Text(
-              count == 0 ? context.l10n.emptyHeadline : context.l10n.headline,
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    height: 1.04,
-                    letterSpacing: -1.6,
-                  ),
-            ),
-            if (count > 0) ...[
-              const SizedBox(height: 10),
+            // The headline welcomes an empty library; once it holds music the
+            // first screen belongs to the music itself.
+            if (count == 0) ...[
+              const SizedBox(height: 28),
               Text(
-                context.l10n.offlineCount(count),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                context.l10n.emptyHeadline,
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      height: 1.04,
+                      letterSpacing: -1.6,
                     ),
               ),
             ],
@@ -579,24 +749,46 @@ class _LibraryHeader extends StatelessWidget {
   }
 }
 
-class _RecentTracks extends StatelessWidget {
-  const _RecentTracks({required this.tracks});
+/// The latest additions as albums: eight cards from one freshly imported
+/// album said less than one card per album.
+class _RecentAlbums extends StatelessWidget {
+  const _RecentAlbums({required this.tracks});
   final List<MusicTrack> tracks;
 
   @override
   Widget build(BuildContext context) {
     final recent = List<MusicTrack>.of(tracks)
       ..sort((a, b) => b.addedAt.compareTo(a.addedAt));
-    final visible = recent.take(8).toList();
+    final albums = <String, List<MusicTrack>>{};
+    for (final track in recent) {
+      final key = track.album == MusicTrack.unknownAlbum
+          ? 'track\u0000${track.id}'
+          : '${track.album}\u0000${track.artist}';
+      if (albums.length == 8 && !albums.containsKey(key)) break;
+      albums.putIfAbsent(key, () => []).add(track);
+    }
+    // Every track of a listed album, not only the recent ones, in order.
+    final entries = [
+      for (final group in albums.values)
+        group.first.album == MusicTrack.unknownAlbum
+            ? group
+            : (tracks
+                .where((track) =>
+                    track.album == group.first.album &&
+                    track.artist == group.first.artist)
+                .toList()
+              ..sort(_albumOrder)),
+    ];
+    final latest = [for (final group in entries) ...group];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 26, 20, 14),
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
           child: _SectionTitle(
             title: context.l10n.recentlyAdded,
             action: TextButton.icon(
-              onPressed: () => context.read<PlayerProvider>().playAll(visible),
+              onPressed: () => context.read<PlayerProvider>().playAll(latest),
               icon: const Icon(Icons.play_arrow_rounded),
               label: Text(context.l10n.playAll),
             ),
@@ -607,21 +799,18 @@ class _RecentTracks extends StatelessWidget {
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             scrollDirection: Axis.horizontal,
-            itemCount: visible.length,
+            itemCount: entries.length,
             separatorBuilder: (_, __) => const SizedBox(width: 14),
-            itemBuilder: (_, index) => Builder(builder: (context) {
-              final track = visible[index];
-              final selection = context.read<_TrackSelection>();
-              final selected = context.select<_TrackSelection, bool>(
-                (selection) => selection.contains(track.id),
-              );
+            itemBuilder: (context, index) {
+              final group = entries[index];
+              final first = group.first;
+              final single = first.album == MusicTrack.unknownAlbum;
               return SizedBox(
                 width: 158,
                 child: InkWell(
-                  onTap: () => selection.active
-                      ? selection.toggle(track.id)
-                      : playWithPositionCheck(context, track, visible),
-                  onLongPress: () => selection.toggle(track.id),
+                  onTap: () => single
+                      ? playWithPositionCheck(context, first, group)
+                      : _openCollection(context, first.album, group),
                   borderRadius: BorderRadius.circular(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -629,42 +818,39 @@ class _RecentTracks extends StatelessWidget {
                       Stack(
                         children: [
                           TrackArtwork(
-                            track: track,
+                            track: first,
                             size: 158,
                             borderRadius: BorderRadius.circular(24),
                           ),
                           Positioned(
-                            right: 10,
-                            bottom: 10,
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: selected
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Colors.white,
-                                shape: BoxShape.circle,
+                            right: 6,
+                            bottom: 6,
+                            child: IconButton.filled(
+                              tooltip: context.l10n.playCollection,
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: const Color(0xFF171221),
                               ),
-                              child: Icon(
-                                  selected
-                                      ? Icons.check_rounded
-                                      : Icons.play_arrow_rounded,
-                                  color: selected
-                                      ? Theme.of(context).colorScheme.onPrimary
-                                      : const Color(0xFF171221)),
+                              onPressed: () => context
+                                  .read<PlayerProvider>()
+                                  .playAll(group),
+                              icon: const Icon(Icons.play_arrow_rounded),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        track.title,
+                        single ? first.title : first.album,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                       Text(
-                        context.l10n.metadata(track.artist),
+                        single
+                            ? context.l10n.metadata(first.artist)
+                            : '${context.l10n.metadata(first.artist)} · '
+                                '${context.l10n.trackCount(group.length)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall,
@@ -673,13 +859,156 @@ class _RecentTracks extends StatelessWidget {
                   ),
                 ),
               );
-            }),
+            },
           ),
         ),
       ],
     );
   }
 }
+
+int _albumOrder(MusicTrack a, MusicTrack b) {
+  final disc = (a.discNumber ?? 0).compareTo(b.discNumber ?? 0);
+  if (disc != 0) return disc;
+  final number = (a.trackNumber ?? 0).compareTo(b.trackNumber ?? 0);
+  return number != 0 ? number : Audiobook.naturalCompare(a.title, b.title);
+}
+
+void _openCollection(
+  BuildContext context,
+  String title,
+  List<MusicTrack> tracks,
+) =>
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => _CollectionScreen(title: title, tracks: tracks),
+    ));
+
+/// A horizontal strip of artist or album cards, for search results.
+class _CollectionRow extends StatelessWidget {
+  const _CollectionRow({required this.groups, this.circularArtwork = false});
+  final Map<String, List<MusicTrack>> groups;
+  final bool circularArtwork;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        height: 196,
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          scrollDirection: Axis.horizontal,
+          itemCount: groups.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 2),
+          itemBuilder: (context, index) {
+            final entry = groups.entries.elementAt(index);
+            return SizedBox(
+              width: 148,
+              child: _CollectionCard(
+                title: entry.key,
+                tracks: entry.value,
+                circularArtwork: circularArtwork,
+              ),
+            );
+          },
+        ),
+      );
+}
+
+/// One audiobook: progress across all of its chapters and a single button
+/// that resumes where listening stopped.
+class _AudiobookTile extends StatelessWidget {
+  const _AudiobookTile({required this.book});
+  final Audiobook book;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final progress = book.progress;
+    final resume = book.resumeChapter;
+    final details = [
+      if (book.chapters.length > 1) l10n.audiobookChapters(book.chapters.length),
+      if (book.finished)
+        l10n.audiobookFinished
+      else if (progress != null)
+        l10n.audiobookProgress((progress * 100).floor()),
+    ].join(' · ');
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      color: Theme.of(context)
+          .colorScheme
+          .surfaceContainerHigh
+          .withValues(alpha: .55),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => book.chapters.length == 1
+            ? resumeAudiobook(context, book)
+            : _openCollection(context, book.title, book.chapters),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Row(
+            children: [
+              TrackArtwork(
+                track: resume,
+                size: 64,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      book.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.metadata(book.author),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    if (details.isNotEmpty)
+                      Text(
+                        details,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    if (progress != null && !book.finished) ...[
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 4,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              FilledButton.tonalIcon(
+                onPressed: () => resumeAudiobook(context, book),
+                icon: const Icon(Icons.play_arrow_rounded),
+                label: Text(book.started && !book.finished
+                    ? l10n.audiobookResume
+                    : l10n.audiobookListen),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Continues [book] at its resume point and runs on through its chapters.
+Future<void> resumeAudiobook(BuildContext context, Audiobook book) =>
+    playWithPositionCheck(context, book.resumeChapter, book.chapters);
 
 class _GroupGrid extends StatelessWidget {
   const _GroupGrid({required this.groups, required this.mode});
@@ -790,6 +1119,10 @@ class _CollectionScreen extends StatelessWidget {
     };
     final visible =
         tracks.map((track) => available[track.id]).nonNulls.toList();
+    final books = visible.every((track) => track.isAudiobook)
+        ? Audiobook.group(visible)
+        : const <Audiobook>[];
+    final book = books.length == 1 ? books.single : null;
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -809,7 +1142,10 @@ class _CollectionScreen extends StatelessWidget {
                 tooltip: context.l10n.playCollection,
                 onPressed: visible.isEmpty
                     ? null
-                    : () => context.read<PlayerProvider>().playAll(visible),
+                    // A single book resumes where it stopped.
+                    : book != null
+                        ? () => resumeAudiobook(context, book)
+                        : () => context.read<PlayerProvider>().playAll(visible),
                 icon: const Icon(Icons.play_arrow_rounded),
               ),
               const SizedBox(width: 12),
@@ -1432,7 +1768,8 @@ class _EmptyPlaylist extends StatelessWidget {
 }
 
 class _NoResults extends StatelessWidget {
-  const _NoResults();
+  const _NoResults({this.query});
+  final String? query;
 
   @override
   Widget build(BuildContext context) => Center(
@@ -1444,7 +1781,11 @@ class _NoResults extends StatelessWidget {
               Icon(Icons.search_off_rounded,
                   size: 64, color: Theme.of(context).colorScheme.primary),
               const SizedBox(height: 16),
-              Text(context.l10n.noResults,
+              Text(
+                  query == null
+                      ? context.l10n.noResults
+                      : context.l10n.noResultsFor(query!),
+                  textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 6),
               Text(

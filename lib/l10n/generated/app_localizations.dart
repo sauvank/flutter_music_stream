@@ -1169,7 +1169,7 @@ abstract class AppLocalizations {
   /// No description provided for @importChooseFolderHint.
   ///
   /// In fr, this message translates to:
-  /// **'Importer récursivement tous les morceaux du dossier'**
+  /// **'Ajoute tous les morceaux du dossier et de ses sous-dossiers'**
   String get importChooseFolderHint;
 
   /// No description provided for @importFailed.
@@ -1511,7 +1511,7 @@ abstract class AppLocalizations {
   /// No description provided for @noResultsHint.
   ///
   /// In fr, this message translates to:
-  /// **'Essayez un autre titre, artiste, album ou genre.'**
+  /// **'Essayez un autre titre, artiste ou album.'**
   String get noResultsHint;
 
   /// No description provided for @notNow.
@@ -2827,6 +2827,96 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Fin du livre'**
   String get sleepTimerEndOfBook;
+
+  /// No description provided for @noResultsFor.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun résultat pour « {query} »'**
+  String noResultsFor(String query);
+
+  /// No description provided for @audiobookChapters.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{{count} chapitre} other{{count} chapitres}}'**
+  String audiobookChapters(int count);
+
+  /// No description provided for @audiobookBookCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{{count} livre} other{{count} livres}}'**
+  String audiobookBookCount(int count);
+
+  /// No description provided for @audiobookProgress.
+  ///
+  /// In fr, this message translates to:
+  /// **'{percent} % écouté'**
+  String audiobookProgress(int percent);
+
+  /// No description provided for @audiobookResume.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reprendre'**
+  String get audiobookResume;
+
+  /// No description provided for @audiobookListen.
+  ///
+  /// In fr, this message translates to:
+  /// **'Écouter'**
+  String get audiobookListen;
+
+  /// No description provided for @audiobookFinished.
+  ///
+  /// In fr, this message translates to:
+  /// **'Terminé'**
+  String get audiobookFinished;
+
+  /// No description provided for @audiobooksInProgress.
+  ///
+  /// In fr, this message translates to:
+  /// **'En cours d’écoute'**
+  String get audiobooksInProgress;
+
+  /// No description provided for @audiobooksAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tous les livres'**
+  String get audiobooksAll;
+
+  /// No description provided for @importDeviceMedia.
+  ///
+  /// In fr, this message translates to:
+  /// **'Musique du téléphone'**
+  String get importDeviceMedia;
+
+  /// No description provided for @importDeviceMediaEnabled.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déjà activée : rechercher les nouveaux morceaux'**
+  String get importDeviceMediaEnabled;
+
+  /// No description provided for @importFromServer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Depuis un serveur'**
+  String get importFromServer;
+
+  /// No description provided for @importFromServerHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'WebDAV, HTTP ou FTP : écouter en ligne ou télécharger'**
+  String get importFromServerHint;
+
+  /// No description provided for @libraryMoreOptions.
+  ///
+  /// In fr, this message translates to:
+  /// **'Plus d’options'**
+  String get libraryMoreOptions;
+
+  /// No description provided for @deleteDownloadsMenu.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer les téléchargements…'**
+  String get deleteDownloadsMenu;
 }
 
 class _AppLocalizationsDelegate

@@ -6,7 +6,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/appearance_provider.dart';
 import '../providers/library_provider.dart';
-import '../services/audio_access.dart';
 import '../services/home_widget_service.dart';
 import '../providers/sync_provider.dart';
 import '../widgets/sync_sheet.dart';
@@ -284,36 +283,11 @@ class _DeviceMediaTile extends StatelessWidget {
   }
 
   Future<void> _toggle(BuildContext context, bool value) async {
-    final library = context.read<LibraryProvider>();
-    if (!value) {
-      await library.setDeviceMediaEnabled(false);
-      return;
-    }
-    final messenger = ScaffoldMessenger.of(context);
-    final l10n = context.l10n;
-    if (!await AudioAccess.request()) {
-      messenger.showSnackBar(SnackBar(
-        content: Text(l10n.deviceMediaPermission),
-        action: SnackBarAction(
-          label: l10n.openSettings,
-          onPressed: AudioAccess.openSettings,
-        ),
-      ));
-      return;
-    }
-    await library.setDeviceMediaEnabled(true);
-    if (context.mounted) await _scan(context);
+    if (value) return enableDeviceMedia(context);
+    await context.read<LibraryProvider>().setDeviceMediaEnabled(false);
   }
 
-  Future<void> _scan(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final l10n = context.l10n;
-    final summary = await context.read<LibraryProvider>().scanDeviceMedia();
-    if (summary == null) return;
-    messenger.showSnackBar(SnackBar(
-      content: Text(l10n.deviceMediaSummary(summary.added, summary.removed)),
-    ));
-  }
+  Future<void> _scan(BuildContext context) => scanDeviceMedia(context);
 }
 
 class _AutomaticLyricsTile extends StatefulWidget {

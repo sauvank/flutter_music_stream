@@ -24,6 +24,13 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   static final _nowPlayingRequests = ValueNotifier<int>(0);
+  static final _serversRequests = ValueNotifier<int>(0);
+
+  /// Closes the pages pushed over the tabs and shows the Servers tab.
+  static void openServers(BuildContext context) {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    _serversRequests.value++;
+  }
 
   /// Closes the pages pushed over the tabs and shows Now Playing.
   static void openNowPlaying(BuildContext context) {
@@ -46,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     HomeScreen._nowPlayingRequests.addListener(_showNowPlaying);
+    HomeScreen._serversRequests.addListener(_showServers);
     _player = context.read<PlayerProvider>()
       ..unsupportedFormat.addListener(_explainUnsupportedFormat);
     if (Platform.isAndroid) {
@@ -137,10 +145,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _player.unsupportedFormat.removeListener(_explainUnsupportedFormat);
     HomeScreen._nowPlayingRequests.removeListener(_showNowPlaying);
+    HomeScreen._serversRequests.removeListener(_showServers);
     super.dispose();
   }
 
   void _showNowPlaying() => _select(2);
+
+  void _showServers() => _select(1);
 
   void _select(int value) {
     if (value == _index) return;
@@ -168,11 +179,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         return;
       }
     }
-    _visited.remove(_index);
-    if (_visited.isNotEmpty) {
-      setState(() => _index = _visited.removeLast());
+    // Closing Now Playing returns to the tab it was opened from. Elsewhere
+    // back follows Android's convention: other tabs lead to the Library, and
+    // the Library, once its search and filters are cleared, leaves the app
+    // (playback carries on in its notification).
+    if (_index == 2) {
+      _visited.remove(_index);
+      setState(() => _index = _visited.isEmpty ? 0 : _visited.removeLast());
     } else if (_index != 0) {
       setState(() => _index = 0);
+    } else {
+      SystemNavigator.pop();
     }
   }
 

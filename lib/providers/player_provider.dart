@@ -336,7 +336,8 @@ class PlayerProvider extends ChangeNotifier {
   }
 
   Future<void> playTrack(MusicTrack track, List<MusicTrack> library) async {
-    // An audiobook plays on its own: it never runs on into music.
+    // An audiobook never runs on into music, only into the next chapters of
+    // the same book (same album and author) when they are queued with it.
     if (track.isAudiobook) {
       final total = track.durationMs;
       // Only a genuinely completed book starts over. Treating the last
@@ -347,7 +348,23 @@ class PlayerProvider extends ChangeNotifier {
           track.lastPositionMs >= total - 1000) {
         track = track.copyWith(lastPositionMs: 0);
       }
-      library = [track];
+      final start = track;
+      library = track.album == MusicTrack.unknownAlbum
+          ? [track]
+          : [
+              for (final item in library)
+                if (item.id == start.id)
+                  start
+                else if (item.isAudiobook &&
+                    item.album == start.album &&
+                    item.artist == start.artist)
+                  item,
+            ];
+      if (!library.any((item) => item.id == track.id)) library = [track];
+      // Chapters are read in order.
+      if (library.length > 1 && _player.shuffleModeEnabled) {
+        await _player.setShuffleModeEnabled(false);
+      }
     }
     final startIndex = library.indexWhere((item) => item.id == track.id);
     _queue = List.of(library);

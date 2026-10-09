@@ -118,6 +118,34 @@ void main() {
     player.dispose();
   });
 
+  test('an audiobook runs on into its own next chapters, never into music',
+      () async {
+    final audioPlayer = _FakeAudioPlayer()..shuffleEnabled = true;
+    final player = PlayerProvider(
+      audioPlayer: audioPlayer,
+      fadeDuration: Duration.zero,
+    );
+    MusicTrack chapter(String id, {String album = 'Livre'}) => MusicTrack(
+          id: id,
+          title: id,
+          album: album,
+          genre: 'Audiobook',
+          uri: 'file:///books/$id.mp3',
+          addedAt: DateTime.utc(2026),
+        );
+    final song = _track('song');
+    final first = chapter('c1');
+    final second = chapter('c2');
+    final other = chapter('x', album: 'Autre');
+
+    await player.playTrack(second, [first, second, other, song]);
+
+    expect(player.queue.map((track) => track.id), ['c1', 'c2']);
+    expect(player.current?.id, 'c2');
+    expect(audioPlayer.shuffleEnabled, isFalse);
+    player.dispose();
+  });
+
   test('removes every queued copy of a deleted track', () async {
     final audioPlayer = _FakeAudioPlayer();
     final player = PlayerProvider(

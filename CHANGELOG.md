@@ -2,6 +2,17 @@
 
 ## Modifications récentes
 
+- Parcours revus après l’audit UX :
+  - livres audio regroupés par livre (album + auteur), avec la progression sur tous les chapitres, une section « En cours d’écoute » et un bouton « Reprendre » ; les chapitres d’un même livre s’enchaînent dans l’ordre naturel, sans aléatoire ;
+  - recherche globale : artistes, albums, livres audio, playlists et morceaux, quel que soit l’onglet, avec « Aucun résultat pour « … » » ;
+  - en-tête compact quand la bibliothèque n’est pas vide ;
+  - « Ajoutés récemment » montre des albums ;
+  - onglets réordonnés (Albums et Artistes visibles), rangée estompée au bord ;
+  - « Ajouter de la musique » propose la musique du téléphone et les serveurs ;
+  - « Supprimer les téléchargements » passe dans un menu ⋮ ;
+  - Retour : vers la Bibliothèque, puis annule recherche, filtre favoris et vue, puis quitte l’app (la lecture continue) ; avant, il ne quittait jamais depuis la Bibliothèque ;
+  - téléchargements réessayés 6 fois au lieu de 3 (erreurs 500 intermittentes d’alist/TeraBox).
+
 - Performances : l’animation d’entrée des listes de la bibliothèque ne joue plus que sur le premier écran (frames de rendu hors budget au défilement de 255 à ~35 sur 640). Ajout des benchmarks `integration_test` (UI et 3 000 téléchargements WebDAV), voir `docs/TESTING.md`.
 
 - CI accélérée : fusion de `build_and_release.yml` dans `release.yml` (une seule installation par job, builds Android/Windows en parallèle, APK universel tiré de l’AAB, APK x86_64 séparé abandonné), suppression du build debug de `ci.yml`, CI ignorée sur les bumps de version, caches Gradle/Flutter remplis sur `main` par `warm-cache.yml`. Environ 50 → 20 minutes facturées par version.

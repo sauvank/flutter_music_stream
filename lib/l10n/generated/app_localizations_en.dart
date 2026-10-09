@@ -714,7 +714,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importChooseFolderHint =>
-      'Import every track in the folder and its subfolders';
+      'Adds every track in the folder and its subfolders';
 
   @override
   String get importFailed => 'Import failed. Please try again.';
@@ -934,7 +934,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noResults => 'No results';
 
   @override
-  String get noResultsHint => 'Try another title, artist, album or genre.';
+  String get noResultsHint => 'Try another title, artist or album.';
 
   @override
   String get notNow => 'Not now';
@@ -1717,4 +1717,69 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sleepTimerEndOfBook => 'End of book';
+
+  @override
+  String noResultsFor(String query) {
+    return 'No results for “$query”';
+  }
+
+  @override
+  String audiobookChapters(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count chapters',
+      one: '$count chapter',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String audiobookBookCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count books',
+      one: '$count book',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String audiobookProgress(int percent) {
+    return '$percent% listened';
+  }
+
+  @override
+  String get audiobookResume => 'Resume';
+
+  @override
+  String get audiobookListen => 'Listen';
+
+  @override
+  String get audiobookFinished => 'Finished';
+
+  @override
+  String get audiobooksInProgress => 'Continue listening';
+
+  @override
+  String get audiobooksAll => 'All books';
+
+  @override
+  String get importDeviceMedia => 'Music on this phone';
+
+  @override
+  String get importDeviceMediaEnabled => 'Already on: look for new tracks';
+
+  @override
+  String get importFromServer => 'From a server';
+
+  @override
+  String get importFromServerHint => 'WebDAV, HTTP or FTP: stream or download';
+
+  @override
+  String get libraryMoreOptions => 'More options';
+
+  @override
+  String get deleteDownloadsMenu => 'Delete downloads…';
 }

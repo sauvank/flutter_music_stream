@@ -737,7 +737,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get importChooseFolderHint =>
-      'Importer récursivement tous les morceaux du dossier';
+      'Ajoute tous les morceaux du dossier et de ses sous-dossiers';
 
   @override
   String get importFailed => 'Import impossible. Réessayez.';
@@ -961,8 +961,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noResults => 'Aucun résultat';
 
   @override
-  String get noResultsHint =>
-      'Essayez un autre titre, artiste, album ou genre.';
+  String get noResultsHint => 'Essayez un autre titre, artiste ou album.';
 
   @override
   String get notNow => 'Pas maintenant';
@@ -1756,4 +1755,71 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sleepTimerEndOfBook => 'Fin du livre';
+
+  @override
+  String noResultsFor(String query) {
+    return 'Aucun résultat pour « $query »';
+  }
+
+  @override
+  String audiobookChapters(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count chapitres',
+      one: '$count chapitre',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String audiobookBookCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count livres',
+      one: '$count livre',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String audiobookProgress(int percent) {
+    return '$percent % écouté';
+  }
+
+  @override
+  String get audiobookResume => 'Reprendre';
+
+  @override
+  String get audiobookListen => 'Écouter';
+
+  @override
+  String get audiobookFinished => 'Terminé';
+
+  @override
+  String get audiobooksInProgress => 'En cours d’écoute';
+
+  @override
+  String get audiobooksAll => 'Tous les livres';
+
+  @override
+  String get importDeviceMedia => 'Musique du téléphone';
+
+  @override
+  String get importDeviceMediaEnabled =>
+      'Déjà activée : rechercher les nouveaux morceaux';
+
+  @override
+  String get importFromServer => 'Depuis un serveur';
+
+  @override
+  String get importFromServerHint =>
+      'WebDAV, HTTP ou FTP : écouter en ligne ou télécharger';
+
+  @override
+  String get libraryMoreOptions => 'Plus d’options';
+
+  @override
+  String get deleteDownloadsMenu => 'Supprimer les téléchargements…';
 }

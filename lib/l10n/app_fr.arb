@@ -377,7 +377,7 @@
   "importChooseFiles": "Choisir des fichiers",
   "importChooseFilesHint": "Sélectionner un ou plusieurs morceaux",
   "importChooseFolder": "Choisir un dossier",
-  "importChooseFolderHint": "Importer récursivement tous les morceaux du dossier",
+  "importChooseFolderHint": "Ajoute tous les morceaux du dossier et de ses sous-dossiers",
   "importFailed": "Import impossible. Réessayez.",
   "importFailures": "{count, plural, one{{count} échec} other{{count} échecs}}",
   "@importFailures": {
@@ -500,7 +500,7 @@
     }
   },
   "noResults": "Aucun résultat",
-  "noResultsHint": "Essayez un autre titre, artiste, album ou genre.",
+  "noResultsHint": "Essayez un autre titre, artiste ou album.",
   "notNow": "Pas maintenant",
   "nothingNewToDownload": "Aucun nouveau téléchargement à ajouter.",
   "nothingPlaying": "Aucun morceau en lecture.",
@@ -915,5 +915,24 @@
   "previousChapter": "Chapitre précédent",
   "nextChapter": "Chapitre suivant",
   "sleepTimerEndOfChapter": "Fin du chapitre",
-  "sleepTimerEndOfBook": "Fin du livre"
+  "sleepTimerEndOfBook": "Fin du livre",
+  "noResultsFor": "Aucun résultat pour « {query} »",
+  "@noResultsFor": {"placeholders": {"query": {"type": "String"}}},
+  "audiobookChapters": "{count, plural, one{{count} chapitre} other{{count} chapitres}}",
+  "@audiobookChapters": {"placeholders": {"count": {"type": "int"}}},
+  "audiobookBookCount": "{count, plural, one{{count} livre} other{{count} livres}}",
+  "@audiobookBookCount": {"placeholders": {"count": {"type": "int"}}},
+  "audiobookProgress": "{percent} % écouté",
+  "@audiobookProgress": {"placeholders": {"percent": {"type": "int"}}},
+  "audiobookResume": "Reprendre",
+  "audiobookListen": "Écouter",
+  "audiobookFinished": "Terminé",
+  "audiobooksInProgress": "En cours d’écoute",
+  "audiobooksAll": "Tous les livres",
+  "importDeviceMedia": "Musique du téléphone",
+  "importDeviceMediaEnabled": "Déjà activée : rechercher les nouveaux morceaux",
+  "importFromServer": "Depuis un serveur",
+  "importFromServerHint": "WebDAV, HTTP ou FTP : écouter en ligne ou télécharger",
+  "libraryMoreOptions": "Plus d’options",
+  "deleteDownloadsMenu": "Supprimer les téléchargements…"
 }

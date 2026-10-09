@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../models/audiobook.dart';
 import '../models/music_playlist.dart';
 import '../models/music_track.dart';
 import '../models/remote_audio_entry.dart';
@@ -45,6 +46,7 @@ class LibraryProvider extends ChangeNotifier {
   List<MusicTrack>? _tracksCache;
   List<MusicTrack>? _historyCache;
   List<MusicTrack>? _audiobooksCache;
+  List<Audiobook>? _audiobookGroupsCache;
   Map<String, MusicTrack>? _byIdCache;
   Map<String, MusicTrack>? _bySourceUriCache;
 
@@ -103,6 +105,13 @@ class LibraryProvider extends ChangeNotifier {
           }),
       );
 
+  /// [audiobooks] gathered into books, the most recently heard first.
+  List<Audiobook> get audiobookGroups =>
+      _audiobookGroupsCache ??= List.unmodifiable(Audiobook.group(audiobooks));
+
+  /// Audiobook files in the library, whatever the search.
+  int get audiobookCount => _tracks.where((track) => track.isAudiobook).length;
+
   /// Sorts with precomputed accent-insensitive keys; ties keep album order.
   static List<MusicTrack> sortTracks(
     Iterable<MusicTrack> tracks,
@@ -145,6 +154,10 @@ class LibraryProvider extends ChangeNotifier {
     'ù': 'u', 'û': 'u', 'ü': 'u', 'ú': 'u', 'ÿ': 'y', 'œ': 'oe', 'æ': 'ae',
   };
 
+  /// Accent- and case-insensitive containment, as the library search uses.
+  static bool matchesQuery(String value, String query) =>
+      _fold(value).contains(_fold(query));
+
   static String _fold(String value) {
     final lower = value.trim().toLowerCase();
     final buffer = StringBuffer();
@@ -172,6 +185,7 @@ class LibraryProvider extends ChangeNotifier {
     _tracksCache = null;
     _historyCache = null;
     _audiobooksCache = null;
+    _audiobookGroupsCache = null;
     _byIdCache = null;
     _bySourceUriCache = null;
   }

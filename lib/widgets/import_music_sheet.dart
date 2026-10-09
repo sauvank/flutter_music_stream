@@ -1,11 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/library_provider.dart';
+import '../screens/home_screen.dart';
 import '../services/audio_access.dart';
 import '../l10n/l10n.dart';
 
-enum _ImportSource { files, directory }
+enum _ImportSource { device, files, directory, server }
 
 Future<void> showMusicImportSheet(BuildContext context) async {
   final library = context.read<LibraryProvider>();
@@ -29,6 +32,18 @@ Future<void> showMusicImportSheet(BuildContext context) async {
                     ?.copyWith(fontWeight: FontWeight.w900),
               ),
             ),
+            // The phone's own music needs no copy and no picker: offered first.
+            if (Platform.isAndroid)
+              ListTile(
+                leading: const CircleAvatar(
+                  child: Icon(Icons.phone_android_rounded),
+                ),
+                title: Text(context.l10n.importDeviceMedia),
+                subtitle: Text(library.deviceMediaEnabled
+                    ? context.l10n.importDeviceMediaEnabled
+                    : context.l10n.deviceMediaHint),
+                onTap: () => Navigator.pop(context, _ImportSource.device),
+              ),
             ListTile(
               leading: const CircleAvatar(
                 child: Icon(Icons.audio_file_rounded),
@@ -45,12 +60,30 @@ Future<void> showMusicImportSheet(BuildContext context) async {
               subtitle: Text(context.l10n.importChooseFolderHint),
               onTap: () => Navigator.pop(context, _ImportSource.directory),
             ),
+            ListTile(
+              leading: const CircleAvatar(
+                child: Icon(Icons.cloud_rounded),
+              ),
+              title: Text(context.l10n.importFromServer),
+              subtitle: Text(context.l10n.importFromServerHint),
+              onTap: () => Navigator.pop(context, _ImportSource.server),
+            ),
           ],
         ),
       ),
     ),
   );
   if (source == null || !context.mounted) return;
+  switch (source) {
+    case _ImportSource.device:
+      return library.deviceMediaEnabled
+          ? scanDeviceMedia(context)
+          : enableDeviceMedia(context);
+    case _ImportSource.server:
+      return HomeScreen.openServers(context);
+    case _ImportSource.files:
+    case _ImportSource.directory:
+  }
   final messenger = ScaffoldMessenger.of(context);
   final l10n = context.l10n;
   if (source == _ImportSource.directory && !await AudioAccess.request()) {
@@ -64,11 +97,9 @@ Future<void> showMusicImportSheet(BuildContext context) async {
     return;
   }
   try {
-    final summary = switch (source) {
-      _ImportSource.files => await library.importFiles(),
-      _ImportSource.directory =>
-        await library.importDirectory(dialogTitle: l10n.pickMusicFolder),
-    };
+    final summary = source == _ImportSource.files
+        ? await library.importFiles()
+        : await library.importDirectory(dialogTitle: l10n.pickMusicFolder);
     if (summary == null) return;
     messenger.showSnackBar(
         SnackBar(content: Text(importSummaryText(l10n, summary))));
@@ -86,4 +117,33 @@ String importSummaryText(AppLocalizations l10n, LocalImportSummary summary) {
     if (summary.failed > 0) l10n.importFailures(summary.failed),
   ];
   return parts.join(' · ');
+}
+
+/// Turns on the phone's media library, asking for audio access, then scans.
+Future<void> enableDeviceMedia(BuildContext context) async {
+  final library = context.read<LibraryProvider>();
+  final messenger = ScaffoldMessenger.of(context);
+  final l10n = context.l10n;
+  if (!await AudioAccess.request()) {
+    messenger.showSnackBar(SnackBar(
+      content: Text(l10n.deviceMediaPermission),
+      action: SnackBarAction(
+        label: l10n.openSettings,
+        onPressed: AudioAccess.openSettings,
+      ),
+    ));
+    return;
+  }
+  await library.setDeviceMediaEnabled(true);
+  if (context.mounted) await scanDeviceMedia(context);
+}
+
+Future<void> scanDeviceMedia(BuildContext context) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final l10n = context.l10n;
+  final summary = await context.read<LibraryProvider>().scanDeviceMedia();
+  if (summary == null) return;
+  messenger.showSnackBar(SnackBar(
+    content: Text(l10n.deviceMediaSummary(summary.added, summary.removed)),
+  ));
 }

@@ -207,7 +207,10 @@ class DownloadQueueProvider extends ChangeNotifier {
         headers: headers,
         group: group,
         updates: Updates.statusAndProgress,
-        retries: 3,
+        // Backoff doubles from 2 s: six attempts span about two minutes,
+        // enough to ride out the intermittent 500s that cloud-backed servers
+        // (alist over TeraBox) return when their upstream throttles.
+        retries: 6,
         allowPause: true,
         displayName: file.name,
         metaData: jsonEncode({'originalName': file.name}),
