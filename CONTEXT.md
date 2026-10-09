@@ -46,6 +46,7 @@ MusicStream est un lecteur Flutter local-first pour Android/iOS. Les fichiers im
 
 - Icônes et splash sont générés par `scripts/generate_branding.py` (glyphe défini une fois en unités 108, vecteurs Android + PNG via Pillow); ne pas retoucher les fichiers produits à la main. La planche fournie (`assets/branding/reference_sheet.jpg`) n'est qu'une référence : basse résolution, damier peint dans l'image. `ic_stat_musicstream` est appelée par son nom (`androidNotificationIcon`) et protégée par `res/raw/keep.xml`.
 
+- Benchmarks d’interface et de téléchargement massif : `integration_test/` + `test_driver/perf_driver.dart`, procédure et chiffres de référence dans [docs/TESTING.md](docs/TESTING.md). `_StaggeredEntry` (bibliothèque) n’anime que le premier écran : animer chaque ligne au défilement coûtait une couche de rendu par ligne.
 - CI GitHub (dépôt privé, quota de minutes) : `release.yml` est l’unique workflow de version (tag) — tests, AAB + APK universel extrait par bundletool, APK arm/arm64, Windows et publications en jobs parallèles. `ci.yml` = analyse + tests seulement, ignorés sur les commits `chore(version)`. Les caches d’un tag ne servent qu’à ce tag : `warm-cache.yml` les remplit sur `main` (déclenché par `pubspec.lock`/fichiers Gradle, ou à la main) ; le relancer après un changement de Flutter ou si les releases deviennent lentes.
 
 - Revue Google Play : source HTTP publique `hosting/demo/` (Firebase Hosting), instructions dans [docs/PLAY_REVIEW.md](docs/PLAY_REVIEW.md); aucun compte n’existe dans l’app.

@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- Performances : l’animation d’entrée des listes de la bibliothèque ne joue plus que sur le premier écran (frames de rendu hors budget au défilement de 255 à ~35 sur 640). Ajout des benchmarks `integration_test` (UI et 3 000 téléchargements WebDAV), voir `docs/TESTING.md`.
+
 - CI accélérée : fusion de `build_and_release.yml` dans `release.yml` (une seule installation par job, builds Android/Windows en parallèle, APK universel tiré de l’AAB, APK x86_64 séparé abandonné), suppression du build debug de `ci.yml`, CI ignorée sur les bumps de version, caches Gradle/Flutter remplis sur `main` par `warm-cache.yml`. Environ 50 → 20 minutes facturées par version.
 
 - Validation physique du correctif des téléchargements sur Galaxy S24 : lot local de 1 500 MP3 distincts, tous téléchargés et indexés, progression en arrière-plan et navigation fonctionnelles, données conservées après arrêt/relance. Aucun crash/ANR ni erreur d’indexation observé; intégrité de trois fichiers contrôlée. Test réalisé dans l’application séparée, sans modifier les données Play.

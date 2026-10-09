@@ -70,4 +70,6 @@
 
 ## Décision ouverte
 
+- Taille APK : `mobile_scanner` embarque ML Kit (~5,3 Mo sur ~31 Mo en arm64). `dev.steenbakker.mobile_scanner.useUnbundled=true` le retirerait, mais le modèle serait téléchargé par Play Services au premier scan QR (échec possible hors ligne ou sans Google).
+- Téléchargements massifs (~5 fichiers/s, UI moins fluide pendant la charge) : regrouper l’indexation (plusieurs fichiers puis une seule sauvegarde de l’index) demande de ne supprimer la copie téléchargée qu’après la sauvegarde, pour garder la garantie actuelle de ne perdre aucun fichier.
 - Déterminer si HTTP non chiffré doit rester autorisé globalement sur Android ou être limité par une configuration réseau fournie hors dépôt.

@@ -1908,19 +1908,29 @@ class _StaggeredEntry extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
-        duration: Duration(milliseconds: 260 + math.min(index, 5) * 45),
-        tween: Tween(begin: 0, end: 1),
-        curve: Curves.easeOutCubic,
-        builder: (context, value, child) => Opacity(
-          opacity: value,
-          child: Transform.translate(
-            offset: Offset(0, 14 * (1 - value)),
-            child: child,
-          ),
+  Widget build(BuildContext context) {
+    // Only the first screenful animates in. Rows built while scrolling would
+    // otherwise each fade in through an offscreen layer, costing raster time
+    // on every frame of a fling.
+    final position = Scrollable.maybeOf(context)?.position;
+    if (index > 12 ||
+        (position != null && position.hasPixels && position.pixels > 0)) {
+      return child;
+    }
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 260 + math.min(index, 5) * 45),
+      tween: Tween(begin: 0, end: 1),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) => Opacity(
+        opacity: value,
+        child: Transform.translate(
+          offset: Offset(0, 14 * (1 - value)),
+          child: child,
         ),
-        child: child,
-      );
+      ),
+      child: child,
+    );
+  }
 }
 
 String _sortLabel(AppLocalizations l10n, TrackSort sort) => switch (sort) {
