@@ -3013,6 +3013,30 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Télécharger ce dossier'**
   String get downloadThisFolder;
+
+  /// No description provided for @pickerHeading.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter à la playlist'**
+  String get pickerHeading;
+
+  /// No description provided for @pickerSearch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Titre, artiste ou album'**
+  String get pickerSearch;
+
+  /// No description provided for @pickerSelected.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =0{Aucun sélectionné} one{{count} sélectionné} other{{count} sélectionnés}}'**
+  String pickerSelected(int count);
+
+  /// No description provided for @pickerAdd.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{Ajouter {count}} other{Ajouter {count}}}'**
+  String pickerAdd(int count);
 }
 
 class _AppLocalizationsDelegate

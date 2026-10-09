@@ -1897,4 +1897,33 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get downloadThisFolder => 'Télécharger ce dossier';
+
+  @override
+  String get pickerHeading => 'Ajouter à la playlist';
+
+  @override
+  String get pickerSearch => 'Titre, artiste ou album';
+
+  @override
+  String pickerSelected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sélectionnés',
+      one: '$count sélectionné',
+      zero: 'Aucun sélectionné',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pickerAdd(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ajouter $count',
+      one: 'Ajouter $count',
+    );
+    return '$_temp0';
+  }
 }

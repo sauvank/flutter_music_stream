@@ -953,5 +953,11 @@
   "continueLabel": "Continuer",
   "visualizerPermissionTitle": "Afficher les ondes du son",
   "visualizerPermissionBody": "Pour dessiner les ondes, Android demande l’autorisation « enregistrer de l’audio ». MusicStream n’utilise pas le micro : il analyse seulement le son qu’il joue, sans rien enregistrer ni envoyer.",
-  "downloadThisFolder": "Télécharger ce dossier"
+  "downloadThisFolder": "Télécharger ce dossier",
+  "pickerHeading": "Ajouter à la playlist",
+  "pickerSearch": "Titre, artiste ou album",
+  "pickerSelected": "{count, plural, =0{Aucun sélectionné} one{{count} sélectionné} other{{count} sélectionnés}}",
+  "@pickerSelected": {"placeholders": {"count": {"type": "int"}}},
+  "pickerAdd": "{count, plural, one{Ajouter {count}} other{Ajouter {count}}}",
+  "@pickerAdd": {"placeholders": {"count": {"type": "int"}}}
 }

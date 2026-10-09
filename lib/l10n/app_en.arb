@@ -505,5 +505,11 @@
   "continueLabel": "Continue",
   "visualizerPermissionTitle": "Show sound waves",
   "visualizerPermissionBody": "To draw the waves, Android asks for the “record audio” permission. MusicStream does not use the microphone: it only analyses the sound it plays, without recording or sending anything.",
-  "downloadThisFolder": "Download this folder"
+  "downloadThisFolder": "Download this folder",
+  "pickerHeading": "Add to playlist",
+  "pickerSearch": "Title, artist or album",
+  "pickerSelected": "{count, plural, =0{None selected} one{{count} selected} other{{count} selected}}",
+  "@pickerSelected": {"placeholders": {"count": {"type": "int"}}},
+  "pickerAdd": "{count, plural, one{Add {count}} other{Add {count}}}",
+  "@pickerAdd": {"placeholders": {"count": {"type": "int"}}}
 }

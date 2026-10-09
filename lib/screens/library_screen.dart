@@ -2694,53 +2694,229 @@ Future<void> _selectTracks(
   MusicPlaylist playlist,
 ) async {
   final library = context.read<LibraryProvider>();
-  final selected = playlist.trackIds.toSet();
-  final result = await showDialog<Set<String>>(
-    context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
-        title: Text(context.l10n.playlistTracks),
-        content: SizedBox(
-          width: 520,
-          child: library.allTracks.isEmpty
-              ? Text(context.l10n.importTracksFirst)
-              : ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: library.allTracks.length,
-                  itemBuilder: (context, index) {
-                    final track = library.allTracks[index];
-                    return CheckboxListTile(
-                      value: selected.contains(track.id),
-                      title: Text(track.title),
-                      subtitle: Text(context.l10n.metadata(track.artist)),
-                      onChanged: (checked) => setState(() {
-                        checked == true
-                            ? selected.add(track.id)
-                            : selected.remove(track.id);
-                      }),
-                    );
-                  },
-                ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(context.l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, selected),
-            child: Text(context.l10n.save),
-          ),
-        ],
-      ),
+  final result = await Navigator.of(context).push<List<String>>(
+    MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => _TrackPickerScreen(playlist: playlist),
     ),
   );
   if (result == null || !context.mounted) return;
-  for (final trackId in result.difference(playlist.trackIds.toSet())) {
+  final before = playlist.trackIds.toSet();
+  final after = result.toSet();
+  // New tracks join the end in the order they were ticked.
+  for (final trackId in result.where((id) => !before.contains(id))) {
     await library.addTrackToPlaylist(playlist.id, trackId);
   }
-  for (final trackId in playlist.trackIds.toSet().difference(result)) {
+  for (final trackId in before.difference(after)) {
     await library.removeTrackFromPlaylist(playlist.id, trackId);
+  }
+}
+
+/// Picks a playlist's tracks among the whole library: a search, artwork and
+/// an album view where one tick takes a whole album. The old dialog was a
+/// bare checklist, unusable past a few dozen tracks.
+class _TrackPickerScreen extends StatefulWidget {
+  const _TrackPickerScreen({required this.playlist});
+  final MusicPlaylist playlist;
+
+  @override
+  State<_TrackPickerScreen> createState() => _TrackPickerScreenState();
+}
+
+class _TrackPickerScreenState extends State<_TrackPickerScreen> {
+  late final List<String> _selected = [...widget.playlist.trackIds];
+  final _search = TextEditingController();
+  bool _byAlbum = false;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  void _toggle(Iterable<String> ids, bool select) => setState(() {
+        for (final id in ids) {
+          _selected.remove(id);
+          if (select) _selected.add(id);
+        }
+      });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final query = _search.text.trim();
+    final tracks = LibraryProvider.sortTracks(
+      context.watch<LibraryProvider>().allTracks.where((track) =>
+          query.isEmpty ||
+          LibraryProvider.matchesQuery(track.title, query) ||
+          LibraryProvider.matchesQuery(track.artist, query) ||
+          LibraryProvider.matchesQuery(track.album, query)),
+      TrackSort.title,
+    );
+    final selected = _selected.toSet();
+    final albums = <String, List<MusicTrack>>{};
+    if (_byAlbum) {
+      for (final track in tracks) {
+        albums.putIfAbsent(track.album, () => []).add(track);
+      }
+      for (final group in albums.values) {
+        group.sort(_albumOrder);
+      }
+    }
+    final albumEntries = albums.entries.toList()
+      ..sort((a, b) => a.key.toLowerCase().compareTo(b.key.toLowerCase()));
+    final added = selected.difference(widget.playlist.trackIds.toSet()).length;
+    return Scaffold(
+      appBar: AppBar(
+        // Two lines: beside the button "Add to “…”" kept only its first
+        // letters of the playlist name.
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.pickerHeading,
+                style: Theme.of(context).textTheme.labelMedium),
+            Text(
+              widget.playlist.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: FilledButton(
+              onPressed: () => Navigator.pop(context, _selected),
+              child: Text(added > 0 ? l10n.pickerAdd(added) : l10n.save),
+            ),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: SearchBar(
+              controller: _search,
+              elevation: const WidgetStatePropertyAll(0),
+              hintText: l10n.pickerSearch,
+              leading: const Icon(Icons.search_rounded),
+              trailing: [
+                if (query.isNotEmpty)
+                  IconButton(
+                    tooltip: l10n.clearSearch,
+                    onPressed: () => setState(_search.clear),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+              ],
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: Row(
+              children: [
+                SegmentedButton<bool>(
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(value: false, label: Text(l10n.modeTracks)),
+                    ButtonSegment(value: true, label: Text(l10n.modeAlbums)),
+                  ],
+                  selected: {_byAlbum},
+                  onSelectionChanged: (value) =>
+                      setState(() => _byAlbum = value.single),
+                ),
+                const Spacer(),
+                Text(
+                  l10n.pickerSelected(selected.length),
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: tracks.isEmpty
+                ? _NoResults(query: query.isEmpty ? null : query)
+                : _byAlbum
+                    ? ListView(
+                        children: [
+                          for (final entry in albumEntries)
+                            _albumTile(context, entry.key, entry.value,
+                                selected),
+                        ],
+                      )
+                    : ListView.builder(
+                        itemCount: tracks.length,
+                        itemBuilder: (context, index) =>
+                            _trackTile(context, tracks[index], selected),
+                      ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _trackTile(
+    BuildContext context,
+    MusicTrack track,
+    Set<String> selected,
+  ) =>
+      CheckboxListTile(
+        value: selected.contains(track.id),
+        secondary: TrackArtwork(
+          track: track,
+          size: 44,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: Text(track.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text(
+          '${context.l10n.metadata(track.artist)} • '
+          '${context.l10n.metadata(track.album)}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        onChanged: (value) => _toggle([track.id], value == true),
+      );
+
+  Widget _albumTile(
+    BuildContext context,
+    String album,
+    List<MusicTrack> tracks,
+    Set<String> selected,
+  ) {
+    final count = tracks.where((track) => selected.contains(track.id)).length;
+    final artists = tracks.map((track) => track.artist).toSet();
+    return ExpansionTile(
+      leading: TrackArtwork(
+        track: tracks.first,
+        size: 44,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      title: Text(context.l10n.metadata(album),
+          maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(
+        '${artists.length == 1 ? context.l10n.metadata(artists.single) : context.l10n.variousArtists}'
+        ' · ${context.l10n.trackCount(tracks.length)}',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      // One tick takes or leaves the whole album; expand to pick tracks.
+      trailing: Checkbox(
+        tristate: true,
+        value: count == 0
+            ? false
+            : count == tracks.length
+                ? true
+                : null,
+        onChanged: (_) => _toggle(
+          tracks.map((track) => track.id),
+          count != tracks.length,
+        ),
+      ),
+      children: [
+        for (final track in tracks) _trackTile(context, track, selected),
+      ],
+    );
   }
 }
 

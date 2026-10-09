@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- Ajout de morceaux à une playlist : page plein écran au lieu d’une liste à cocher brute, avec recherche (sans accents), pochettes, vue par albums (une case coche tout l’album, état partiel affiché, album dépliable) et compteur ; les nouveaux morceaux s’ajoutent dans l’ordre où ils ont été cochés.
+
 - Troisième passe (tour scripté des fenêtres) :
   - livre audio en plusieurs fichiers : progression et temps restant sur tout le livre, bouton « chapitre suivant/précédent » qui passe au fichier voisin ;
   - navigateur serveur : dans un sous-dossier, le bouton télécharge ce dossier (« Télécharger ce dossier ») au lieu de tout le serveur ;
