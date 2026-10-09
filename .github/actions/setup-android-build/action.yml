@@ -34,8 +34,15 @@ runs:
       shell: bash
       run: |
         ndk=27.0.12077973
-        [ -d "$ANDROID_HOME/ndk/$ndk" ] || \
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ndk" > /dev/null
+        if [ ! -d "$ANDROID_HOME/ndk/$ndk" ]; then
+          # `yes` dies of SIGPIPE once sdkmanager exits; under the default
+          # pipefail that failed the step even after a good install.
+          set +o pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            --install "ndk;$ndk" | tail -n 5
+          set -o pipefail
+        fi
+        test -d "$ANDROID_HOME/ndk/$ndk"
 
     - name: Restore signing and Firebase files
       shell: bash
