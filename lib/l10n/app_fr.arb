@@ -555,7 +555,7 @@
   "pasteJson": "Coller le contenu JSON",
   "pause": "Mettre en pause",
   "personalServers": "Serveurs personnels",
-  "personalServersHint": "WebDAV et HTTP, avec identifiants dans le coffre système",
+  "personalServersHint": "WebDAV, HTTP et FTP, avec identifiants dans le coffre système",
   "pickMusicFolder": "Choisir un dossier de musique",
   "playAll": "Tout lire",
   "playCollection": "Lire la collection",
@@ -952,5 +952,6 @@
   "serverMoreOptions": "Options du serveur",
   "continueLabel": "Continuer",
   "visualizerPermissionTitle": "Afficher les ondes du son",
-  "visualizerPermissionBody": "Pour dessiner les ondes, Android demande l’autorisation « enregistrer de l’audio ». MusicStream n’utilise pas le micro : il analyse seulement le son qu’il joue, sans rien enregistrer ni envoyer."
+  "visualizerPermissionBody": "Pour dessiner les ondes, Android demande l’autorisation « enregistrer de l’audio ». MusicStream n’utilise pas le micro : il analyse seulement le son qu’il joue, sans rien enregistrer ni envoyer.",
+  "downloadThisFolder": "Télécharger ce dossier"
 }

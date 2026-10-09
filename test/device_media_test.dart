@@ -80,6 +80,29 @@ void main() {
     expect(await library.scanDeviceMedia(), (added: 0, removed: 0, skipped: 1));
   });
 
+  test('a copy downloaded later shadows the phone file on the next scan',
+      () async {
+    final file = audio('Music/Song.mp3');
+    MusicTrack song(String id, String uri, MusicSource source) => MusicTrack(
+          id: id,
+          title: 'Song',
+          uri: uri,
+          addedAt: DateTime.utc(2026),
+          metadataRead: true,
+          source: source,
+        );
+    final library = await provider(tracks: [
+      song(LibraryService.deviceTrackId(file.path), file.uri.toString(),
+          MusicSource.deviceMedia),
+      song('download', 'file:///media/music/song.mp3',
+          MusicSource.serverDownload),
+    ]);
+    await library.setDeviceMediaEnabled(true);
+
+    expect((await library.scanDeviceMedia())?.removed, 1);
+    expect(library.allTracks.single.id, 'download');
+  });
+
   test('forgets vanished files, but not when the listing comes back empty',
       () async {
     final kept = audio('Music/Kept.mp3');

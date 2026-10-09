@@ -2,6 +2,12 @@
 
 ## Modifications récentes
 
+- Troisième passe (tour scripté des fenêtres) :
+  - livre audio en plusieurs fichiers : progression et temps restant sur tout le livre, bouton « chapitre suivant/précédent » qui passe au fichier voisin ;
+  - navigateur serveur : dans un sous-dossier, le bouton télécharge ce dossier (« Télécharger ce dossier ») au lieu de tout le serveur ;
+  - médiathèque du téléphone : un fichier doublonné par une copie importée/téléchargée ensuite est oublié au scan suivant (sauf favori ou playlist) ;
+  - bibliothèque vide sans grand titre (le bouton « Ajouter ma musique » passait sous la navigation) ; bouton « Reprendre » en icône sur téléphone ; « Serveurs personnels » mentionne FTP.
+
 - Repasse UI après un tour complet sur 8 profils d’écran (360×640 à 1920×1080, texte ×1,3/×1,5, tablettes, PC) :
   - correctif : une file restaurée au lancement jouait son premier morceau au lieu de celui affiché, y compris depuis la notification ou un casque (cause du « Chapitre 1 » inattendu) ;
   - Lecture : pochette adaptée à la hauteur et à la taille du texte, commandes toujours visibles ; « Album/Genre inconnu » masqués ; volume sans retour à la ligne ;

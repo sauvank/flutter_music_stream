@@ -229,7 +229,13 @@ class PlayerProvider extends ChangeNotifier {
   /// otherwise goes to the one before.
   Future<void> previousChapter() {
     final index = chapterIndexAt(_player.position);
-    if (index < 0) return skipBy(const Duration(seconds: -30));
+    // Without chapter marks each file is a chapter: restart it, or go to
+    // the previous file in its first seconds.
+    if (index < 0) {
+      return _player.position > const Duration(seconds: 3) || !hasPrevious
+          ? seek(Duration.zero)
+          : previous();
+    }
     final start = Duration(milliseconds: _current!.chapters[index].startMs);
     if (_player.position - start > const Duration(seconds: 3) || index == 0) {
       return seek(start);
@@ -239,7 +245,9 @@ class PlayerProvider extends ChangeNotifier {
 
   Future<void> nextChapter() {
     final index = chapterIndexAt(_player.position);
-    if (index < 0) return skipBy(const Duration(seconds: 30));
+    if (index < 0) {
+      return hasNext ? next() : skipBy(const Duration(seconds: 30));
+    }
     if (index + 1 >= _current!.chapters.length) return next();
     return seekToChapter(index + 1);
   }

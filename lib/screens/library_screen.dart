@@ -730,19 +730,9 @@ class _LibraryHeader extends StatelessWidget {
                   ),
               ],
             ),
-            // The headline welcomes an empty library; once it holds music the
-            // first screen belongs to the music itself.
-            if (count == 0) ...[
-              const SizedBox(height: 28),
-              Text(
-                context.l10n.emptyHeadline,
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      height: 1.04,
-                      letterSpacing: -1.6,
-                    ),
-              ),
-            ],
+            // No headline: the welcome card below has its own title, and
+            // this one pushed its "Add my music" button under the
+            // navigation bar on a 360 dp phone.
             if (importProgress case final progress?
                 when progress.total > 0) ...[
               const SizedBox(height: 14),
@@ -1012,13 +1002,24 @@ class _AudiobookTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              FilledButton.tonalIcon(
-                onPressed: () => resumeAudiobook(context, book),
-                icon: const Icon(Icons.play_arrow_rounded),
-                label: Text(book.started && !book.finished
-                    ? l10n.audiobookResume
-                    : l10n.audiobookListen),
-              ),
+              // On a phone a labelled button squeezed the title onto two
+              // lines; the icon keeps the label as its tooltip.
+              if (MediaQuery.sizeOf(context).width < 420)
+                IconButton.filledTonal(
+                  tooltip: book.started && !book.finished
+                      ? l10n.audiobookResume
+                      : l10n.audiobookListen,
+                  onPressed: () => resumeAudiobook(context, book),
+                  icon: const Icon(Icons.play_arrow_rounded),
+                )
+              else
+                FilledButton.tonalIcon(
+                  onPressed: () => resumeAudiobook(context, book),
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: Text(book.started && !book.finished
+                      ? l10n.audiobookResume
+                      : l10n.audiobookListen),
+                ),
             ],
           ),
         ),

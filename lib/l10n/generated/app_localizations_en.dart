@@ -1012,7 +1012,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get personalServersHint =>
-      'WebDAV and HTTP, with credentials in the system keystore';
+      'WebDAV, HTTP and FTP, with credentials in the system keystore';
 
   @override
   String get pickMusicFolder => 'Choose a music folder';
@@ -1853,4 +1853,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get visualizerPermissionBody =>
       'To draw the waves, Android asks for the “record audio” permission. MusicStream does not use the microphone: it only analyses the sound it plays, without recording or sending anything.';
+
+  @override
+  String get downloadThisFolder => 'Download this folder';
 }

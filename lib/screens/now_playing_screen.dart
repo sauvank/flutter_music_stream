@@ -551,9 +551,27 @@ class _AudiobookPanel extends StatelessWidget {
             final span = end - start > 0 ? end - start : 1;
             final inChapter =
                 (position.inMilliseconds - start).clamp(0, span).toInt();
-            final left = total - position.inMilliseconds;
+            // A book split into one file per chapter is queued whole: its
+            // progress and time left span every file, not only this one.
+            final queue = player.queue;
+            final current = player.currentIndex ?? -1;
+            final book = current >= 0 &&
+                    current < queue.length &&
+                    queue.every((item) =>
+                        item.isAudiobook &&
+                        item.album == track.album &&
+                        item.durationMs != null)
+                ? queue
+                : const <MusicTrack>[];
+            final before = book.take(current < 0 ? 0 : current).fold<int>(
+                0, (sum, item) => sum + item.durationMs!);
+            final after = book.skip(current + 1).fold<int>(
+                0, (sum, item) => sum + item.durationMs!);
+            final bookTotal = before + total + after;
+            final heard = before + position.inMilliseconds;
+            final left = bookTotal - heard;
             final percent =
-                total > 0 ? (position.inMilliseconds * 100 / total).floor() : 0;
+                bookTotal > 0 ? (heard * 100 / bookTotal).floor() : 0;
             final title = index >= 0 ? _chapterTitle(chapters[index]) : null;
             return Column(
               children: [
@@ -655,7 +673,7 @@ class _AudiobookPanel extends StatelessWidget {
             IconButton(
               iconSize: 36,
               tooltip: l10n.nextChapter,
-              onPressed: track.chapters.isEmpty
+              onPressed: track.chapters.isEmpty && !player.hasNext
                   ? null
                   : () => _tap(player.nextChapter),
               icon: const Icon(Icons.skip_next_rounded),

@@ -1637,7 +1637,7 @@ abstract class AppLocalizations {
   /// No description provided for @personalServersHint.
   ///
   /// In fr, this message translates to:
-  /// **'WebDAV et HTTP, avec identifiants dans le coffre système'**
+  /// **'WebDAV, HTTP et FTP, avec identifiants dans le coffre système'**
   String get personalServersHint;
 
   /// No description provided for @pickMusicFolder.
@@ -3007,6 +3007,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Pour dessiner les ondes, Android demande l’autorisation « enregistrer de l’audio ». MusicStream n’utilise pas le micro : il analyse seulement le son qu’il joue, sans rien enregistrer ni envoyer.'**
   String get visualizerPermissionBody;
+
+  /// No description provided for @downloadThisFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Télécharger ce dossier'**
+  String get downloadThisFolder;
 }
 
 class _AppLocalizationsDelegate

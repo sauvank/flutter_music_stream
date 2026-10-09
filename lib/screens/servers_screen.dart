@@ -670,14 +670,32 @@ class _BrowserState extends State<_Browser> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: Align(
             alignment: Alignment.centerLeft,
+            // Inside a folder the button takes that folder: it used to
+            // fetch the whole server whatever folder was open.
             child: Tooltip(
-              message: context.l10n.downloadEntireServer,
+              message: provider.canGoBack && provider.currentUri != null
+                  ? context.l10n.downloadFolder
+                  : context.l10n.downloadEntireServer,
               child: FilledButton.tonalIcon(
-                onPressed: () =>
-                    _downloadServer(context, provider, provider.selected!),
+                onPressed: () => provider.canGoBack &&
+                        provider.currentUri != null
+                    ? _startDownload(
+                        context,
+                        provider,
+                        provider.selected!,
+                        RemoteAudioEntry(
+                          name: _Breadcrumbs.folderName(provider.currentUri!),
+                          uri: provider.currentUri!,
+                          isDirectory: true,
+                        ))
+                    : _downloadServer(context, provider, provider.selected!),
                 icon: const Icon(Icons.download_for_offline_outlined, size: 20),
-                label: Text(context.l10n.downloadAll,
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                label: Text(
+                    provider.canGoBack
+                        ? context.l10n.downloadThisFolder
+                        : context.l10n.downloadAll,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
               ),
             ),
           ),
@@ -767,7 +785,7 @@ class _Breadcrumbs extends StatelessWidget {
                 child: Text(
                   index == 0
                       ? provider.selected!.name
-                      : _folderName(crumbs[index]),
+                      : folderName(crumbs[index]),
                   style: TextStyle(
                     fontWeight:
                         index == last ? FontWeight.w800 : FontWeight.w500,
@@ -784,7 +802,7 @@ class _Breadcrumbs extends StatelessWidget {
     );
   }
 
-  static String _folderName(Uri uri) {
+  static String folderName(Uri uri) {
     final raw = uri.path.split('/').lastWhere(
           (part) => part.isNotEmpty,
           orElse: () => '/',

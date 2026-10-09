@@ -295,6 +295,14 @@ class LibraryProvider extends ChangeNotifier {
           : {
               for (final entry in known.entries)
                 if (!found.contains(entry.key)) entry.value.id,
+              // A copy imported or downloaded after this file was listed
+              // shadows it. Favorites and playlist entries keep theirs.
+              for (final track in known.values)
+                if (duplicate(track) &&
+                    !track.favorite &&
+                    !_playlists.any((playlist) =>
+                        playlist.trackIds.contains(track.id)))
+                  track.id,
             };
       if (files.isNotEmpty && !_hiddenDeviceUris.every(found.contains)) {
         _hiddenDeviceUris = _hiddenDeviceUris.where(found.contains).toSet();
