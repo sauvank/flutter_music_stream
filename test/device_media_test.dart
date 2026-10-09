@@ -93,7 +93,12 @@ void main() {
         );
     final library = await provider(tracks: [
       song(LibraryService.deviceTrackId(file.path), file.uri.toString(),
-          MusicSource.deviceMedia),
+              MusicSource.deviceMedia)
+          .copyWith(
+        lastPositionMs: 42000,
+        lastPlayedAt: DateTime.utc(2026, 5),
+        playCount: 2,
+      ),
       song('download', 'file:///media/music/song.mp3',
           MusicSource.serverDownload),
     ]);
@@ -101,6 +106,9 @@ void main() {
 
     expect((await library.scanDeviceMedia())?.removed, 1);
     expect(library.allTracks.single.id, 'download');
+    // Where listening stopped on the phone copy carries over.
+    expect(library.allTracks.single.lastPositionMs, 42000);
+    expect(library.allTracks.single.playCount, 2);
   });
 
   test('forgets vanished files, but not when the listing comes back empty',

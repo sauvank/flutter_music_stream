@@ -308,6 +308,27 @@ class LibraryProvider extends ChangeNotifier {
         _hiddenDeviceUris = _hiddenDeviceUris.where(found.contains).toSet();
         await _service.saveHiddenDeviceUris(_hiddenDeviceUris);
       }
+      // The kept copy inherits where listening stopped on the shadowed one.
+      for (final track in known.values) {
+        if (!missing.contains(track.id) || !found.contains(track.uri)) continue;
+        if (track.lastPlayedAt == null && track.lastPositionMs == 0) continue;
+        final twin = _tracks.indexWhere((item) =>
+            item.source != MusicSource.deviceMedia &&
+            _duplicateKey(item) == _duplicateKey(track));
+        if (twin == -1) continue;
+        final kept = _tracks[twin];
+        final newer = kept.lastPlayedAt == null ||
+            (track.lastPlayedAt?.isAfter(kept.lastPlayedAt!) ?? false);
+        _tracks[twin] = kept.copyWith(
+          lastPositionMs: newer ? track.lastPositionMs : kept.lastPositionMs,
+          lastPlayedAt: newer ? track.lastPlayedAt : kept.lastPlayedAt,
+          playCount: kept.playCount + track.playCount,
+        );
+        // Positions are also stored on their own and folded back on load.
+        if (newer) {
+          await _service.savePosition(kept.id, track.lastPositionMs);
+        }
+      }
       if (missing.isNotEmpty) {
         await _forgetTracks(missing);
       } else if (added > 0) {
