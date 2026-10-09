@@ -74,3 +74,9 @@
 - Téléchargements massifs (~5 fichiers/s, UI moins fluide pendant la charge) : regrouper l’indexation (plusieurs fichiers puis une seule sauvegarde de l’index) demande de ne supprimer la copie téléchargée qu’après la sauvegarde, pour garder la garantie actuelle de ne perdre aucun fichier.
 - Déterminer si HTTP non chiffré doit rester autorisé globalement sur Android ou être limité par une configuration réseau fournie hors dépôt.
 - Notification de téléchargement : pendant la mise en file, le compteur du plugin reste sur « 0 / 1 » puis rattrape d’un coup (une tâche WorkManager par fichier ajouté, rafraîchissement limité). Corriger demanderait une notification gérée par l’app au lieu de celle du plugin.
+- Confidentialité (audit 2026-10-09), à corriger :
+  - identifiants serveur en clair sur disque : `background_downloader` garde l’en-tête `Authorization` de chaque tâche, dans ses enregistrements et dans les préférences natives ;
+  - sauvegarde Android automatique active (`allowBackup` absent) : index, historique, serveurs et tâches de téléchargement partent dans la sauvegarde Google, et les valeurs de `flutter_secure_storage` ne se déchiffrent plus après restauration ;
+  - HTTP en clair autorisé partout, sans avertissement quand un mot de passe part en clair ;
+  - phrase de synchro de 8 caractères minimum ;
+  - jeton Google en clair dans `pairings/{id}` : le chiffrer avec la clé du QR et ajouter une TTL Firestore.
