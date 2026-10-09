@@ -2,7 +2,7 @@
 
 ## Livré
 
-- [x] Correctif des gros téléchargements : moteur 9.5.5, rafraîchissements regroupés, tags hors du thread UI et tests automatisés à 1 500 éléments; validation physique suivie ci-dessous.
+- [x] Correctif des gros téléchargements : moteur 9.5.5, rafraîchissements regroupés, tags hors du thread UI et tests automatisés à 1 500 éléments; validation physique de 1 500 petits MP3 réussie sur Galaxy S24, y compris en arrière-plan et après relance.
 
 - [x] Bouton de téléchargement du serveur sur une ligne dédiée, libellé compact et tests petit écran français/anglais.
 
@@ -48,7 +48,7 @@
 
 ## En cours
 
-- [ ] Valider sur appareil un lot de plus de 1 000 transferts avec le moteur 9.5.5, les rafraîchissements regroupés et le service Android `dataSync`; conserver la file et les morceaux de l’installation Play.
+- [ ] Compléter le test des gros téléchargements avec le catalogue réel (fichiers longs/pochettes), une coupure réseau et un arrêt du processus pendant le lot; préserver les données Play.
 - [ ] Revue UI petit écran : débordement des commandes Lecture à 320 px repéré; correctif différé pendant la priorité stabilité des téléchargements.
 
 - [ ] Valider le dialogue de mise à jour sur une installation Play avec une version supérieure accessible au compte testeur.
