@@ -30,7 +30,7 @@
   - « Ajouter de la musique » propose la musique du téléphone et les serveurs ;
   - « Supprimer les téléchargements » passe dans un menu ⋮ ;
   - Retour : vers la Bibliothèque, puis annule recherche, filtre favoris et vue, puis quitte l’app (la lecture continue) ; avant, il ne quittait jamais depuis la Bibliothèque ;
-  - téléchargements réessayés 6 fois au lieu de 3 (erreurs 500 intermittentes d’alist/TeraBox).
+  - téléchargements réessayés 6 fois au lieu de 3 (erreurs 500 intermittentes de serveurs adossés à un stockage cloud).
 
 - Performances : l’animation d’entrée des listes de la bibliothèque ne joue plus que sur le premier écran (frames de rendu hors budget au défilement de 255 à ~35 sur 640). Ajout des benchmarks `integration_test` (UI et 3 000 téléchargements WebDAV), voir `docs/TESTING.md`.
 
