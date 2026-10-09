@@ -2,6 +2,17 @@
 
 ## Modifications récentes
 
+- Repasse UI après un tour complet sur 8 profils d’écran (360×640 à 1920×1080, texte ×1,3/×1,5, tablettes, PC) :
+  - correctif : une file restaurée au lancement jouait son premier morceau au lieu de celui affiché, y compris depuis la notification ou un casque (cause du « Chapitre 1 » inattendu) ;
+  - Lecture : pochette adaptée à la hauteur et à la taille du texte, commandes toujours visibles ; « Album/Genre inconnu » masqués ; volume sans retour à la ligne ;
+  - pages album/artiste/playlist : mini-lecteur présent, titre lisible ;
+  - lignes de morceau plus compactes sur téléphone ; menu « Voir l’album », « Voir l’artiste » ; suppression masquée pour la musique du téléphone ;
+  - favoris vides : message dédié ; « Aléatoire » en icône (titre « Tous les morceaux » sur une ligne) ; libellés de navigation bornés en taille ;
+  - Serveurs : sans grand titre (le bouton d’ajout n’est plus sous le mini-lecteur), actions du serveur dans un menu ⋮, icône de file de téléchargement distincte, titre à l’import JSON ;
+  - Réglages : sans grand titre, tuiles d’information non cliquables sans fond, « Serveurs personnels » ouvre l’onglet, version affichée ;
+  - ondes du son : explication avant la demande d’autorisation « enregistrer de l’audio » ;
+  - adresse du compte de synchro sur sa propre ligne.
+
 - Parcours revus après l’audit UX :
   - livres audio regroupés par livre (album + auteur), avec la progression sur tous les chapitres, une section « En cours d’écoute » et un bouton « Reprendre » ; les chapitres d’un même livre s’enchaînent dans l’ordre naturel, sans aléatoire ;
   - recherche globale : artistes, albums, livres audio, playlists et morceaux, quel que soit l’onglet, avec « Aucun résultat pour « … » » ;

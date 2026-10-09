@@ -146,6 +146,32 @@ void main() {
     player.dispose();
   });
 
+  test('a restored queue resumes its saved track, not the first one',
+      () async {
+    final audioPlayer = _FakeAudioPlayer()..loadsFromStart = true;
+    final player = PlayerProvider(
+      audioPlayer: audioPlayer,
+      fadeDuration: Duration.zero,
+    );
+    final first = _track('1');
+    final saved = MusicTrack(
+      id: '2',
+      title: 'Titre 2',
+      uri: 'file:///music/2.mp3',
+      lastPositionMs: 42000,
+      addedAt: DateTime.utc(2026),
+    );
+
+    await player.restoreQueue([first, saved], '2');
+    expect(player.current?.id, '2');
+    await player.toggle();
+
+    expect(audioPlayer.index, 1);
+    expect(audioPlayer.currentPosition, const Duration(seconds: 42));
+    expect(audioPlayer.isPlaying, isTrue);
+    player.dispose();
+  });
+
   test('removes every queued copy of a deleted track', () async {
     final audioPlayer = _FakeAudioPlayer();
     final player = PlayerProvider(
@@ -390,6 +416,10 @@ class _FakeAudioPlayer extends AudioPlayer {
 
   bool isPlaying = false;
   bool shuffleEnabled = false;
+
+  /// Mimics just_audio loading a lazily set queue from its first track.
+  bool loadsFromStart = false;
+  bool loaded = false;
   int? index;
   double currentVolume = 1;
   Duration currentPosition = Duration.zero;
@@ -448,8 +478,28 @@ class _FakeAudioPlayer extends AudioPlayer {
       ..addAll(audioSources);
     index = initialIndex ?? (sources.isEmpty ? null : 0);
     currentPosition = initialPosition ?? Duration.zero;
+    loaded = preload;
     _currentIndex.add(index);
     return null;
+  }
+
+  @override
+  ProcessingState get processingState =>
+      loaded ? ProcessingState.ready : ProcessingState.idle;
+
+  @override
+  Future<Duration?> load() async {
+    _loadLazily();
+    return currentDuration;
+  }
+
+  void _loadLazily() {
+    if (loaded) return;
+    loaded = true;
+    if (!loadsFromStart) return;
+    index = sources.isEmpty ? null : 0;
+    currentPosition = Duration.zero;
+    _currentIndex.add(index);
   }
 
   @override
@@ -494,6 +544,7 @@ class _FakeAudioPlayer extends AudioPlayer {
   @override
   Future<void> seek(Duration? position, {int? index}) async {
     if (index != null) this.index = index;
+    if (position != null) currentPosition = position;
     _currentIndex.add(this.index);
   }
 
@@ -521,6 +572,7 @@ class _FakeAudioPlayer extends AudioPlayer {
 
   @override
   Future<void> play() async {
+    _loadLazily();
     isPlaying = true;
     _playerState.add(PlayerState(true, ProcessingState.ready));
   }

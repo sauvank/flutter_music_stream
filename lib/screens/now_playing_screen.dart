@@ -136,9 +136,16 @@ class NowPlayingScreen extends StatelessWidget {
                         final extraTitleLine =
                             title.didExceedMaxLines ? title.height : 0.0;
                         title.dispose();
-                        final heightLimit =
-                            (screenHeight - 500 - extraTitleLine)
-                                .clamp(180.0, 460.0);
+                        // What sits below the artwork (title, progress,
+                        // controls, navigation) grows with the text size;
+                        // on a short screen or with large text the artwork
+                        // shrinks so the play button stays reachable.
+                        final textScale =
+                            MediaQuery.textScalerOf(context).scale(1);
+                        final heightLimit = (screenHeight -
+                                (360 + 190 * textScale) -
+                                extraTitleLine)
+                            .clamp(110.0, 460.0);
                         final artworkSize =
                             widthLimit < heightLimit ? widthLimit : heightLimit;
                         // Swiping the artwork changes track, like the mini player.
@@ -345,11 +352,17 @@ class NowPlayingScreen extends StatelessWidget {
                           const Icon(Icons.volume_up_rounded, size: 22),
                           SizedBox(
                             width: 44,
-                            child: Text(
-                              context.l10n
-                                  .volumePercent((player.volume * 100).round()),
-                              textAlign: TextAlign.end,
-                              style: Theme.of(context).textTheme.labelMedium,
+                            // Shrinks instead of wrapping "100 %" with large
+                            // text.
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                context.l10n.volumePercent(
+                                    (player.volume * 100).round()),
+                                maxLines: 1,
+                                style: Theme.of(context).textTheme.labelMedium,
+                              ),
                             ),
                           ),
                         ],
@@ -392,12 +405,15 @@ class NowPlayingScreen extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _MetadataPill(
-                            icon: Icons.album_rounded,
-                            label: context.l10n.metadata(track.album)),
-                        _MetadataPill(
-                            icon: Icons.auto_awesome_rounded,
-                            label: context.l10n.metadata(track.genre)),
+                        // Unknown values say nothing; they are left out.
+                        if (track.album != MusicTrack.unknownAlbum)
+                          _MetadataPill(
+                              icon: Icons.album_rounded,
+                              label: track.album),
+                        if (track.genre != MusicTrack.unknownGenre)
+                          _MetadataPill(
+                              icon: Icons.auto_awesome_rounded,
+                              label: track.genre),
                         if (track.durationMs != null)
                           _MetadataPill(
                             icon: Icons.schedule_rounded,

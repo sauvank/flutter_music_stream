@@ -1825,4 +1825,73 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get syncSignedIn => 'Connecté';
+
+  @override
+  String get variousArtists => 'Artistes divers';
+
+  @override
+  String albumCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count albums',
+      one: '$count album',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String artistCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count artistes',
+      one: '$count artiste',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String genreCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count genres',
+      one: '$count genre',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get favoritesEmpty => 'Aucun favori pour l’instant';
+
+  @override
+  String get favoritesEmptyHint =>
+      'Touchez ♡ sur un morceau pour le retrouver ici.';
+
+  @override
+  String get goToAlbum => 'Voir l’album';
+
+  @override
+  String get goToArtist => 'Voir l’artiste';
+
+  @override
+  String get importServersTitle => 'Importer des serveurs';
+
+  @override
+  String get importServersHint =>
+      'Fichier ou texte JSON exporté depuis MusicStream ou préparé à la main.';
+
+  @override
+  String get serverMoreOptions => 'Options du serveur';
+
+  @override
+  String get continueLabel => 'Continuer';
+
+  @override
+  String get visualizerPermissionTitle => 'Afficher les ondes du son';
+
+  @override
+  String get visualizerPermissionBody =>
+      'Pour dessiner les ondes, Android demande l’autorisation « enregistrer de l’audio ». MusicStream n’utilise pas le micro : il analyse seulement le son qu’il joue, sans rien enregistrer ni envoyer.';
 }

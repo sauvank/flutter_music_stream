@@ -111,6 +111,28 @@ class _AudioVisualizerState extends State<AudioVisualizer>
   }
 
   Future<void> _enable() async {
+    // Android names this permission "record audio": say first why it is
+    // needed, so the system prompt does not read as eavesdropping.
+    final l10n = context.l10n;
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.graphic_eq_rounded),
+        title: Text(l10n.visualizerPermissionTitle),
+        content: Text(l10n.visualizerPermissionBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.continueLabel),
+          ),
+        ],
+      ),
+    );
+    if (proceed != true || !mounted) return;
     final granted = await _service.request();
     if (!mounted) return;
     setState(() => _granted = granted);

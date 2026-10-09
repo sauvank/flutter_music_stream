@@ -254,7 +254,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (_index != 2) _MiniPlayer(onOpen: () => _select(2)),
+              if (_index != 2) MiniPlayer(onOpen: () => _select(2)),
               DecoratedBox(
                 decoration: BoxDecoration(
                   color: Theme.of(context)
@@ -272,40 +272,45 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(28),
-                  child: NavigationBar(
-                    height: 72,
-                    backgroundColor: Colors.transparent,
-                    indicatorColor:
-                        Theme.of(context).colorScheme.primaryContainer,
-                    labelBehavior:
-                        NavigationDestinationLabelBehavior.onlyShowSelected,
-                    selectedIndex: _index,
-                    onDestinationSelected: _select,
-                    destinations: [
-                      NavigationDestination(
-                        icon: const Icon(Icons.headphones_outlined),
-                        selectedIcon: const Icon(Icons.headphones_rounded),
-                        label: context.l10n.navLibrary,
-                      ),
-                      NavigationDestination(
-                        icon: const _DownloadsBadge(
-                            child: Icon(Icons.cloud_outlined)),
-                        selectedIcon: const _DownloadsBadge(
-                            child: Icon(Icons.cloud_rounded)),
-                        label: context.l10n.navServers,
-                      ),
-                      NavigationDestination(
-                        icon: const Icon(Icons.play_circle_outline_rounded),
-                        selectedIcon:
-                            const Icon(Icons.play_circle_fill_rounded),
-                        label: context.l10n.navPlayer,
-                      ),
-                      NavigationDestination(
-                        icon: const Icon(Icons.tune_rounded),
-                        selectedIcon: const Icon(Icons.tune_rounded),
-                        label: context.l10n.navSettings,
-                      ),
-                    ],
+                  // Four labels share a phone's width: past this scale
+                  // "Bibliothèque" was cut to "Bibliothèq".
+                  child: MediaQuery.withClampedTextScaling(
+                    maxScaleFactor: 1.15,
+                    child: NavigationBar(
+                      height: 72,
+                      backgroundColor: Colors.transparent,
+                      indicatorColor:
+                          Theme.of(context).colorScheme.primaryContainer,
+                      labelBehavior:
+                          NavigationDestinationLabelBehavior.onlyShowSelected,
+                      selectedIndex: _index,
+                      onDestinationSelected: _select,
+                      destinations: [
+                        NavigationDestination(
+                          icon: const Icon(Icons.headphones_outlined),
+                          selectedIcon: const Icon(Icons.headphones_rounded),
+                          label: context.l10n.navLibrary,
+                        ),
+                        NavigationDestination(
+                          icon: const _DownloadsBadge(
+                              child: Icon(Icons.cloud_outlined)),
+                          selectedIcon: const _DownloadsBadge(
+                              child: Icon(Icons.cloud_rounded)),
+                          label: context.l10n.navServers,
+                        ),
+                        NavigationDestination(
+                          icon: const Icon(Icons.play_circle_outline_rounded),
+                          selectedIcon:
+                              const Icon(Icons.play_circle_fill_rounded),
+                          label: context.l10n.navPlayer,
+                        ),
+                        NavigationDestination(
+                          icon: const Icon(Icons.tune_rounded),
+                          selectedIcon: const Icon(Icons.tune_rounded),
+                          label: context.l10n.navSettings,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -406,7 +411,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
                             child: _index == 2
                                 ? const SizedBox.shrink()
-                                : _MiniPlayer(onOpen: () => _select(2)),
+                                : MiniPlayer(onOpen: () => _select(2)),
                           ),
                         ),
                       ),
@@ -501,8 +506,10 @@ class _DownloadsBadge extends StatelessWidget {
   }
 }
 
-class _MiniPlayer extends StatelessWidget {
-  const _MiniPlayer({required this.onOpen});
+/// Current track with play/pause and next, shown above the navigation and
+/// at the foot of pages pushed over the tabs.
+class MiniPlayer extends StatelessWidget {
+  const MiniPlayer({super.key, required this.onOpen});
 
   final VoidCallback onOpen;
 

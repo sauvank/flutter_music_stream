@@ -487,5 +487,22 @@
   "importFromServerHint": "WebDAV, HTTP or FTP: stream or download",
   "libraryMoreOptions": "More options",
   "deleteDownloadsMenu": "Delete downloads…",
-  "syncSignedIn": "Signed in"
+  "syncSignedIn": "Signed in",
+  "variousArtists": "Various artists",
+  "albumCount": "{count, plural, one{{count} album} other{{count} albums}}",
+  "@albumCount": {"placeholders": {"count": {"type": "int"}}},
+  "artistCount": "{count, plural, one{{count} artist} other{{count} artists}}",
+  "@artistCount": {"placeholders": {"count": {"type": "int"}}},
+  "genreCount": "{count, plural, one{{count} genre} other{{count} genres}}",
+  "@genreCount": {"placeholders": {"count": {"type": "int"}}},
+  "favoritesEmpty": "No favorites yet",
+  "favoritesEmptyHint": "Tap ♡ on a track to find it here.",
+  "goToAlbum": "Go to album",
+  "goToArtist": "Go to artist",
+  "importServersTitle": "Import servers",
+  "importServersHint": "A JSON file or text exported from MusicStream or written by hand.",
+  "serverMoreOptions": "Server options",
+  "continueLabel": "Continue",
+  "visualizerPermissionTitle": "Show sound waves",
+  "visualizerPermissionBody": "To draw the waves, Android asks for the “record audio” permission. MusicStream does not use the microphone: it only analyses the sound it plays, without recording or sending anything."
 }

@@ -2923,6 +2923,90 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Connecté'**
   String get syncSignedIn;
+
+  /// No description provided for @variousArtists.
+  ///
+  /// In fr, this message translates to:
+  /// **'Artistes divers'**
+  String get variousArtists;
+
+  /// No description provided for @albumCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{{count} album} other{{count} albums}}'**
+  String albumCount(int count);
+
+  /// No description provided for @artistCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{{count} artiste} other{{count} artistes}}'**
+  String artistCount(int count);
+
+  /// No description provided for @genreCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{{count} genre} other{{count} genres}}'**
+  String genreCount(int count);
+
+  /// No description provided for @favoritesEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun favori pour l’instant'**
+  String get favoritesEmpty;
+
+  /// No description provided for @favoritesEmptyHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Touchez ♡ sur un morceau pour le retrouver ici.'**
+  String get favoritesEmptyHint;
+
+  /// No description provided for @goToAlbum.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir l’album'**
+  String get goToAlbum;
+
+  /// No description provided for @goToArtist.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir l’artiste'**
+  String get goToArtist;
+
+  /// No description provided for @importServersTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Importer des serveurs'**
+  String get importServersTitle;
+
+  /// No description provided for @importServersHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fichier ou texte JSON exporté depuis MusicStream ou préparé à la main.'**
+  String get importServersHint;
+
+  /// No description provided for @serverMoreOptions.
+  ///
+  /// In fr, this message translates to:
+  /// **'Options du serveur'**
+  String get serverMoreOptions;
+
+  /// No description provided for @continueLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Continuer'**
+  String get continueLabel;
+
+  /// No description provided for @visualizerPermissionTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Afficher les ondes du son'**
+  String get visualizerPermissionTitle;
+
+  /// No description provided for @visualizerPermissionBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pour dessiner les ondes, Android demande l’autorisation « enregistrer de l’audio ». MusicStream n’utilise pas le micro : il analyse seulement le son qu’il joue, sans rien enregistrer ni envoyer.'**
+  String get visualizerPermissionBody;
 }
 
 class _AppLocalizationsDelegate

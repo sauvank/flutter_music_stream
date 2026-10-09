@@ -935,5 +935,22 @@
   "importFromServerHint": "WebDAV, HTTP ou FTP : écouter en ligne ou télécharger",
   "libraryMoreOptions": "Plus d’options",
   "deleteDownloadsMenu": "Supprimer les téléchargements…",
-  "syncSignedIn": "Connecté"
+  "syncSignedIn": "Connecté",
+  "variousArtists": "Artistes divers",
+  "albumCount": "{count, plural, one{{count} album} other{{count} albums}}",
+  "@albumCount": {"placeholders": {"count": {"type": "int"}}},
+  "artistCount": "{count, plural, one{{count} artiste} other{{count} artistes}}",
+  "@artistCount": {"placeholders": {"count": {"type": "int"}}},
+  "genreCount": "{count, plural, one{{count} genre} other{{count} genres}}",
+  "@genreCount": {"placeholders": {"count": {"type": "int"}}},
+  "favoritesEmpty": "Aucun favori pour l’instant",
+  "favoritesEmptyHint": "Touchez ♡ sur un morceau pour le retrouver ici.",
+  "goToAlbum": "Voir l’album",
+  "goToArtist": "Voir l’artiste",
+  "importServersTitle": "Importer des serveurs",
+  "importServersHint": "Fichier ou texte JSON exporté depuis MusicStream ou préparé à la main.",
+  "serverMoreOptions": "Options du serveur",
+  "continueLabel": "Continuer",
+  "visualizerPermissionTitle": "Afficher les ondes du son",
+  "visualizerPermissionBody": "Pour dessiner les ondes, Android demande l’autorisation « enregistrer de l’audio ». MusicStream n’utilise pas le micro : il analyse seulement le son qu’il joue, sans rien enregistrer ni envoyer."
 }

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -13,6 +14,7 @@ import '../providers/player_provider.dart';
 import '../services/playback_settings_service.dart';
 import '../services/lyrics_service.dart';
 import '../widgets/import_music_sheet.dart';
+import 'home_screen.dart';
 import '../l10n/l10n.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -58,22 +60,7 @@ class SettingsScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 30),
-          Text(
-            context.l10n.settingsHeadline,
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -1.6,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            context.l10n.settingsTagline,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-          ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 24),
           _SectionLabel(context.l10n.sectionAppearance),
           const SizedBox(height: 8),
           const _ThemeModeTile(),
@@ -126,6 +113,7 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.cloud_outlined,
             title: context.l10n.personalServers,
             subtitle: context.l10n.personalServersHint,
+            onTap: () => HomeScreen.openServers(context),
           ),
           Builder(builder: (context) {
             final sync = context.watch<SyncProvider>();
@@ -160,6 +148,21 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => launchUrl(
               Uri.parse('https://musicstream-ks.web.app/privacy'),
               mode: LaunchMode.externalApplication,
+            ),
+          ),
+          const SizedBox(height: 18),
+          // Asked first when something goes wrong.
+          FutureBuilder<PackageInfo>(
+            future: PackageInfo.fromPlatform(),
+            builder: (context, snapshot) => Text(
+              snapshot.hasData
+                  ? 'MusicStream ${snapshot.data!.version} '
+                      '(${snapshot.data!.buildNumber})'
+                  : '',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ),
         ],
@@ -504,10 +507,13 @@ class _InfoTile extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Material(
-          color: Theme.of(context)
-              .colorScheme
-              .surfaceContainer
-              .withValues(alpha: .56),
+          // Only tiles that do something look like buttons.
+          color: onTap == null
+              ? Colors.transparent
+              : Theme.of(context)
+                  .colorScheme
+                  .surfaceContainer
+                  .withValues(alpha: .56),
           borderRadius: BorderRadius.circular(24),
           child: InkWell(
             onTap: onTap,
@@ -544,6 +550,8 @@ class _InfoTile extends StatelessWidget {
                           style: Theme.of(context).textTheme.labelSmall),
                     ),
                   ],
+                  if (onTap != null)
+                    const Icon(Icons.chevron_right_rounded),
                 ],
               ),
             ),

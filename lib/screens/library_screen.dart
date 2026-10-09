@@ -318,9 +318,15 @@ class LibraryScreenState extends State<LibraryScreen> {
             child: _EmptyLibrary(importing: library.isImporting),
           )
         else if (tracks.isEmpty && _mode != _LibraryMode.audiobooks)
-          const SliverFillRemaining(
+          SliverFillRemaining(
             hasScrollBody: false,
-            child: _NoResults(),
+            child: library.favoritesOnly
+                ? _NoResults(
+                    icon: Icons.favorite_border_rounded,
+                    title: context.l10n.favoritesEmpty,
+                    hint: context.l10n.favoritesEmptyHint,
+                  )
+                : const _NoResults(),
           )
         else if (_mode == _LibraryMode.history) ...[
           SliverPadding(
@@ -391,11 +397,13 @@ class LibraryScreenState extends State<LibraryScreen> {
                           ),
                       ],
                     ),
-                    TextButton.icon(
+                    // An icon: with a label the row squeezed "Tous les
+                    // morceaux" onto two lines on a 360 dp phone.
+                    IconButton.filledTonal(
+                      tooltip: context.l10n.shuffle,
                       onPressed: () =>
                           context.read<PlayerProvider>().playShuffled(tracks),
                       icon: const Icon(Icons.shuffle_rounded),
-                      label: Text(context.l10n.shuffle),
                     ),
                   ],
                 ),
@@ -418,7 +426,12 @@ class LibraryScreenState extends State<LibraryScreen> {
             sliver: SliverToBoxAdapter(
               child: _SectionTitle(
                 title: _mode.label(context.l10n),
-                detail: context.l10n.collectionCount(groups.length),
+                detail: switch (_mode) {
+                  _LibraryMode.albums => context.l10n.albumCount(groups.length),
+                  _LibraryMode.artists =>
+                    context.l10n.artistCount(groups.length),
+                  _ => context.l10n.genreCount(groups.length),
+                },
               ),
             ),
           ),
@@ -491,8 +504,8 @@ class LibraryScreenState extends State<LibraryScreen> {
     final books = library.audiobookGroups;
     final playlists = library.matchingPlaylists;
     Map<String, List<MusicTrack>> named(String Function(MusicTrack) name) => {
-          for (final entry in _group(tracks, _LibraryMode.tracks, by: name)
-              .entries)
+          for (final entry
+              in _group(tracks, _LibraryMode.tracks, by: name).entries)
             if (entry.key != MusicTrack.unknownArtist &&
                 entry.key != MusicTrack.unknownAlbum &&
                 LibraryProvider.matchesQuery(entry.key, query))
@@ -541,8 +554,7 @@ class LibraryScreenState extends State<LibraryScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           sliver: SliverList.builder(
             itemCount: books.length,
-            itemBuilder: (context, index) =>
-                _AudiobookTile(book: books[index]),
+            itemBuilder: (context, index) => _AudiobookTile(book: books[index]),
           ),
         ),
       ],
@@ -649,19 +661,29 @@ class _LibraryHeader extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // One line each: on a 360 dp phone with three header
+                      // buttons both labels wrapped mid-word.
                       Text(
                         context.l10n.yourLibrary,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               letterSpacing: 1.8,
                               fontWeight: FontWeight.w800,
                               color: Theme.of(context).colorScheme.primary,
                             ),
                       ),
-                      Text(
-                        count == 0 ? 'MusicStream' : _greeting(context.l10n),
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          count == 0 ? 'MusicStream' : _greeting(context.l10n),
+                          maxLines: 1,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
                       ),
                     ],
                   ),
@@ -761,9 +783,10 @@ class _RecentAlbums extends StatelessWidget {
       ..sort((a, b) => b.addedAt.compareTo(a.addedAt));
     final albums = <String, List<MusicTrack>>{};
     for (final track in recent) {
+      // By album alone: a compilation is one album, not one per artist.
       final key = track.album == MusicTrack.unknownAlbum
           ? 'track\u0000${track.id}'
-          : '${track.album}\u0000${track.artist}';
+          : track.album;
       if (albums.length == 8 && !albums.containsKey(key)) break;
       albums.putIfAbsent(key, () => []).add(track);
     }
@@ -773,9 +796,7 @@ class _RecentAlbums extends StatelessWidget {
         group.first.album == MusicTrack.unknownAlbum
             ? group
             : (tracks
-                .where((track) =>
-                    track.album == group.first.album &&
-                    track.artist == group.first.artist)
+                .where((track) => track.album == group.first.album)
                 .toList()
               ..sort(_albumOrder)),
     ];
@@ -831,9 +852,8 @@ class _RecentAlbums extends StatelessWidget {
                                 backgroundColor: Colors.white,
                                 foregroundColor: const Color(0xFF171221),
                               ),
-                              onPressed: () => context
-                                  .read<PlayerProvider>()
-                                  .playAll(group),
+                              onPressed: () =>
+                                  context.read<PlayerProvider>().playAll(group),
                               icon: const Icon(Icons.play_arrow_rounded),
                             ),
                           ),
@@ -849,7 +869,7 @@ class _RecentAlbums extends StatelessWidget {
                       Text(
                         single
                             ? context.l10n.metadata(first.artist)
-                            : '${context.l10n.metadata(first.artist)} · '
+                            : '${group.every((track) => track.artist == first.artist) ? context.l10n.metadata(first.artist) : context.l10n.variousArtists} · '
                                 '${context.l10n.trackCount(group.length)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -924,7 +944,8 @@ class _AudiobookTile extends StatelessWidget {
     final progress = book.progress;
     final resume = book.resumeChapter;
     final details = [
-      if (book.chapters.length > 1) l10n.audiobookChapters(book.chapters.length),
+      if (book.chapters.length > 1)
+        l10n.audiobookChapters(book.chapters.length),
       if (book.finished)
         l10n.audiobookFinished
       else if (progress != null)
@@ -1124,11 +1145,17 @@ class _CollectionScreen extends StatelessWidget {
         : const <Audiobook>[];
     final book = books.length == 1 ? books.single : null;
     return Scaffold(
+      // Pushed over the tabs: without this the playback controls vanished.
+      bottomNavigationBar: const _PageMiniPlayer(),
       body: CustomScrollView(
         slivers: [
           SliverAppBar.large(
             expandedHeight: 310,
             pinned: true,
+            // Dark in both states: the title sits on the artwork's dark
+            // gradient when expanded and stays legible once collapsed.
+            backgroundColor: const Color(0xFF0D0C14),
+            foregroundColor: Colors.white,
             actions: [
               IconButton(
                 tooltip: context.l10n.shufflePlay,
@@ -1151,7 +1178,14 @@ class _CollectionScreen extends StatelessWidget {
               const SizedBox(width: 12),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              title: Text(context.l10n.metadata(title), maxLines: 1),
+              title: Text(
+                context.l10n.metadata(title),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                // Explicit: the large app bar ignored its foreground colour
+                // and drew a dark title on the artwork's dark gradient.
+                style: const TextStyle(color: Colors.white),
+              ),
               background: visible.isEmpty
                   ? null
                   : Stack(
@@ -1378,6 +1412,7 @@ class _PlaylistScreenState extends State<_PlaylistScreen> {
     final tracks = library.tracksForPlaylist(playlist);
     final reordering = _reordering && tracks.length > 1;
     return Scaffold(
+      bottomNavigationBar: const _PageMiniPlayer(),
       body: CustomScrollView(
         slivers: [
           SliverAppBar.large(
@@ -1768,8 +1803,11 @@ class _EmptyPlaylist extends StatelessWidget {
 }
 
 class _NoResults extends StatelessWidget {
-  const _NoResults({this.query});
+  const _NoResults({this.query, this.icon, this.title, this.hint});
   final String? query;
+  final IconData? icon;
+  final String? title;
+  final String? hint;
 
   @override
   Widget build(BuildContext context) => Center(
@@ -1778,18 +1816,19 @@ class _NoResults extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.search_off_rounded,
+              Icon(icon ?? Icons.search_off_rounded,
                   size: 64, color: Theme.of(context).colorScheme.primary),
               const SizedBox(height: 16),
               Text(
-                  query == null
-                      ? context.l10n.noResults
-                      : context.l10n.noResultsFor(query!),
+                  title ??
+                      (query == null
+                          ? context.l10n.noResults
+                          : context.l10n.noResultsFor(query!)),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 6),
               Text(
-                context.l10n.noResultsHint,
+                hint ?? context.l10n.noResultsHint,
                 textAlign: TextAlign.center,
               ),
             ],
@@ -2092,12 +2131,15 @@ class _TrackTileState extends State<_TrackTile> {
                     },
                   ),
                 ),
-                if (track.durationMs != null)
+                // On a phone the title needs that width more than the length.
+                if (track.durationMs != null &&
+                    MediaQuery.sizeOf(context).width >= 600)
                   Text(
                     _duration(track.durationMs!),
                     style: Theme.of(context).textTheme.labelSmall,
                   ),
                 IconButton(
+                  visualDensity: VisualDensity.compact,
                   tooltip: track.favorite
                       ? context.l10n.removeFavorite
                       : context.l10n.addFavorite,
@@ -2109,6 +2151,8 @@ class _TrackTileState extends State<_TrackTile> {
                 ),
                 PopupMenuButton<String>(
                   key: _menuKey,
+                  style: IconButton.styleFrom(
+                      visualDensity: VisualDensity.compact),
                   tooltip: context.l10n.trackOptions,
                   onSelected: (action) => _onAction(context, action),
                   itemBuilder: (_) => [
@@ -2130,10 +2174,22 @@ class _TrackTileState extends State<_TrackTile> {
                         value: 'remove',
                         child: Text(context.l10n.removeFromPlaylist),
                       ),
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: Text(context.l10n.deleteFromPhone),
-                    ),
+                    if (track.album != MusicTrack.unknownAlbum)
+                      PopupMenuItem(
+                        value: 'album',
+                        child: Text(context.l10n.goToAlbum),
+                      ),
+                    if (track.artist != MusicTrack.unknownArtist)
+                      PopupMenuItem(
+                        value: 'artist',
+                        child: Text(context.l10n.goToArtist),
+                      ),
+                    // The phone's own files are only listed, never deleted.
+                    if (track.source != MusicSource.deviceMedia)
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text(context.l10n.deleteFromPhone),
+                      ),
                   ],
                 ),
               ],
@@ -2187,6 +2243,16 @@ class _TrackTileState extends State<_TrackTile> {
       await showAddToPlaylistSheet(context, [track]);
     } else if (action == 'remove') {
       await _removeFromPlaylist(context, widget.playlistId!, track);
+    } else if (action == 'album') {
+      final tracks = context
+          .read<LibraryProvider>()
+          .allTracks
+          .where((item) => item.album == track.album)
+          .toList()
+        ..sort(_albumOrder);
+      _openCollection(context, track.album, tracks);
+    } else if (action == 'artist') {
+      showArtistTracks(context, track.artist);
     } else if (action == 'delete') {
       await _confirmDeleteTracks(context, [track]);
     }
@@ -2675,4 +2741,18 @@ Future<void> _selectTracks(
   for (final trackId in playlist.trackIds.toSet().difference(result)) {
     await library.removeTrackFromPlaylist(playlist.id, trackId);
   }
+}
+
+/// [MiniPlayer] for pages pushed over the tabs; opening it returns to them.
+class _PageMiniPlayer extends StatelessWidget {
+  const _PageMiniPlayer();
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+          child: MiniPlayer(onOpen: () => HomeScreen.openNowPlaying(context)),
+        ),
+      );
 }

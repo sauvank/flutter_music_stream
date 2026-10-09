@@ -1785,4 +1785,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncSignedIn => 'Signed in';
+
+  @override
+  String get variousArtists => 'Various artists';
+
+  @override
+  String albumCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count albums',
+      one: '$count album',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String artistCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count artists',
+      one: '$count artist',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String genreCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count genres',
+      one: '$count genre',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get favoritesEmpty => 'No favorites yet';
+
+  @override
+  String get favoritesEmptyHint => 'Tap ♡ on a track to find it here.';
+
+  @override
+  String get goToAlbum => 'Go to album';
+
+  @override
+  String get goToArtist => 'Go to artist';
+
+  @override
+  String get importServersTitle => 'Import servers';
+
+  @override
+  String get importServersHint =>
+      'A JSON file or text exported from MusicStream or written by hand.';
+
+  @override
+  String get serverMoreOptions => 'Server options';
+
+  @override
+  String get continueLabel => 'Continue';
+
+  @override
+  String get visualizerPermissionTitle => 'Show sound waves';
+
+  @override
+  String get visualizerPermissionBody =>
+      'To draw the waves, Android asks for the “record audio” permission. MusicStream does not use the microphone: it only analyses the sound it plays, without recording or sending anything.';
 }

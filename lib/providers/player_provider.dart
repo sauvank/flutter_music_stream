@@ -38,6 +38,10 @@ class PlayerProvider extends ChangeNotifier {
       // 0:00 until it loads, and saving that would lose the bookmark.
       final paused = _wasPlaying && !state.playing;
       _wasPlaying = state.playing;
+      // Play pressed outside the app (notification, headset, car).
+      if (state.playing && _pendingRestore != null) {
+        unawaited(_applyPendingRestore());
+      }
       final track = _current;
       if (paused && track != null && track.isAudiobook) {
         _lastPersistedAt = DateTime.now();
@@ -76,7 +80,8 @@ class PlayerProvider extends ChangeNotifier {
     _subscriptions.add(_player.currentIndexStream.listen((index) {
       // Loading a restored queue first reports index 0; ignore it so the
       // saved current track is not overwritten.
-      if (_restoreIndex != null && index != _restoreIndex) return;
+      final expected = _restoreIndex ?? _pendingRestore?.index;
+      if (expected != null && index != expected) return;
       if (_sleepAtTrackEnd && _reachedTrackEnd) {
         _cancelSleepTimer();
         unawaited(_player.pause().then((_) => _player.seek(Duration.zero)));
@@ -134,6 +139,11 @@ class PlayerProvider extends ChangeNotifier {
   final void Function(List<String> trackIds, String? currentId)? onQueueChanged;
   int _queueRevision = 0;
   int? _restoreIndex;
+
+  /// Saved track and position of a queue restored at launch, until it is
+  /// first played: the lazily loaded queue starts at its first track
+  /// whatever index it was given.
+  ({int index, Duration position})? _pendingRestore;
   String? _queueKey;
 
   @override
@@ -198,7 +208,9 @@ class PlayerProvider extends ChangeNotifier {
   }
 
   /// Jumps by [offset] inside the current track, clamped to its bounds.
-  Future<void> skipBy(Duration offset) {
+  Future<void> skipBy(Duration offset) async {
+    // Relative to the restored bookmark, not to 0:00 of an unloaded queue.
+    await _applyPendingRestore();
     final total = _player.duration;
     var target = _player.position + offset;
     if (target < Duration.zero) target = Duration.zero;
@@ -328,6 +340,7 @@ class PlayerProvider extends ChangeNotifier {
       if (_player.currentIndex != index) {
         await _player.seek(position, index: index);
       }
+      _pendingRestore = (index: index, position: position);
     } finally {
       _restoreIndex = null;
     }
@@ -335,7 +348,25 @@ class PlayerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Lands a restored queue on its saved track and position before anything
+  /// plays or moves; afterwards the player behaves as for any other queue.
+  Future<void> _applyPendingRestore() async {
+    final pending = _pendingRestore;
+    if (pending == null) return;
+    _pendingRestore = null;
+    _restoreIndex = pending.index;
+    try {
+      if (_player.processingState == ProcessingState.idle) {
+        await _player.load();
+      }
+      await _player.seek(pending.position, index: pending.index);
+    } finally {
+      _restoreIndex = null;
+    }
+  }
+
   Future<void> playTrack(MusicTrack track, List<MusicTrack> library) async {
+    _pendingRestore = null;
     // An audiobook never runs on into music, only into the next chapters of
     // the same book (same album and author) when they are queued with it.
     if (track.isAudiobook) {
@@ -437,6 +468,7 @@ class PlayerProvider extends ChangeNotifier {
     int startIndex = 0,
     Map<String, String> headers = const {},
   }) async {
+    _pendingRestore = null;
     if (tracks.isEmpty) return;
     final index = startIndex.clamp(0, tracks.length - 1);
     _queue = List.of(tracks);
@@ -459,6 +491,7 @@ class PlayerProvider extends ChangeNotifier {
 
   Future<void> playAt(int index) async {
     if (index < 0 || index >= _queue.length) return;
+    await _applyPendingRestore();
     final wasPlaying = _player.playing;
     if (wasPlaying && !await _fadeTo(0)) return;
     await _player.seek(Duration.zero, index: index);
@@ -554,6 +587,7 @@ class PlayerProvider extends ChangeNotifier {
   }
 
   Future<void> toggle() async {
+    await _applyPendingRestore();
     if (_player.playing) {
       if (await _fadeTo(0)) {
         await _player.pause();
@@ -603,7 +637,8 @@ class PlayerProvider extends ChangeNotifier {
         LoopMode.one => LoopMode.off,
       });
 
-  Future<void> seek(Duration position) {
+  Future<void> seek(Duration position) async {
+    await _applyPendingRestore();
     _reachedTrackEnd = false;
     // Jumping elsewhere moves "end of chapter" to the chapter landed in.
     if (_sleepChapter != null) {
@@ -637,6 +672,7 @@ class PlayerProvider extends ChangeNotifier {
   }
 
   Future<void> _changeTrack(Future<void> Function() change) async {
+    await _applyPendingRestore();
     final wasPlaying = _player.playing;
     if (wasPlaying && !await _fadeTo(0)) return;
     await change();

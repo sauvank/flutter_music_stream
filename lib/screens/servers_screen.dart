@@ -212,7 +212,25 @@ class ServersScreen extends StatelessWidget {
       builder: (sheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.l10n.importServersTitle,
+                    style: Theme.of(sheetContext)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(context.l10n.importServersHint),
+                ],
+              ),
+            ),
             ListTile(
               leading: const Icon(Icons.folder_open_rounded),
               title: Text(context.l10n.chooseJsonFile),
@@ -380,15 +398,8 @@ class _ServerHeader extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 28),
-            Text(
-              context.l10n.serversHeadline,
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    height: 1.04,
-                    letterSpacing: -1.6,
-                  ),
-            ),
+            // No decorative headline: on a phone it pushed the "Add a
+            // server" button under the mini player.
           ],
         ),
       );
@@ -512,26 +523,41 @@ class _ServerCard extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.w800)),
                 subtitle: Text(profile.baseUrl,
                     maxLines: 1, overflow: TextOverflow.ellipsis),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      tooltip: context.l10n.scanNewAlbums,
-                      onPressed: scanning ? null : onScan,
-                      icon: scanning
-                          ? const SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.new_releases_outlined),
-                    ),
-                    IconButton(
-                      tooltip: context.l10n.delete,
-                      onPressed: onDelete,
-                      icon: const Icon(Icons.delete_outline_rounded),
-                    ),
-                  ],
-                ),
+                // Named actions in a menu: the bare "new releases" badge read
+                // as a warning, and deleting sat one tap away.
+                trailing: scanning
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : PopupMenuButton<VoidCallback>(
+                        tooltip: context.l10n.serverMoreOptions,
+                        onSelected: (action) => action(),
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: onScan,
+                            child: ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: const Icon(Icons.new_releases_outlined),
+                              title: Text(context.l10n.scanNewAlbums),
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: onDelete,
+                            child: ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: Icon(
+                                Icons.delete_outline_rounded,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                              title: Text(context.l10n.delete),
+                            ),
+                          ),
+                        ],
+                      ),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
@@ -626,7 +652,8 @@ class _BrowserState extends State<_Browser> {
                   child: IconButton(
                     onPressed: () => showDownloadQueue(context),
                     tooltip: context.l10n.downloads,
-                    icon: const Icon(Icons.download_rounded),
+                    // Not the per-track download arrow: this opens the queue.
+                    icon: const Icon(Icons.downloading_rounded),
                   ),
                 ),
               ),
