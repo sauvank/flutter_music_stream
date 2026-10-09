@@ -1,0 +1,60 @@
+name: Set up Android build
+description: Java, Gradle cache, Flutter, NDK, Firebase config and optional upload signing.
+
+inputs:
+  google-services-json-base64:
+    required: true
+  upload-keystore-base64:
+    required: false
+    default: ''
+  upload-keystore-password:
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+    # Caches are written on main only (warm-cache.yml); tag runs restore them.
+    - uses: gradle/actions/setup-gradle@v4
+    - name: Enable the Gradle build cache
+      shell: bash
+      run: echo "org.gradle.caching=true" >> "${GRADLE_USER_HOME:-$HOME/.gradle}/gradle.properties"
+    - uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.27.4'
+        channel: stable
+        cache: true
+
+    # The runner image ships the Android SDK and sdkmanager; only this NDK is missing.
+    - name: Install Android NDK
+      shell: bash
+      run: |
+        ndk=27.0.12077973
+        [ -d "$ANDROID_HOME/ndk/$ndk" ] || \
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ndk" > /dev/null
+
+    - name: Restore signing and Firebase files
+      shell: bash
+      env:
+        GOOGLE_SERVICES_JSON_BASE64: ${{ inputs.google-services-json-base64 }}
+        UPLOAD_KEYSTORE_BASE64: ${{ inputs.upload-keystore-base64 }}
+        UPLOAD_KEYSTORE_PASSWORD: ${{ inputs.upload-keystore-password }}
+      run: |
+        echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > android/app/google-services.json
+        # Without key.properties, release builds fall back to debug signing.
+        if [ -n "$UPLOAD_KEYSTORE_BASE64" ]; then
+          echo "$UPLOAD_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          {
+            echo "storePassword=$UPLOAD_KEYSTORE_PASSWORD"
+            echo "keyPassword=$UPLOAD_KEYSTORE_PASSWORD"
+            echo "keyAlias=upload"
+            echo "storeFile=$RUNNER_TEMP/upload.jks"
+          } > android/key.properties
+        fi
+
+    - shell: bash
+      run: flutter pub get

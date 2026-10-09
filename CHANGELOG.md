@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- CI accélérée : fusion de `build_and_release.yml` dans `release.yml` (une seule installation par job, builds Android/Windows en parallèle, APK universel tiré de l’AAB, APK x86_64 séparé abandonné), suppression du build debug de `ci.yml`, CI ignorée sur les bumps de version, caches Gradle/Flutter remplis sur `main` par `warm-cache.yml`. Environ 50 → 20 minutes facturées par version.
+
 - Validation physique du correctif des téléchargements sur Galaxy S24 : lot local de 1 500 MP3 distincts, tous téléchargés et indexés, progression en arrière-plan et navigation fonctionnelles, données conservées après arrêt/relance. Aucun crash/ANR ni erreur d’indexation observé; intégrité de trois fichiers contrôlée. Test réalisé dans l’application séparée, sans modifier les données Play.
 
 - Stabilité des gros téléchargements : moteur `background_downloader` 9.5.5, service Android `dataSync`, rafraîchissements regroupés sur 500 ms et lecture des tags/pochettes dans un isolate. Outils Android alignés (AGP 8.9.2, Gradle 8.11.1); installation de test indépendante facultative. Tests de rafales de 1 500 événements, de file volumineuse et de métadonnées hors du thread UI.
