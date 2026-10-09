@@ -73,3 +73,14 @@
 - Taille APK : `mobile_scanner` embarque ML Kit (~5,3 Mo sur ~31 Mo en arm64). `dev.steenbakker.mobile_scanner.useUnbundled=true` le retirerait, mais le modèle serait téléchargé par Play Services au premier scan QR (échec possible hors ligne ou sans Google).
 - Téléchargements massifs (~5 fichiers/s, UI moins fluide pendant la charge) : regrouper l’indexation (plusieurs fichiers puis une seule sauvegarde de l’index) demande de ne supprimer la copie téléchargée qu’après la sauvegarde, pour garder la garantie actuelle de ne perdre aucun fichier.
 - Déterminer si HTTP non chiffré doit rester autorisé globalement sur Android ou être limité par une configuration réseau fournie hors dépôt.
+- Audit UX (2026-10-09, émulateur), à prioriser :
+  - livres audio en liste de chapitres, sans regroupement par livre ni « Reprendre » ;
+  - recherche limitée à l’onglet actif, avec un message « vide » trompeur ;
+  - en-tête de la bibliothèque trop haut (une seule ligne visible au-dessus du mini-lecteur) ;
+  - pas de navigation par artiste ou album ;
+  - activation de la médiathèque de l’appareil cachée dans Réglages, absente de « Ajouter ma musique » ;
+  - « Supprimer les téléchargements » en icône d’en-tête, à côté des favoris ;
+  - puce Playlists hors écran ;
+  - Retour qui renvoie vers l’onglet visité avant ;
+  - compteurs incohérents (55 contre 50 morceaux).
+- Téléchargements depuis alist/TeraBox : erreurs 500 intermittentes côté serveur ; prévoir plus de nouvelles tentatives sur 5xx, ou 1 connexion par hôte ; notification bloquée sur « 0/1 » pendant la mise en file.
