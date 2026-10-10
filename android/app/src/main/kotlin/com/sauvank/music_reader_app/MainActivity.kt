@@ -68,6 +68,21 @@ class MainActivity : AudioServiceActivity() {
                 PlayerWidgetProvider.refreshAll(this)
                 result.success(null)
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, DOWNLOADS_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "hold" -> result.success(
+                        DownloadKeepAliveService.start(
+                            applicationContext, call.argument<String>("title") ?: ""
+                        )
+                    )
+                    "release" -> {
+                        DownloadKeepAliveService.stop(applicationContext)
+                        result.success(null)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
         visualizer?.stop()
         visualizer = AudioVisualizer(flutterEngine.dartExecutor.binaryMessenger)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, OUTPUT_CHANNEL)
@@ -95,6 +110,7 @@ class MainActivity : AudioServiceActivity() {
         private const val UPDATE_CHANNEL = "com.sauvank.musicstream/updates"
         private const val WIDGET_CHANNEL = "com.sauvank.musicstream/widget"
         private const val OUTPUT_CHANNEL = "com.sauvank.musicstream/output"
+        private const val DOWNLOADS_CHANNEL = "com.sauvank.musicstream/downloads"
 
         /** Whether this process hosts the Flutter engine that plays audio. */
         @Volatile

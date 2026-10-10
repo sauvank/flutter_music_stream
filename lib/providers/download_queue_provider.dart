@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 import '../models/remote_audio_entry.dart';
 import '../models/server_profile.dart';
 import '../services/remote_server_service.dart';
+import '../services/download_keep_alive.dart';
 import '../services/download_queue_refresh.dart';
 import 'download_request.dart';
 import 'library_provider.dart';
@@ -31,6 +32,9 @@ class DownloadQueueProvider extends ChangeNotifier {
     debugPrint('Unable to refresh download queue: ${error.runtimeType}');
   });
   Future<void>? _reloadInFlight;
+  final _keepAlive = DownloadKeepAlive();
+  Timer? _settleTimer;
+  bool _settling = false;
   bool _reloadPending = false;
 
   List<TaskRecord> get records => List.unmodifiable(_records);
@@ -144,6 +148,7 @@ class DownloadQueueProvider extends ChangeNotifier {
   /// Uses the downloader's own `{numFinished}`-style tokens as arguments so
   /// the translations keep them in place.
   void configureNotifications(AppLocalizations l10n) {
+    _keepAlive.title = l10n.notificationRunningTitle;
     _downloader.configureNotificationForGroup(
       group,
       running: TaskNotification(
@@ -323,6 +328,31 @@ class DownloadQueueProvider extends ChangeNotifier {
     if (ids.isEmpty) return;
     await _downloader.cancelTasksWithIds(ids);
     await _reload();
+    await _settleStaleRecords();
+  }
+
+  /// The downloader can drop the canceled update of tasks still waiting in
+  /// its holding queue (about 500 of 1,400 after "Cancel all"), leaving them
+  /// active forever, along with the keep-alive service. Once the native side
+  /// reports the group idle, any record still unfinished is stale.
+  Future<void> _settleStaleRecords() async {
+    if (_settling || _requests.values.any((request) => request.active)) return;
+    _settling = true;
+    try {
+      if (!await _downloader.tasksFinished(group: group)) return;
+      final records = await _downloader.database.allRecords(group: group);
+      final stale = records.where(_isTransferring);
+      if (stale.isEmpty) return;
+      for (final record in stale) {
+        await _downloader.database
+            .updateRecord(record.copyWith(status: TaskStatus.canceled));
+      }
+      await _reload();
+    } catch (error) {
+      debugPrint('Unable to settle download records: ${error.runtimeType}');
+    } finally {
+      _settling = false;
+    }
   }
 
   void _onStatus(TaskStatusUpdate update) {
@@ -392,8 +422,31 @@ class DownloadQueueProvider extends ChangeNotifier {
     }
   }
 
+  // Every queue or request change passes through here, in the background too.
+  // Paused tasks leave the native queue: they neither need the foreground
+  // nor count as stale.
+  static bool _isTransferring(TaskRecord record) =>
+      record.status.isNotFinalState && record.status != TaskStatus.paused;
+
+  @override
+  void notifyListeners() {
+    final active = _records.any(_isTransferring) ||
+        _requests.values.any((request) => request.active);
+    _keepAlive.update(active);
+    if (active) {
+      _settleTimer ??= Timer.periodic(
+          const Duration(seconds: 30), (_) => _settleStaleRecords());
+    } else {
+      _settleTimer?.cancel();
+      _settleTimer = null;
+    }
+    super.notifyListeners();
+  }
+
   @override
   void dispose() {
+    _settleTimer?.cancel();
+    _keepAlive.update(false);
     _refresh.dispose();
     super.dispose();
   }

@@ -2,6 +2,8 @@
 
 ## Modifications récentes
 
+- Téléchargements en arrière-plan : ils s’arrêtaient au bout de quelques minutes (service de premier plan WorkManager perdu entre deux fichiers, puis réseau coupé par Android). Un service `dataSync` propre à l’app tient le premier plan pendant tout le lot ; validé sur émulateur Android 17 avec 10 min en arrière-plan sans erreur. Les tâches restées « actives » après « Tout annuler » sont désormais soldées.
+
 - Ajout de morceaux à une playlist : page plein écran au lieu d’une liste à cocher brute, avec recherche (sans accents), pochettes, vue par albums (une case coche tout l’album, état partiel affiché, album dépliable) et compteur ; les nouveaux morceaux s’ajoutent dans l’ordre où ils ont été cochés.
 
 - Troisième passe (tour scripté des fenêtres) :
