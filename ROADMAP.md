@@ -62,7 +62,7 @@
 ## À venir
 
 - [ ] Publication automatique : workflow prêt (`release.yml`), compte de service et secret créés ; reste à l’inviter dans la Play Console (droit « Publier des versions ») et à ajouter le SHA-1 de la clé de signature Play à Firebase.
-- [ ] Bloquant Play : remplir la déclaration « Autorisations de service de premier plan » (dataSync, téléchargements) dans la Play Console › Contenu de l'application ; sans elle, l'étape « Publish to Google Play » échoue (depuis v0.1.112).
+- [ ] Play : v0.1.113 importée à la main en tests internes (l'envoi auto échouait faute de déclaration FGS `dataSync`). Vérifier que la déclaration « Autorisations pour le service de premier plan » liste DATA_SYNC, puis confirmer qu'une release auto passe.
 
 
 ## Différé
