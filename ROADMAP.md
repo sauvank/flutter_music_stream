@@ -62,7 +62,7 @@
 ## À venir
 
 - [ ] Publication automatique : workflow prêt (`release.yml`), compte de service et secret créés ; reste à l’inviter dans la Play Console (droit « Publier des versions ») et à ajouter le SHA-1 de la clé de signature Play à Firebase.
-- [x] Play : déclaration FGS `dataSync` remplie (v0.1.113 importée à la main) ; la v0.1.114 vérifie que l'envoi automatique repasse.
+- [x] Play : déclaration FGS `dataSync` remplie (v0.1.113 importée à la main) ; envoi automatique de nouveau fonctionnel depuis la v0.1.114.
 
 
 ## Différé
